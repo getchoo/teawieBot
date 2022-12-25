@@ -8,16 +8,18 @@ moyai = commands.Bot(command_prefix="m!", description="moyai", intents=intents)
 
 
 @moyai.event
-async def on_ready(self):
-	print(f"logged in as {self.user}")
+async def on_ready():
+	print(f"logged in as {moyai.user}")
 
 
 @moyai.event
-async def on_message(self, message):
-	if message.author == self.user or not message.channel == "moyai-testing":
+async def on_message(message):
+	if message.author == moyai.user:
 		return
 
-	echo_messages = ["moyai", discord.utils.get(moyai.emojis, name="moyai")]
+	echo_messages = [
+	    "moyai", str(discord.utils.get(moyai.emojis, name="moyai"))
+	]
 	try:
 		index = echo_messages.index(message.content.toLower())
 		await message.channel.send(echo_messages[index])
