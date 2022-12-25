@@ -1,0 +1,41 @@
+name: Format and Lint
+
+on:
+  push:
+    branches:
+      - main, develop
+    paths:
+      - '**.py'
+  pull_request:
+    paths:
+      - '**.py'
+
+jobs:
+  format_and_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout HEAD
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Run flake8
+        uses: microsoft/action-python@0.2.0
+        with:
+          flake8: true
+          fail_on_error: true
+      - name: Run yapf
+        uses: mritunjaysharma394/autoyapf@v2
+        with:
+          args: --in-place --recursive .
+
+      - name: Check for Modified Files
+        id: git-check
+        run: echo ::set-output name=modified::$(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi)
+
+      - name: Push Changes
+        if: steps.git-check.outputs.modified == 'true'
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git commit -am "chore: format and lint"
