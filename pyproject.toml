@@ -1,0 +1,32 @@
+[build-system]
+requires = ["flit_core>=3.2"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "moyaiBot"
+version = "0.0.1"
+description = "moyai"
+authors = [
+	{ name="seth", email="getchoo@tuta.io" },
+]
+#readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+	"discord.py >=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+	"toml",
+	"yapf",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/getchoo/moyaiBot"
+"Bug Tracker" = "https://github.com/getchoo/moyaiBot/issues"
+
+[project.scripts]
+moyaibot = "moyaiBot:main"
+
+[tool.yapf]
+use_tabs = true
