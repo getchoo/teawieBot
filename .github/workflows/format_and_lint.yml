@@ -4,25 +4,27 @@ on:
   push:
     branches:
       - main, develop
-    paths:
-      - '**.py'
   pull_request:
-    paths:
-      - '**.py'
+    branches:
+      - main, develop
 
 jobs:
+
   format_and_lint:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout HEAD
         uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
+
       - name: Run flake8
         uses: microsoft/action-python@0.2.0
         with:
           flake8: true
           fail_on_error: true
+
       - name: Run yapf
         uses: mritunjaysharma394/autoyapf@v2
         with:

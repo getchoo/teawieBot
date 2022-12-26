@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
-from moyaiBot.lib import get_random_response
+
+from moyai_bot.lib import get_random_response
 
 intents = discord.Intents.default()
-intents.message_content = True
+intents.message_content = True  # pylint: disable=assigning-non-slot
 moyai = commands.Bot(command_prefix="m!", description="moyai", intents=intents)
 
 
@@ -37,6 +38,6 @@ async def ask(ctx):
 @moyai.command()
 async def moyaispam(ctx):
 	msg = str()
-	for i in range(30):
+	for _ in range(30):
 		msg += str(discord.utils.get(moyai.emojis, name="moyai"))
 	await ctx.send(msg)
