@@ -9,7 +9,7 @@ description = "moyai"
 authors = [
 	{ name="seth", email="getchoo@tuta.io" },
 ]
-#readme = "README.md"
+readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
 	"discord.py >=2.0.0",
