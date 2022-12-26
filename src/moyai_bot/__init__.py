@@ -1,5 +1,6 @@
 import os
-from .moyaiBot import moyai
+
+from .bot import moyai
 
 TOKEN = os.getenv("TOKEN")
 

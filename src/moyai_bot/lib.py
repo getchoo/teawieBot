@@ -1,5 +1,6 @@
-import discord
 import random
+
+import discord
 
 
 def get_random_response(moyai):
