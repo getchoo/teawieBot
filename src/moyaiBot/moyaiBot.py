@@ -21,7 +21,7 @@ async def on_message(message):
 	    "moyai", str(discord.utils.get(moyai.emojis, name="moyai"))
 	]
 	try:
-		index = echo_messages.index(message.content.toLower())
+		index = echo_messages.index(message.content.lower())
 		await message.channel.send(echo_messages[index])
 	except ValueError:
 		return
