@@ -24,7 +24,9 @@ async def on_message(message):
 		index = echo_messages.index(message.content.lower())
 		await message.channel.send(echo_messages[index])
 	except ValueError:
-		return
+		pass
+
+	await moyai.process_commands(message)
 
 
 @moyai.command()
