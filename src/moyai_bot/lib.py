@@ -1,9 +1,12 @@
 import importlib.resources
 import random
+from math import ceil
 
 import discord
 
 from moyai_bot import copypastas
+
+CHAR_LIMIT: int = 2000
 
 
 def get_random_response(moyai):
@@ -24,11 +27,27 @@ def get_random_response(moyai):
 	return random.choice(responses)
 
 
+def split_msg(msg: str):
+	"""
+	splits a message into multiple parts so that it
+	can fit into the discord character limit
+	"""
+	split = ceil(len(msg) / ceil(len(msg) / CHAR_LIMIT))
+	return [msg[i:i + split] for i in range(0, len(msg), split)]
+
+
 def get_copypasta(name):
 	try:
 		res = importlib.resources.read_text(copypastas, name + ".txt")
-		if res != "":
-			return res
 	except OSError:
-		pass
-	return f"couldn't send copypasta: {name} :("
+		return "something went wrong :("
+
+	if res == "":
+		return f"couldn't send copypasta: {name} :("
+
+	if len(res) >= CHAR_LIMIT:
+		res = split_msg(res)
+	else:
+		res = [res]
+
+	return res
