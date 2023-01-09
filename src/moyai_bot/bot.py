@@ -54,8 +54,13 @@ async def moyaispam(ctx: commands.Context):
     app_commands.Choice(name="happymeal", value="happymeal"),
     app_commands.Choice(name="ismah", value="ismah"),
     app_commands.Choice(name="sus", value="sus"),
-    app_commands.Choice(name="ticktock", value="ticktock")
+    app_commands.Choice(name="ticktock", value="ticktock"),
 ])
-async def copypasta(i: discord.Interaction, choices: app_commands.Choice[str]):
-	msg = get_copypasta(choices.value)
-	await i.response.send_message(msg)
+async def copypasta(interaction: discord.Interaction,
+                    choices: app_commands.Choice[str]):
+	msgs = get_copypasta(choices.value)
+	for i, msg in enumerate(msgs):
+		if i == 0:
+			await interaction.response.send_message(msg)
+		else:
+			await interaction.channel.send(msg)
