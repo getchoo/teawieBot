@@ -14,7 +14,7 @@ async def on_ready():
 
 
 @moyai.event
-async def on_message(message):
+async def on_message(message: discord.Message):
 	if message.author == moyai.user:
 		return
 
@@ -31,12 +31,12 @@ async def on_message(message):
 
 
 @moyai.command()
-async def ask(ctx):
+async def ask(ctx: commands.Context):
 	await ctx.send(get_random_response(moyai))
 
 
 @moyai.command()
-async def moyaispam(ctx):
+async def moyaispam(ctx: commands.Context):
 	msg = str()
 	for _ in range(30):
 		msg += str(discord.utils.get(moyai.emojis, name="moyai"))
