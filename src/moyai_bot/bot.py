@@ -55,6 +55,9 @@ async def moyaispam(ctx: commands.Context):
     app_commands.Choice(name="ismah", value="ismah"),
     app_commands.Choice(name="sus", value="sus"),
     app_commands.Choice(name="ticktock", value="ticktock"),
+    app_commands.Choice(name="amongus_sus", value="amongus_sus"),
+    app_commands.Choice(name="egrill", value="egrill"),
+    app_commands.Choice(name="dvd", value="dvd"),
 ])
 async def copypasta(interaction: discord.Interaction,
                     choices: app_commands.Choice[str]):
