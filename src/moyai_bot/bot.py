@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from moyai_bot.apis import guzzle
 from moyai_bot.lib import get_copypasta, get_random_response
 
 SERVER_ID = discord.Object(id=1055663552679137310)
@@ -76,3 +77,11 @@ async def copypasta(interaction: discord.Interaction,
 			await interaction.response.send_message(msg)
 		else:
 			await interaction.channel.send(msg)
+
+
+@moyai.tree.command(name="random_teawie",
+                    description="get a random teawie!",
+                    guild=SERVER_ID)
+async def random_teawie(interaction: discord.Interaction):
+	msg = guzzle.get_random_teawie()
+	await interaction.response.send_message(msg)
