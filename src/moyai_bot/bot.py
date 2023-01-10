@@ -39,6 +39,15 @@ async def ask(ctx: commands.Context):
 	await ctx.send(get_random_response(moyai))
 
 
+@moyai.tree.command(
+    name="ask",
+    description="ask lord moyai a question and they shall respond",
+    guild=SERVER_ID)
+async def ask_slash_command(interaction: discord.Interaction):
+	msg = get_random_response(moyai)
+	await interaction.response.send_message(msg)
+
+
 @moyai.command()
 async def moyaispam(ctx: commands.Context):
 	msg = str()
