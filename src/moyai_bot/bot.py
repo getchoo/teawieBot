@@ -24,7 +24,8 @@ async def on_message(message: discord.Message):
 		return
 
 	echo_messages = [
-	    "moyai", str(discord.utils.get(moyai.emojis, name="moyai"))
+	    "moyai",
+	    "🗿",
 	]
 	try:
 		index = echo_messages.index(message.content.lower())
@@ -53,7 +54,7 @@ async def ask_slash_command(interaction: discord.Interaction):
 async def moyaispam(ctx: commands.Context):
 	msg = str()
 	for _ in range(30):
-		msg += str(discord.utils.get(moyai.emojis, name="moyai"))
+		msg += "🗿"
 	await ctx.send(msg)
 
 
