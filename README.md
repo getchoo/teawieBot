@@ -7,6 +7,7 @@ okay so like basically, it's just a discord bot named "Moyai" (so original!!)
 
 **m!ask** | Ask the bot a question with predefined answers 
 	(this is also a slash command, use with /ask)
+
 **/copypasta** | Gives out a random copypasta from the copypasta folder in *src\copypastas*
 	current copypastas include:
 		dvd
@@ -16,6 +17,7 @@ okay so like basically, it's just a discord bot named "Moyai" (so original!!)
 		navyseal
 		sus
 		ticktock
+		
 **/random_teawie** | Sends out a random teawie, which is a soft cute character made by SympathyTea
 
 ## dev setup
