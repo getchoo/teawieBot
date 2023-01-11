@@ -10,7 +10,7 @@ okay so like basically, it's just a discord bot named "Moyai" (so original!!)
 
 **m!moyaispam** | what do you think it does. It spams the moyai emoji.
 
-**/copypasta** | gives out a random copypasta from the copypasta folder in *src\moyai_bot\copypastas*
+**/copypasta** | sends a random copypasta from *src\moyai_bot\copypastas*
 
 **/random_teawie** | sends out a random teawie, which is a soft cute character made by SympathyTea
 
