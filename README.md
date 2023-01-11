@@ -5,20 +5,15 @@ okay so like basically, it's just a discord bot named "Moyai" (so original!!)
 ## features / commands
 (some are slash, some are not)
 
-**m!ask** | Ask the bot a question with predefined answers 
+**m!ask** | ask the bot a question with predefined answers 
 	(this is also a slash command, use with /ask)
 
-**/copypasta** | Gives out a random copypasta from the copypasta folder in *src\copypastas*
-	current copypastas include:
-		dvd
-		egrill
-		happymeal
-		ismah (is my son a hacker)
-		navyseal
-		sus
-		ticktock
-		
-**/random_teawie** | Sends out a random teawie, which is a soft cute character made by SympathyTea
+**m!moyaispam** | what do you think it does. It spams the moyai emoji.
+
+**/copypasta** | gives out a random copypasta from the copypasta folder in *src\moyai_bot\copypastas*
+
+**/random_teawie** | sends out a random teawie, which is a soft cute character made by SympathyTea
+
 
 ## dev setup
 
