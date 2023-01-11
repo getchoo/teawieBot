@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from moyai_bot.apis import guzzle
 from moyai_bot.lib import get_copypasta, get_random_response
 
 SERVER_ID = discord.Object(id=1055663552679137310)
@@ -23,7 +24,8 @@ async def on_message(message: discord.Message):
 		return
 
 	echo_messages = [
-	    "moyai", str(discord.utils.get(moyai.emojis, name="moyai"))
+	    "moyai",
+	    "🗿",
 	]
 	try:
 		index = echo_messages.index(message.content.lower())
@@ -39,11 +41,20 @@ async def ask(ctx: commands.Context):
 	await ctx.send(get_random_response(moyai))
 
 
+@moyai.tree.command(
+    name="ask",
+    description="ask lord moyai a question and they shall respond",
+    guild=SERVER_ID)
+async def ask_slash_command(interaction: discord.Interaction):
+	msg = get_random_response(moyai)
+	await interaction.response.send_message(msg)
+
+
 @moyai.command()
 async def moyaispam(ctx: commands.Context):
 	msg = str()
 	for _ in range(30):
-		msg += str(discord.utils.get(moyai.emojis, name="moyai"))
+		msg += "🗿"
 	await ctx.send(msg)
 
 
@@ -54,8 +65,24 @@ async def moyaispam(ctx: commands.Context):
     app_commands.Choice(name="happymeal", value="happymeal"),
     app_commands.Choice(name="ismah", value="ismah"),
     app_commands.Choice(name="sus", value="sus"),
-    app_commands.Choice(name="ticktock", value="ticktock")
+    app_commands.Choice(name="ticktock", value="ticktock"),
+    app_commands.Choice(name="amongus_sus", value="amongus_sus"),
+    app_commands.Choice(name="egrill", value="egrill"),
+    app_commands.Choice(name="dvd", value="dvd"),
 ])
-async def copypasta(i: discord.Interaction, choices: app_commands.Choice[str]):
-	msg = get_copypasta(choices.value)
-	await i.response.send_message(msg)
+async def copypasta(interaction: discord.Interaction,
+                    choices: app_commands.Choice[str]):
+	msgs = get_copypasta(choices.value)
+	for i, msg in enumerate(msgs):
+		if i == 0:
+			await interaction.response.send_message(msg)
+		else:
+			await interaction.channel.send(msg)
+
+
+@moyai.tree.command(name="random_teawie",
+                    description="get a random teawie!",
+                    guild=SERVER_ID)
+async def random_teawie(interaction: discord.Interaction):
+	msg = guzzle.get_random_teawie()
+	await interaction.response.send_message(msg)
