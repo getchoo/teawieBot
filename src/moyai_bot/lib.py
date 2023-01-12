@@ -36,14 +36,14 @@ def split_msg(msg: str):
 	return [msg[i:i + split] for i in range(0, len(msg), split)]
 
 
-def get_copypasta(name):
+def get_copypasta(name) -> list[str]:
 	try:
 		res = importlib.resources.read_text(copypastas, name + ".txt")
 	except OSError:
-		return "something went wrong :("
+		return ["something went wrong :("]
 
 	if res == "":
-		return f"couldn't send copypasta: {name} :("
+		return [f"couldn't send copypasta: {name} :("]
 
 	if len(res) >= CHAR_LIMIT:
 		res = split_msg(res)
