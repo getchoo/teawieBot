@@ -9,7 +9,7 @@ from moyai_bot import copypastas
 CHAR_LIMIT: int = 2000
 
 
-def get_random_response(moyai):
+def get_random_response(moyai) -> str:
 	responses = [
 	    "soon",
 	    "maybe",
@@ -27,7 +27,7 @@ def get_random_response(moyai):
 	return random.choice(responses)
 
 
-def split_msg(msg: str):
+def split_msg(msg: str) -> list[str]:
 	"""
 	splits a message into multiple parts so that it
 	can fit into the discord character limit
