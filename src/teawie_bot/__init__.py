@@ -1,9 +1,9 @@
 import os
 
-from .bot import moyai
+from .bot import bot
 
 TOKEN = os.getenv("TOKEN")
 
 
 def main():
-	moyai.run(TOKEN)
+	bot.run(TOKEN)

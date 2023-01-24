@@ -2,65 +2,72 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from moyai_bot.apis import guzzle
-from moyai_bot.lib import get_copypasta, get_random_response
+from teawie_bot.apis import guzzle
+from teawie_bot import utils
 
 SERVER_ID = discord.Object(id=1055663552679137310)
 intents = discord.Intents.default()
 intents.message_content = True  # pylint: disable=assigning-non-slot
-moyai = commands.Bot(command_prefix="m!", description="moyai", intents=intents)
+bot = commands.Bot(command_prefix="m!",
+                   description="teawie time",
+                   intents=intents)
 
 
-@moyai.event
+@bot.event
 async def on_ready():
-	print(f"logged in as {moyai.user}")
-	await moyai.tree.sync(guild=SERVER_ID)
+	print(f"logged in as {bot.user}")
+	await bot.tree.sync(guild=SERVER_ID)
 	print("ready!")
 
 
-@moyai.event
+@bot.event
 async def on_message(message: discord.Message):
-	if message.author == moyai.user:
+	if message.author == bot.user:
 		return
 
 	echo_messages = [
-	    "moyai",
 	    "🗿",
 	]
+	echo_messages = echo_messages + utils.Teawies(bot).emojis
 	try:
 		index = echo_messages.index(message.content.lower())
 		await message.channel.send(echo_messages[index])
 	except ValueError:
 		pass
 
-	await moyai.process_commands(message)
+	await bot.process_commands(message)
 
 
-@moyai.command()
+@bot.command()
 async def ask(ctx: commands.Context):
-	await ctx.send(get_random_response(moyai))
+	await ctx.send(utils.get_random_response(bot, utils.Teawies(bot)))
 
 
-@moyai.tree.command(
+@bot.tree.command(
     name="ask",
-    description="ask lord moyai a question and they shall respond",
+    description="ask lord teawie a question and they shall respond",
     guild=SERVER_ID)
 async def ask_slash_command(interaction: discord.Interaction):
-	msg = get_random_response(moyai)
+	msg = utils.get_random_response(bot, utils.Teawies(bot))
+	while not msg:
+		msg = utils.get_random_response(bot, utils.Teawies(bot))
 	await interaction.response.send_message(msg)
 
 
-@moyai.command()
-async def moyaispam(ctx: commands.Context):
+@bot.command()
+async def teawiespam(ctx: commands.Context):
+	if not discord.utils.get(bot.emojis, name="teawiesmile"):
+		return
 	msg = str()
-	for _ in range(30):
-		msg += "🗿"
+	for _ in range(50):
+		msg += str(discord.utils.get(bot.emojis, name="teawiesmile"))
+
 	await ctx.send(msg)
 
 
-@moyai.tree.command(name="copypasta",
-                    description="send funni copypasta",
-                    guild=SERVER_ID)
+@bot.tree.command(name="copypasta",
+                  description="send funni copypasta",
+                  guild=SERVER_ID)
 @app_commands.choices(choices=[
     app_commands.Choice(name="happymeal", value="happymeal"),
     app_commands.Choice(name="ismah", value="ismah"),
@@ -72,7 +79,7 @@ async def moyaispam(ctx: commands.Context):
 ])
 async def copypasta(interaction: discord.Interaction,
                     choices: app_commands.Choice[str]):
-	msgs = get_copypasta(choices.value)
+	msgs = utils.get_copypasta(choices.value)
 	for i, msg in enumerate(msgs):
 		if i == 0:
 			await interaction.response.send_message(msg)
@@ -80,9 +87,9 @@ async def copypasta(interaction: discord.Interaction,
 			await interaction.channel.send(msg)
 
 
-@moyai.tree.command(name="random_teawie",
-                    description="get a random teawie!",
-                    guild=SERVER_ID)
+@bot.tree.command(name="random_teawie",
+                  description="get a random teawie!",
+                  guild=SERVER_ID)
 async def random_teawie(interaction: discord.Interaction):
 	msg = guzzle.get_random_teawie()
 	await interaction.response.send_message(msg)
