@@ -1,19 +1,19 @@
-# moyai bot
+# teawie bot
 
-okay so like basically, it's just a discord bot named "Moyai" (so original!!)
+okay so like basically, it's just a discord bot named "teawie" (so cool!!)
 
 ## features / commands
+
 (some are slash, some are not)
 
-**m!ask** | ask the bot a question with predefined answers 
-	(this is also a slash command, use with /ask)
+**m!ask** | ask the bot a question with predefined answers
+(this is also a slash command, use with /ask)
 
-**m!moyaispam** | what do you think it does. It spams the moyai emoji.
+**m!teawiespam** | spams :teawiesmile:
 
-**/copypasta** | sends a random copypasta from *src\moyai_bot\copypastas*
+**/copypasta** | sends a random copypasta from src\teawie_bot\copypastas
 
 **/random_teawie** | sends out a random teawie, which is a soft cute character made by SympathyTea
-
 
 ## dev setup
 

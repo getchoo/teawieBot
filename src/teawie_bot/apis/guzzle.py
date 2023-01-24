@@ -4,7 +4,7 @@ GUZZLE: str = "https://guzzle.gay/api"
 
 
 def get_random_teawie() -> str:
-	resp: requests.Response = {}
+	resp: requests.Response
 	try:
 		resp = requests.get(GUZZLE + "/get_random_teawie", timeout=30)
 	except (requests.RequestException, requests.ConnectionError,
