@@ -2,8 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from teawie_bot.apis import guzzle
 from teawie_bot import utils
+from teawie_bot.apis import guzzle
 
 SERVER_ID = discord.Object(id=1055663552679137310)
 intents = discord.Intents.default()
@@ -17,6 +17,7 @@ bot = commands.Bot(command_prefix="m!",
 async def on_ready():
 	print(f"logged in as {bot.user}")
 	await bot.tree.sync(guild=SERVER_ID)
+	bot.teawies = utils.Teawies(bot)
 	print("ready!")
 
 
@@ -28,7 +29,7 @@ async def on_message(message: discord.Message):
 	echo_messages = [
 	    "🗿",
 	]
-	echo_messages = echo_messages + utils.Teawies(bot).emojis
+	echo_messages = echo_messages + bot.teawies.emojis
 	try:
 		index = echo_messages.index(message.content.lower())
 		await message.channel.send(echo_messages[index])
@@ -40,7 +41,7 @@ async def on_message(message: discord.Message):
 
 @bot.command()
 async def ask(ctx: commands.Context):
-	await ctx.send(utils.get_random_response(bot, utils.Teawies(bot)))
+	await ctx.send(utils.get_random_response(bot))
 
 
 @bot.tree.command(
@@ -48,19 +49,16 @@ async def ask(ctx: commands.Context):
     description="ask lord teawie a question and they shall respond",
     guild=SERVER_ID)
 async def ask_slash_command(interaction: discord.Interaction):
-	msg = utils.get_random_response(bot, utils.Teawies(bot))
-	while not msg:
-		msg = utils.get_random_response(bot, utils.Teawies(bot))
+	msg = utils.get_random_response(bot)
 	await interaction.response.send_message(msg)
 
 
 @bot.command()
 async def teawiespam(ctx: commands.Context):
-	if not discord.utils.get(bot.emojis, name="teawiesmile"):
-		return
+	emoji = str(discord.utils.get(bot.emojis, name="teawiesmile"))
 	msg = str()
 	for _ in range(50):
-		msg += str(discord.utils.get(bot.emojis, name="teawiesmile"))
+		msg += emoji
 
 	await ctx.send(msg)
 

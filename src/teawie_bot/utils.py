@@ -2,52 +2,53 @@ import importlib.resources
 import random
 from math import ceil
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
 from teawie_bot import copypastas
 
 CHAR_LIMIT: int = 2000
 
 
+# pylint: disable-next=too-few-public-methods
 class Teawies:
 	"""
-    wrapper class around list[discord.Emoji]
-    """
+	wrapper class around list[discord.Emoji]
+	"""
 
 	def __init__(self, bot: commands.Bot):
 		names = [
 		    "teawiecry", "teawiederp", "teawiedizzy",
 		    "teawienerdcroppedanddownsized", "teawieneutral", "teawiepet",
 		    "teawiepetfast", "teawiepop", "teawiesmile", "teawiesmug",
-		    "teawiestarstruck", "tei", "wavy", "wie", "wie~1",
-		    "manythoughtsheadfull"
+		    "teawiestarstruck", "tei", "wavy", "wie", "manythoughtsheadfull"
 		]
 
-		self.emojis: list[str] = []
-		for name in names:
-			emoji = discord.utils.get(bot.emojis, name=name)
-			if emoji:
-				self.emojis.append(str(emoji))
+		self.emojis: list[str] = [
+		    str(discord.utils.get(bot.emojis, name=name)) for name in names
+		]
 
 	def random(self) -> str:
 		return random.choice(self.emojis)
 
 
-def get_random_response(bot: commands.Bot, teawies: Teawies) -> str:
+def get_random_response(bot: commands.Bot) -> str:
 	responses = [
-	    "soon", "maybe", "perhaps", "elaborate",
+	    "soon",
+	    "maybe",
+	    "perhaps",
+	    "elaborate",
 	    str(discord.utils.get(bot.emojis, name="moyai")),
 	]
-	responses = responses + teawies.emojis
+	responses = responses + bot.teawies.emojis
 	return random.choice(responses)
 
 
 def split_msg(msg: str) -> list[str]:
 	"""
-    splits a message into multiple parts so that it
-    can fit into the discord character limit
-    """
+	splits a message into multiple parts so that it
+	can fit into the discord character limit
+	"""
 	split = ceil(len(msg) / ceil(len(msg) / CHAR_LIMIT))
 	return [msg[i:i + split] for i in range(0, len(msg), split)]
 
