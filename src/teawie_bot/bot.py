@@ -8,7 +8,7 @@ from teawie_bot.apis import guzzle
 SERVER_ID = discord.Object(id=1055663552679137310)
 intents = discord.Intents.default()
 intents.message_content = True  # pylint: disable=assigning-non-slot
-bot = commands.Bot(command_prefix="m!",
+bot = commands.Bot(command_prefix="t!",
                    description="teawie time",
                    intents=intents)
 
