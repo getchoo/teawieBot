@@ -48,7 +48,7 @@ async def ask(ctx: commands.Context):
     name="ask",
     description="ask lord teawie a question and they shall respond",
     guild=SERVER_ID)
-async def ask_slash_command(interaction: discord.Interaction):
+async def ask_slash_command(interaction: discord.Interaction, question: str):  # pylint: disable=unused-argument
 	msg = utils.get_random_response(bot)
 	await interaction.response.send_message(msg)
 
