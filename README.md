@@ -23,6 +23,6 @@ python -m venv .env
 source .env/bin/activate # for linux
 
 pip install flit
-flit install --deps=develop --only-deps
+flit install --only-deps
 pre-commit install
 ```
