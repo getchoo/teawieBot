@@ -6,4 +6,7 @@ TOKEN = os.getenv("TOKEN")
 
 
 def main():
-	bot.run(TOKEN)
+	try:
+		bot.run(TOKEN)
+	except TypeError:
+		print("invalid/no token!")
