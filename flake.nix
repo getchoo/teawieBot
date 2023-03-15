@@ -6,6 +6,9 @@
     pre-commit-hooks = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "nixpkgs";
+      inputs.flake-compat.follows = "flake-compat";
+      inputs.flake-utils.follows = "flake-utils";
     };
     flake-compat = {
       url = "github:edolstra/flake-compat";
@@ -18,8 +21,8 @@
     self,
     nixpkgs,
     pre-commit-hooks,
-    flake-compat,
     flake-utils,
+    ...
   }: let
     version = "0.0.1";
     supportedSystems = with flake-utils.lib.system; [x86_64-linux x86_64-darwin aarch64-linux aarch64-darwin];
@@ -36,6 +39,12 @@
               src = ./.;
               format = "flit";
               propagatedBuildInputs = with pkgs.python39Packages; [hatchling discordpy requests];
+            };
+          container = with pkgs.dockerTools;
+            buildImage {
+              name = "teawiebot";
+              copyToRoot = [caCertificates];
+              config.Cmd = ["${self.packages.${system}.teawiebot}/bin/teawiebot"];
             };
         }
         // {default = self.packages.${system}.teawiebot;};

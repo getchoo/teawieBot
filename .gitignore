@@ -131,3 +131,4 @@ dmypy.json
 # nix stuff
 .direnv/
 result
+.pre-commit-config.yaml
