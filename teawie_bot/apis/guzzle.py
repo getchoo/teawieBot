@@ -1,6 +1,6 @@
 import requests
 
-GUZZLE: str = "https://guzzle.gay/api"
+GUZZLE: str = "http://198.199.68.30"
 
 
 def get_random_teawie() -> str:
