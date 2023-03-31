@@ -43,6 +43,7 @@
           container = with pkgs.dockerTools;
             buildImage {
               name = "teawiebot";
+              tag = "latest";
               copyToRoot = [caCertificates];
               config.Cmd = ["${self.packages.${system}.teawiebot}/bin/teawiebot"];
             };
