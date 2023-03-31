@@ -28,10 +28,11 @@ async def on_message(message: discord.Message):
 
 	echo_messages = [
 	    "🗿",
+	    "Twitter's Recommendation Algorithm",
 	]
 	echo_messages = echo_messages + bot.teawies.emojis
 	try:
-		index = echo_messages.index(message.content.lower())
+		index = echo_messages.index(message.content)
 		await message.channel.send(echo_messages[index])
 	except ValueError:
 		pass
@@ -74,6 +75,7 @@ async def teawiespam(ctx: commands.Context):
     app_commands.Choice(name="amongus_sus", value="amongus_sus"),
     app_commands.Choice(name="egrill", value="egrill"),
     app_commands.Choice(name="dvd", value="dvd"),
+    app_commands.Choice(name="twitter", value="twitter"),
 ])
 async def copypasta(interaction: discord.Interaction,
                     choices: app_commands.Choice[str]):

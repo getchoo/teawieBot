@@ -38,6 +38,7 @@ def get_random_response(bot: commands.Bot) -> str:
 	    "maybe",
 	    "perhaps",
 	    "elaborate",
+	    "Twitter's Recommendation Algorithm",
 	    str(discord.utils.get(bot.emojis, name="moyai")),
 	]
 	responses = responses + bot.teawies.emojis
