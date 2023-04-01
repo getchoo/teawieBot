@@ -31,7 +31,7 @@
       pkgs = import nixpkgs {inherit system;};
     in {
       packages =
-        {
+        rec {
           teawiebot = with pkgs;
             python39Packages.buildPythonPackage {
               pname = "teawiebot";
@@ -41,11 +41,11 @@
               propagatedBuildInputs = with pkgs.python39Packages; [hatchling discordpy requests];
             };
           container = with pkgs.dockerTools;
-            buildImage {
+            buildLayeredImage {
               name = "teawiebot";
               tag = "latest";
-              copyToRoot = [caCertificates];
-              config.Cmd = ["${self.packages.${system}.teawiebot}/bin/teawiebot"];
+              contents = [caCertificates];
+              config.Cmd = ["${teawiebot}/bin/teawiebot"];
             };
         }
         // {default = self.packages.${system}.teawiebot;};
