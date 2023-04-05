@@ -1,43 +1,63 @@
-name: Format and Lint
+name: format and lint
 
 on:
   push:
-    branches:
-      - main, develop
   pull_request:
-    branches:
-      - main, develop
+  workflow_dispatch:
 
 jobs:
-
-  format_and_lint:
+  check:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout HEAD
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
-          ref: ${{ github.head_ref }}
-
-      - name: Run flake8
-        uses: microsoft/action-python@0.2.0
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
         with:
-          flake8: true
-          fail_on_error: true
+          command: check
 
-      - name: Run yapf
-        uses: mritunjaysharma394/autoyapf@v2
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
-          args: --in-place --recursive .
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
 
-      - name: Check for Modified Files
-        id: git-check
-        run: echo ::set-output name=modified::$(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi)
+  fmt:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
 
-      - name: Push Changes
-        if: steps.git-check.outputs.modified == 'true'
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git commit -am "chore: format and lint"
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all
+
+      - uses: cachix/install-nix-action@v19
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: nix fmt
+
+      - uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actions
+          message: "chore: fmt files"

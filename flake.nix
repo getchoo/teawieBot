@@ -7,12 +7,7 @@
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nixpkgs-stable.follows = "nixpkgs";
-      inputs.flake-compat.follows = "flake-compat";
       inputs.flake-utils.follows = "flake-utils";
-    };
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
     };
     flake-utils.url = "github:numtide/flake-utils";
   };
@@ -25,27 +20,55 @@
     ...
   }: let
     version = "0.0.1";
-    supportedSystems = with flake-utils.lib.system; [x86_64-linux x86_64-darwin aarch64-linux aarch64-darwin];
+    supportedSystems = with flake-utils.lib.system; [
+      x86_64-linux
+      x86_64-darwin
+      aarch64-linux
+      aarch64-darwin
+    ];
   in
     flake-utils.lib.eachSystem supportedSystems (system: let
       pkgs = import nixpkgs {inherit system;};
     in {
-      packages =
+      packages = let
+        inherit (pkgs.lib) maintainers licenses;
+        inherit (pkgs.dockerTools) buildLayeredImage caCertificates;
+        inherit (pkgs.rustPlatform) buildRustPackage;
+      in
         rec {
-          teawiebot = with pkgs;
-            python39Packages.buildPythonPackage {
-              pname = "teawiebot";
-              inherit version;
-              src = ./.;
-              format = "flit";
-              propagatedBuildInputs = with pkgs.python39Packages; [hatchling discordpy requests];
+          teawiebot = buildRustPackage {
+            pname = "teawiebot";
+            inherit version;
+
+            src = ./.;
+
+            RUSTFLAGS = "-C lto=thin -C embed-bitcode=yes";
+            cargoSha256 = "sha256-TQThvhD2psA5+VGSMl3+dBOs8K33Fs5q42RovXnYYhY=";
+
+            buildInputs = with pkgs; [
+              openssl.dev
+            ];
+            nativeBuildInputs = with pkgs; [
+              pkg-config
+            ];
+
+            meta = {
+              description = "funni bot";
+              homepage = "https://github.com/getchoo/teawiebot";
+              license = licenses.mit;
+              maintainers = with maintainers; [getchoo];
             };
-          container = with pkgs.dockerTools;
+          };
+          container = let
+            bot = teawiebot.overrideAttrs (prev: {
+              RUSTFLAGS = prev.RUSTFLAGS + " -C opt-level=s";
+            });
+          in
             buildLayeredImage {
               name = "teawiebot";
               tag = "latest";
               contents = [caCertificates];
-              config.Cmd = ["${teawiebot}/bin/teawiebot"];
+              config.Cmd = ["${bot}/bin/teawiebot"];
             };
         }
         // {default = self.packages.${system}.teawiebot;};
@@ -54,23 +77,35 @@
         pre-commit-check = pre-commit-hooks.lib.${system}.run {
           src = ./.;
           hooks = {
-            isort.enable = true;
-            pylint.enable = true;
-            yapf = {
-              enable = true;
-              name = "yapf";
-              entry = "${pkgs.python39Packages.yapf}/bin/yapf -i";
-              types = ["file" "python"];
-            };
+            actionlint.enable = true;
+            alejandra.enable = true;
+            cargo-check.enable = true;
+            deadnix.enable = true;
+            rustfmt.enable = true;
+            statix.enable = true;
           };
         };
       };
 
-      devShells = with pkgs; {
+      devShells = let
+        inherit (pkgs) mkShell;
+      in {
         default = mkShell {
-          packages = with pkgs.python39Packages; [python39 discordpy flit pylint requests toml yapf];
+          packages = with pkgs; [
+            actionlint
+            alejandra
+            cargo
+            clippy
+            deadnix
+            openssl.dev
+            pkg-config
+            rustfmt
+            statix
+          ];
           inherit (self.checks.${system}.pre-commit-check) shellHook;
         };
       };
+
+      formatter = pkgs.alejandra;
     });
 }
