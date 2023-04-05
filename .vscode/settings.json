@@ -1,7 +1,0 @@
-{
-	"editor.tabSize": 2,
-	"editor.insertSpaces": false,
-	"files.eol": "\n",
-	"python.formatting.provider": "yapf",
-	"python.linting.pylintEnabled": true,
-}
