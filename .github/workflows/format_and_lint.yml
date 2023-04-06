@@ -2,7 +2,17 @@ name: format and lint
 
 on:
   push:
+    paths:
+      - "**.lock"
+      - "**.nix"
+      - "**.rs"
+      - "**.toml"
   pull_request:
+    paths:
+      - "**.lock"
+      - "**.nix"
+      - "**.rs"
+      - "**.toml"
   workflow_dispatch:
 
 jobs:
