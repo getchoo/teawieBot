@@ -17,3 +17,6 @@ Cargo.lock
 .direnv/
 result
 .pre-commit-config.yaml
+
+# mac stuff (you're welcome sake)
+**/.DS_Store
