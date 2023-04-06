@@ -48,7 +48,7 @@ const RESPONSES: [&str; 20] = [
 	"<:manythoughtsheadfull:1065887153399283742>",
 ];
 
-const LORE; [&str; 19] = [
+const LORE: [&str; 19] = [
 	"Teawie is made of silly string and blood.",
 	"Teawie has the mentality of an eight year old, but no discernable age.",
 	"Teawie can change size to fit into tight spaces. Although prefers to be small most of the time.",
@@ -69,6 +69,7 @@ const LORE; [&str; 19] = [
 	"Teawie has a Go-Kart that he will sometimes drive around in, however due to being mentally eight years old at a base \"knowledge level\", is not good at all with driving, however despite numerous crashes, ends up unscathed.",
 	"Teawie will \"insert\" himself into various media while trying to move from host to host.",
 ];
+
 /*
  * chooses a random response out of our options
  */
