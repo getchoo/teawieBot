@@ -1,7 +1,7 @@
-# teawie bot
+# teawie bot 🦀🦀🦀
 
 okay so like basically, it's just a discord bot named "teawie" (so cool!!
-and now in rust!!!)
+and now in rust!!!)🚀🚀
 
 ## features / commands
 
