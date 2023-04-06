@@ -10,6 +10,7 @@ use std::{env, vec};
 
 mod api;
 mod commands;
+mod consts;
 mod utils;
 
 const GUILD: u64 = 1055663552679137310;
@@ -35,7 +36,7 @@ impl EventHandler for Handler {
 
 		let mut echo_msgs = vec!["🗿", "Twitter's Recommendation Algorithm"];
 
-		for emoji in utils::TEAMOJIS {
+		for emoji in consts::TEAMOJIS {
 			// i was also lazy here
 			echo_msgs.push(emoji);
 		}
