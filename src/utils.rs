@@ -1,4 +1,5 @@
 use crate::consts::*;
+use bottomify::bottom::{decode_string, encode_string};
 use include_dir::{include_dir, Dir};
 use rand::seq::SliceRandom;
 use std::collections::HashMap;
@@ -64,4 +65,25 @@ pub async fn get_copypasta(name: &str) -> Vec<String> {
 
 	let err = format!("couldn't find {:?} in files", name);
 	vec![err]
+}
+
+/*
+ * encodes a string into bottom 🥺
+ */
+pub async fn bottom_encode(string: &str) -> String {
+	encode_string(&string)
+}
+
+/*
+ * decodes a bottom string into english 🥸
+ */
+pub async fn bottom_decode(string: &str) -> String {
+	let decoded = decode_string(&string);
+	match decoded {
+		Ok(ret) => ret,
+		Err(why) => {
+			println!("couldn't decode {:?}! ({:?})", string, why);
+			"couldn't decode that! sowwy 🥺".to_string()
+		}
+	}
 }
