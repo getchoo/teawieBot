@@ -47,7 +47,7 @@ jobs:
 
       - name: build
         run: |
-          nix build .#${{ matrix.output }}
+          nix build -L .#${{ matrix.output }}
 
       - name: upload to ghcr
         if: ${{ matrix.output == 'container' && github.ref == 'refs/heads/main' }}

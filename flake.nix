@@ -43,21 +43,9 @@
       aarch64-darwin
     ];
 
-    packageFn = pkgs: let
+    packageFn = craneLib: cargoArtifacts: pkgs: let
       inherit (pkgs.lib) licenses maintainers platforms;
-      craneLib = let
-        toolchain = with pkgs.fenix;
-          combine [
-            stable.cargo
-            stable.rustc
-            targets."x86_64-unknown-linux-musl".stable.rust-std
-          ];
-      in
-        (crane.mkLib pkgs).overrideToolchain toolchain;
       inherit (craneLib) buildPackage;
-      cargoArtifacts = craneLib.buildDepsOnly {
-        src = ./.;
-      };
     in {
       teawiebot = buildPackage {
         src = ./.;
@@ -78,9 +66,26 @@
           inherit system;
           overlays = [fenix.overlays.default];
         };
+
+        toolchain = with pkgs.fenix;
+        with stable;
+          combine [
+            cargo
+            rustc
+            rustfmt
+            clippy
+            targets."x86_64-unknown-linux-musl".stable.rust-std
+          ];
+
+        craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
+
+        cargoArtifacts = craneLib.buildDepsOnly {
+          src = ./.;
+        };
       in {
         packages = let
-          inherit (packageFn pkgs) teawiebot;
+          inherit (packageFn craneLib cargoArtifacts pkgs) teawiebot;
+
           teawiebot-smol =
             teawiebot.overrideAttrs (_: {
                 # statically link musl, optimize for size
@@ -107,8 +112,23 @@
           }
           // {default = self.packages.${system}.teawiebot;};
 
-        checks = {
+        checks = let
+          commonArgs = {
+            src = ./.;
+          };
+
+          inherit (craneLib) cargoClippy cargoFmt;
+        in {
           inherit (self.packages.${system}) teawiebot;
+
+          clippy = cargoClippy (commonArgs
+            // {
+              inherit cargoArtifacts;
+              cargoClippyExtraArgs = "--all-targets";
+            });
+
+          fmt = cargoFmt commonArgs;
+
           pre-commit-check = pre-commit-hooks.lib.${system}.run {
             src = ./.;
             hooks = {
@@ -121,7 +141,7 @@
         };
 
         devShells = let
-          inherit (pkgs) fenix mkShell;
+          inherit (pkgs) mkShell;
           inherit (self.checks.${system}.pre-commit-check) shellHook;
         in {
           default = mkShell {
@@ -129,16 +149,10 @@
             packages = with pkgs; [
               actionlint
               alejandra
-              clippy
               deadnix
               statix
-              (with fenix;
-                combine [
-                  stable.cargo
-                  stable.rustc
-                  stable.rustfmt
-                  targets."x86_64-unknown-linux-musl".stable.rust-std
-                ])
+
+              toolchain
             ];
           };
         };

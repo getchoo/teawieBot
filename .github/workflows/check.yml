@@ -1,0 +1,28 @@
+name: check project
+
+on:
+  push:
+    paths:
+      - "**.lock"
+      - "**.nix"
+      - "**.rs"
+      - "**.toml"
+  pull_request:
+    paths:
+      - "**.lock"
+      - "**.nix"
+      - "**.rs"
+      - "**.toml"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: cachix/install-nix-action@v19
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: nix flake check -L
