@@ -96,18 +96,47 @@
                   inherit (pkgs.pkgsStatic.stdenv) cc;
                 in "${cc}/bin/${cc.targetPrefix}cc";
               });
+          cmd = "${teawiebot-smol}/bin/teawiebot";
         in
           {
             inherit teawiebot;
             container = let
               inherit (pkgs.dockerTools) buildLayeredImage caCertificates;
-              cmd = "${teawiebot-smol}/bin/teawiebot";
             in
               buildLayeredImage {
                 name = "teawiebot";
                 tag = "latest";
                 contents = [caCertificates];
                 config.Cmd = ["${cmd}"];
+              };
+            service = let
+              inherit (pkgs) cacert portableService;
+              service = pkgs.writeTextFile {
+                name = "teawiebot.service";
+                text = ''
+                  [Unit]
+                  Description=portable service for teawiebot
+
+                  [Service]
+                  DynamicUser=yes
+                  ExecStart="${cmd}"
+
+                  [Install]
+                  WantedBy=multi-user.target
+                '';
+              };
+            in
+              portableService {
+                inherit (teawiebot) pname;
+                inherit (teawiebot-smol) version;
+                description = "portable service for teawiebot!";
+                units = [service];
+                symlinks = [
+                  {
+                    object = "${cacert}/etc/ssl";
+                    symlink = "/etc/ssl";
+                  }
+                ];
               };
           }
           // {default = self.packages.${system}.teawiebot;};
