@@ -99,7 +99,7 @@
           cmd = "${teawiebot-smol}/bin/teawiebot";
         in
           {
-            inherit teawiebot;
+            inherit teawiebot teawiebot-smol;
             container = let
               inherit (pkgs.dockerTools) buildLayeredImage caCertificates;
             in

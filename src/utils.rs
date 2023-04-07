@@ -9,14 +9,27 @@ const CHAR_LIMIT: usize = 2000;
 const FILES: Dir = include_dir!("src/include");
 
 /*
- * chooses a random response out of our options
+ * chooses a random element from an array
  */
-pub async fn get_random_response() -> String {
+async fn random_choice<const N: usize>(arr: [&str; N]) -> String {
 	let mut rng = rand::thread_rng();
-	let resp = RESPONSES
+	let resp = arr 
 		.choose(&mut rng)
 		.expect("couldn't choose random value!");
 	resp.to_string()
+}
+
+/*
+ * pub functions to get random elements
+ * from our consts
+ */
+
+pub async fn get_random_response() -> String {
+    random_choice(RESPONSES).await
+}
+
+pub async fn get_random_lore() -> String {
+    random_choice(LORE).await
 }
 
 /*
