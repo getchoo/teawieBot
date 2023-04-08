@@ -56,8 +56,7 @@ impl EventHandler for Handler {
 			println!("Received command interaction: {:#?}", command);
 			let content = match command.data.name.as_str() {
 				"ask" => commands::ask::run(&command.data.options).await,
-				"bottom_decode" => commands::bottom_decode::run(&command.data.options).await,
-				"bottom_encode" => commands::bottom_encode::run(&command.data.options).await,
+				"bottom" => commands::bottom::run(&command.data.options).await,
 				"copypasta" => {
 					commands::copypasta::run(&command.data.options, command.channel_id, &ctx.http)
 						.await
@@ -88,8 +87,7 @@ impl EventHandler for Handler {
 		let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
 			commands
 				.create_application_command(|command| commands::ask::register(command))
-				.create_application_command(|command| commands::bottom_decode::register(command))
-				.create_application_command(|command| commands::bottom_encode::register(command))
+				.create_application_command(|command| commands::bottom::register(command))
 				.create_application_command(|command| commands::copypasta::register(command))
 				.create_application_command(|command| commands::random_lore::register(command))
 				.create_application_command(|command| commands::random_teawie::register(command))

@@ -79,21 +79,21 @@ pub async fn get_copypasta(name: &str) -> Vec<String> {
 }
 
 /*
- * encodes a string into bottom 🥺
+ * encodes a message into bottom
  */
-pub async fn bottom_encode(string: &str) -> String {
-	encode_string(&string)
+pub async fn bottom_encode(msg: &str) -> String {
+	encode_string(&msg)
 }
 
 /*
- * decodes a bottom string into english 🥸
+ * decodes a bottom string into english
  */
-pub async fn bottom_decode(string: &str) -> String {
-	let decoded = decode_string(&string);
+pub async fn bottom_decode(msg: &str) -> String {
+	let decoded = decode_string(&msg);
 	match decoded {
 		Ok(ret) => ret,
 		Err(why) => {
-			println!("couldn't decode {:?}! ({:?})", string, why);
+			println!("couldn't decode {:?}! ({:?})", msg, why);
 			"couldn't decode that! sowwy 🥺".to_string()
 		}
 	}
