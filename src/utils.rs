@@ -13,9 +13,7 @@ const FILES: Dir = include_dir!("src/include");
  */
 async fn random_choice<const N: usize>(arr: [&str; N]) -> String {
 	let mut rng = rand::thread_rng();
-	let resp = arr 
-		.choose(&mut rng)
-		.expect("couldn't choose random value!");
+	let resp = arr.choose(&mut rng).expect("couldn't choose random value!");
 	resp.to_string()
 }
 
@@ -25,11 +23,11 @@ async fn random_choice<const N: usize>(arr: [&str; N]) -> String {
  */
 
 pub async fn get_random_response() -> String {
-    random_choice(RESPONSES).await
+	random_choice(RESPONSES).await
 }
 
 pub async fn get_random_lore() -> String {
-    random_choice(LORE).await
+	random_choice(LORE).await
 }
 
 /*
