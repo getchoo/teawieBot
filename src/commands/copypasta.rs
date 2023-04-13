@@ -52,12 +52,13 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
 				.description("the copypasta you want to send")
 				.kind(CommandOptionType::String)
 				.required(true)
-				.add_string_choice("ismah", "ismah") // renable this later
+				.add_string_choice("astral", "astral")
+				.add_string_choice("dvd", "dvd")
+				.add_string_choice("egrill", "egrill")
 				.add_string_choice("happymeal", "happymeal")
+				.add_string_choice("ismah", "ismah")
 				.add_string_choice("sus", "sus")
 				.add_string_choice("ticktock", "ticktock")
-				.add_string_choice("egrill", "egrill")
-				.add_string_choice("dvd", "dvd")
 				.add_string_choice("twitter", "twitter")
 		})
 }

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::vec;
 
 const CHAR_LIMIT: usize = 2000;
-const FILES: Dir = include_dir!("src/include");
+const FILES: Dir = include_dir!("src/copypastas");
 
 /*
  * chooses a random element from an array
