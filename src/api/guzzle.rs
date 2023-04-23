@@ -6,7 +6,7 @@ struct GuzzleResponse {
 	pub url: String,
 }
 
-const GUZZLE: &str = "http://198.199.68.30";
+const GUZZLE: &str = "http://167.99.145.73";
 
 pub async fn get_random_teawie() -> String {
 	let endpoint = "/get_random_teawie";
