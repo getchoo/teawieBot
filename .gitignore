@@ -18,5 +18,8 @@ Cargo.lock
 result
 .pre-commit-config.yaml
 
+# Used to supply a token together with direnv
+.env
+
 # mac stuff (you're welcome sake)
 **/.DS_Store
