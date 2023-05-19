@@ -1,3 +1,5 @@
+use lazy_static::lazy_static;
+use regex::Regex;
 use serenity::async_trait;
 use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
@@ -41,12 +43,24 @@ impl EventHandler for Handler {
 			echo_msgs.push(emoji);
 		}
 
-		for echo in echo_msgs {
-			if msg.content.as_str() == echo {
-				let send = msg.reply(&ctx, echo);
-				if let Err(why) = send.await {
-					println!("error when replying to {:?}: {:?}", msg.content, why);
+		let mut should_echo = echo_msgs.contains(&msg.content.as_str());
+
+		if !should_echo {
+			lazy_static! {
+				static ref EMOJI_RE: Regex = Regex::new(r"^<a?:(\w+):\d+>$").unwrap();
+			}
+			if let Some(cap) = EMOJI_RE.captures(msg.content.as_str()) {
+				if let Some(emoji_name) = cap.get(1) {
+					let emoji_name = emoji_name.as_str();
+					should_echo = emoji_name.contains("moai") || emoji_name.contains("moyai");
 				}
+			}
+		}
+
+		if should_echo {
+			let send = msg.reply(&ctx, msg.content.as_str());
+			if let Err(why) = send.await {
+				println!("error when replying to {:?}: {:?}", msg.content, why);
 			}
 		}
 	}
