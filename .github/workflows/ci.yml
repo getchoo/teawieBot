@@ -7,12 +7,14 @@ on:
       - "**.nix"
       - "**.rs"
       - "**.toml"
+
   pull_request:
     paths:
       - "**.lock"
       - "**.nix"
       - "**.rs"
       - "**.toml"
+
   workflow_dispatch:
 
 jobs:
@@ -34,8 +36,6 @@ jobs:
       - uses: actions/checkout@v3
 
       - uses: cachix/install-nix-action@v20
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: cachix/cachix-action@v12
         with:
@@ -52,7 +52,7 @@ jobs:
 
       - name: build
         run: |
-          nix build -L .#${{ matrix.output }}
+          nix build --accept-flake-config -L .#${{ matrix.output }}
 
       - name: upload to ghcr
         if: ${{ matrix.output == 'container' && github.ref == 'refs/heads/main' }}
