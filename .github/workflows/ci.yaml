@@ -1,0 +1,91 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  checks: write
+  contents: write
+  packages: write
+
+jobs:
+  lint:
+    name: lint project
+    uses: ./.github/workflows/lint.yaml
+
+  format:
+    name: format project
+    if: github.event_name != 'pull_request'
+    needs: lint
+    uses: ./.github/workflows/format.yaml
+
+  build:
+    runs-on: ubuntu-latest
+    needs: format
+    if: always() && (needs.format.result == 'success' || needs.format.result == 'skipped')
+
+    strategy:
+      matrix:
+        output: [teawiebot, container]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: cachix/install-nix-action@v21
+
+      - uses: cachix/cachix-action@v12
+        with:
+          name: getchoo
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: build
+        run: |
+          nix build --accept-flake-config -L .#${{ matrix.output }}
+
+      - name: copy docker image
+        if: ${{ matrix.output == 'container' }}
+        run: |
+          readlink result | xargs -I{} cp {} teawiebot.tar.gz
+
+      - name: upload binary
+        if: ${{ matrix.output == 'teawiebot' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.output }}
+          path: result/bin/${{ matrix.output }}
+
+      - name: upload docker image
+        if: ${{ matrix.output == 'container' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.output }}-container
+          path: teawiebot.tar.gz
+
+  upload-to-docker:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    env:
+      REGISTRY: ghcr.io
+
+    steps:
+      - name: download docker image
+        uses: actions/download-artifact@v3
+        with:
+          name: teawiebot-container
+
+      - name: login to ghcr
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: "getchoo"
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: upload to ghcr
+        run: |
+          docker load < teawiebot.tar.gz
+          docker tag teawiebot:latest ghcr.io/getchoo/teawiebot:latest
+          docker push ghcr.io/getchoo/teawiebot:latest
