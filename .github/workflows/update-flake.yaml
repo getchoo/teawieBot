@@ -1,0 +1,28 @@
+name: update nix flake
+# this is to make sure we can build against a
+# recent version of nixos-unstable
+
+on:
+  schedule:
+    - cron: "0 0 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-flake:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup nix & cachix
+        uses: ./.github/actions/setup-nix
+        with:
+          cachix-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - uses: DeterminateSystems/update-flake-lock@v19
+        with:
+          commit-msg: "chore(flake): update inputs"
+          pr-title: "chore(flake): update inputs"

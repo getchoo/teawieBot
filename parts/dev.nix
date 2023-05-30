@@ -10,15 +10,17 @@
     src,
     toolchain,
     ...
-  }: {
+  } @ args: {
     checks = let
-      commonArgs = {
-        inherit src;
-      };
+      inherit (craneLib) cargoAudit cargoClippy cleanCargoSource cargoFmt path;
 
-      inherit (craneLib) cargoClippy cargoFmt;
+      commonArgs = {
+        src = cleanCargoSource (path args.src);
+      };
     in {
       inherit (self.packages.${system}) teawiebot;
+
+      audit = cargoAudit (commonArgs // {inherit (inputs) advisory-db;});
 
       clippy = cargoClippy (commonArgs
         // {
