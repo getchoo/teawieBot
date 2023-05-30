@@ -60,7 +60,7 @@ jobs:
         if: ${{ matrix.output == 'container' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.output }}-container
+          name: ${{ matrix.output }}
           path: teawiebot.tar.gz
 
   upload-to-docker:
@@ -75,7 +75,7 @@ jobs:
       - name: download docker image
         uses: actions/download-artifact@v3
         with:
-          name: teawiebot-container
+          name: container
 
       - name: login to ghcr
         uses: docker/login-action@v2
