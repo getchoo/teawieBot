@@ -3,6 +3,7 @@ use regex::Regex;
 use serenity::async_trait;
 use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
+use serenity::model::application::command::Command;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::channel::Message;
 use serenity::model::id::GuildId;
@@ -15,7 +16,7 @@ mod commands;
 mod consts;
 mod utils;
 
-const GUILD: u64 = 1055663552679137310;
+const TEAWIE_GUILD: u64 = 1055663552679137310;
 const BOT: u64 = 1056467120986271764;
 
 #[group]
@@ -96,19 +97,25 @@ impl EventHandler for Handler {
 	async fn ready(&self, ctx: Context, ready: Ready) {
 		println!("connected as {:?}", ready.user.name);
 
-		let guild_id = GuildId(GUILD);
+		let guild_id = GuildId(TEAWIE_GUILD);
 
-		let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+		let guild_commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+			commands.create_application_command(|command| commands::copypasta::register(command))
+		})
+		.await;
+
+		println!("registered guild commands: {:#?}", guild_commands);
+
+		let commands = Command::set_global_application_commands(&ctx.http, |commands| {
 			commands
 				.create_application_command(|command| commands::ask::register(command))
 				.create_application_command(|command| commands::bottom::register(command))
-				.create_application_command(|command| commands::copypasta::register(command))
 				.create_application_command(|command| commands::random_lore::register(command))
 				.create_application_command(|command| commands::random_teawie::register(command))
 		})
 		.await;
 
-		println!("registered commands: {:#?}", commands);
+		println!("registered global commands: {:#?}", commands);
 	}
 }
 

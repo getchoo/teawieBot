@@ -28,7 +28,7 @@ pub async fn run(options: &[CommandDataOption], channel_id: ChannelId, http: &Ar
 					Ok(_) => continue,
 					Err(why) => {
 						println!("couldn't send message: {:?}", why);
-						"something went wrong!";
+						return "something went wrong!".to_string();
 					}
 				}
 			}
