@@ -25,5 +25,5 @@ jobs:
 
       - uses: DeterminateSystems/update-flake-lock@v19
         with:
-          commit-msg: "chore(flake): update inputs"
-          pr-title: "chore(flake): update inputs"
+          commit-msg: "deps(flake): update inputs"
+          pr-title: "deps(flake): update inputs"
