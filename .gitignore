@@ -23,3 +23,9 @@ result
 
 # mac stuff (you're welcome sake)
 **/.DS_Store
+
+# ide stuf
+.idea/
+.vs/
+.vscode/
+

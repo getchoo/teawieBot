@@ -72,6 +72,7 @@ impl EventHandler for Handler {
 			let content = match command.data.name.as_str() {
 				"ask" => commands::ask::run(&command.data.options).await,
 				"bottom" => commands::bottom::run(&command.data.options).await,
+				"convertto" => commands::convert::run(&command.data.options).await,
 				"copypasta" => {
 					commands::copypasta::run(&command.data.options, command.channel_id, &ctx.http)
 						.await
@@ -110,6 +111,7 @@ impl EventHandler for Handler {
 			commands
 				.create_application_command(|command| commands::ask::register(command))
 				.create_application_command(|command| commands::bottom::register(command))
+				.create_application_command(|command| commands::convert::register(command))
 				.create_application_command(|command| commands::random_lore::register(command))
 				.create_application_command(|command| commands::random_teawie::register(command))
 		})

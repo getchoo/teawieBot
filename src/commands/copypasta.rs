@@ -9,7 +9,7 @@ use serenity::model::prelude::interaction::application_command::{
 use std::sync::Arc;
 
 pub async fn run(options: &[CommandDataOption], channel_id: ChannelId, http: &Arc<Http>) -> String {
-	let err_msg = "expected a copyasta";
+	let err_msg = "expected a copypasta";
 	let option = options
 		.get(0)
 		.expect(err_msg)
