@@ -40,7 +40,7 @@ pub const RESPONSES: [&str; 20] = [
 	"<:manythoughtsheadfull:1065887153399283742>",
 ];
 
-pub const LORE: [&str; 20] = [
+pub const LORE: [&str; 21] = [
 	"Teawie is made of silly string and blood.",
 	"Teawie has the mentality of an eight year old, but no discernable age.",
 	"Teawie can change size to fit into tight spaces. Although prefers to be small most of the time.",
@@ -60,5 +60,6 @@ pub const LORE: [&str; 20] = [
 	"Teawie himself isnt radioactive however some Teawies have a pretty bad habit of being in or around places with incredibly high radiation.",
 	"Teawie has a Go-Kart that he will sometimes drive around in, however due to being mentally eight years old at a base \"knowledge level\", is not good at all with driving, however despite numerous crashes, ends up unscathed.",
 	"Teawie will \"insert\" himself into various media while trying to move from host to host.",
+        "Teawie is described as \"chewy\" in texture.";
         "Teawie is friends with Blåhaj.";
 ];
