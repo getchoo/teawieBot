@@ -17,6 +17,7 @@ mod consts;
 mod utils;
 
 const TEAWIE_GUILD: GuildId = GuildId(1055663552679137310);
+const ALLOWED_GUILDS: [GuildId; 2] = [TEAWIE_GUILD, GuildId(1091969030694375444)];
 const BOT: u64 = 1056467120986271764;
 
 #[group]
@@ -33,7 +34,9 @@ impl EventHandler for Handler {
 	async fn message(&self, ctx: Context, msg: Message) {
 		let author = msg.author.id.as_u64();
 
-		if author == &BOT || msg.guild_id.unwrap_or_else(|| GuildId::from(0)) != TEAWIE_GUILD {
+		if author == &BOT
+			|| !ALLOWED_GUILDS.contains(&msg.guild_id.unwrap_or_else(|| GuildId::from(0)))
+		{
 			return;
 		}
 
@@ -182,7 +185,7 @@ async fn random_teawie(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn teawiespam(ctx: &Context, msg: &Message) -> CommandResult {
-	if msg.guild_id.unwrap_or_else(|| GuildId::from(0)) != TEAWIE_GUILD {
+	if !ALLOWED_GUILDS.contains(&msg.guild_id.unwrap_or_else(|| GuildId::from(0))) {
 		return Ok(());
 	}
 
