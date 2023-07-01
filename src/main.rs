@@ -16,7 +16,7 @@ mod commands;
 mod consts;
 mod utils;
 
-const TEAWIE_GUILD: u64 = 1055663552679137310;
+const TEAWIE_GUILD: GuildId = GuildId(1055663552679137310);
 const BOT: u64 = 1056467120986271764;
 
 #[group]
@@ -33,7 +33,7 @@ impl EventHandler for Handler {
 	async fn message(&self, ctx: Context, msg: Message) {
 		let author = msg.author.id.as_u64();
 
-		if author == &BOT {
+		if author == &BOT || msg.guild_id.unwrap_or_else(|| GuildId::from(0)) != TEAWIE_GUILD {
 			return;
 		}
 
@@ -98,12 +98,12 @@ impl EventHandler for Handler {
 	async fn ready(&self, ctx: Context, ready: Ready) {
 		println!("connected as {:?}", ready.user.name);
 
-		let guild_id = GuildId(TEAWIE_GUILD);
-
-		let guild_commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-			commands.create_application_command(|command| commands::copypasta::register(command))
-		})
-		.await;
+		let guild_commands =
+			GuildId::set_application_commands(&TEAWIE_GUILD, &ctx.http, |commands| {
+				commands
+					.create_application_command(|command| commands::copypasta::register(command))
+			})
+			.await;
 
 		println!("registered guild commands: {:#?}", guild_commands);
 
@@ -182,6 +182,10 @@ async fn random_teawie(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn teawiespam(ctx: &Context, msg: &Message) -> CommandResult {
+	if msg.guild_id.unwrap_or_else(|| GuildId::from(0)) != TEAWIE_GUILD {
+		return Ok(());
+	}
+
 	let mut resp = String::new();
 
 	for _ in 0..50 {
