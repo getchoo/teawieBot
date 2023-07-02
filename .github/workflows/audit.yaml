@@ -5,12 +5,6 @@ name: audit crates
 on:
   schedule:
     - cron: "0 0 * * 6"
-  push:
-    paths:
-      - "Cargo.lock"
-  pull_request:
-    paths:
-      - "Cargo.lock"
   workflow_dispatch:
 
 jobs:
