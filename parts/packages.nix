@@ -2,7 +2,6 @@
   perSystem = {
     craneLib,
     pkgs,
-    src,
     system,
     ...
   }: let
@@ -10,10 +9,10 @@
     inherit (craneLib) buildPackage;
   in {
     packages = {
-      cargoArtifacts = craneLib.buildDepsOnly {inherit src;};
+      cargoArtifacts = craneLib.buildDepsOnly {src = self;};
 
       teawiebot = buildPackage {
-        inherit src;
+        src = self;
         inherit (self.packages.${system}) cargoArtifacts;
 
         meta = {

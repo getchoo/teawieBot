@@ -12,11 +12,4 @@ _: {
     "aarch64-linux"
     "aarch64-darwin"
   ];
-
-  perSystem = _: {
-    _module.args.src = builtins.path {
-      name = "teawiebot-src";
-      path = ../.;
-    };
-  };
 }

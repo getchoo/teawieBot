@@ -1,0 +1,42 @@
+name: upload to registry
+# this is for uploading images to a container registry when
+# changes are made to `main`
+
+on:
+  check_suite:
+    types: [completed]
+
+permissions:
+  packages: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ghcr.io
+      USERNAME: getchoo
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v22
+
+      - name: fetch docker image
+        run: |
+          nix build --accept-flake-config -L .#container
+          readlink result | xargs -I {} cp {} teawiebot.tar.gz
+
+      - name: login to ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.USERNAME }}
+          password: ${{ github.token }}
+
+      - name: upload to ${{ env.REGISTRY }}
+        env:
+          PUSH_PREFIX: ${{ env.REGISTRY }}/${{ env.USERNAME }}
+        run: |
+          docker load < teawiebot.tar.gz
+          docker tag teawiebot:latest ${{ env.REGISTRY_PREFIX }}/teawiebot:latest
+          docker push ${{ env.PUSH_PREFIX }}/teawiebot:latest

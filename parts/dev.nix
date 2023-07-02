@@ -7,15 +7,14 @@
     craneLib,
     pkgs,
     system,
-    src,
     toolchain,
     ...
-  } @ args: {
+  }: {
     checks = let
-      inherit (craneLib) cargoAudit cargoClippy cleanCargoSource cargoFmt path;
+      inherit (craneLib) cargoAudit cargoClippy cleanCargoSource cargoFmt;
 
       commonArgs = {
-        src = cleanCargoSource (path args.src);
+        src = cleanCargoSource self;
       };
     in {
       inherit (self.packages.${system}) teawiebot;
@@ -31,7 +30,7 @@
       fmt = cargoFmt commonArgs;
 
       pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
-        inherit src;
+        src = self;
         hooks = {
           actionlint.enable = true;
           alejandra.enable = true;
