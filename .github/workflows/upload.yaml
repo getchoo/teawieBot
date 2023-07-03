@@ -6,6 +6,11 @@ on:
   check_suite:
     types: [completed]
 
+# https://github.com/garnix-io/issues/issues/63
+concurrency:
+  group: upload-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   packages: write
 
