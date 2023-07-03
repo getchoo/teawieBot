@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: write
   pull-requests: write
 
 jobs:
@@ -19,6 +20,14 @@ jobs:
       - uses: cachix/install-nix-action@v22
 
       - uses: DeterminateSystems/update-flake-lock@v19
+        id: update
         with:
           commit-msg: "deps(flake): update inputs"
           pr-title: "deps(flake): update inputs"
+
+      - name: auto-merge pull request
+        shell: bash
+        run: gh pr merge --auto --rebase "$PR_ID"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_ID: ${{ steps.update.outputs.pull-request-number }}
