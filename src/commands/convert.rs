@@ -5,7 +5,7 @@ use serenity::model::prelude::interaction::application_command::{
 	CommandDataOption, CommandDataOptionValue,
 };
 
-pub async fn run(options: &[CommandDataOption]) -> String {
+pub fn run(options: &[CommandDataOption]) -> String {
 	let err = "couldn't get convert subcommand!";
 	let data = options
 		.get(0)

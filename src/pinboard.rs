@@ -38,9 +38,7 @@ impl PinBoard {
 	}
 
 	async fn redirect(&self, ctx: &Context, pin: &Message, pinner: Option<UserId>) {
-		let pinner = pinner
-			.map(|u| format!("<@{u}>"))
-			.unwrap_or("*someone*".to_owned());
+		let pinner = pinner.map_or("*someone*".to_owned(), |u| format!("<@{u}>"));
 
 		let truncation_point = floor_char_boundary(&pin.content, 700);
 		let truncated_content = if pin.content.len() <= truncation_point {

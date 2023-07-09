@@ -2,8 +2,8 @@ use crate::utils::get_random_lore;
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::interaction::application_command::CommandDataOption;
 
-pub async fn run(_: &[CommandDataOption]) -> String {
-	get_random_lore().await
+pub fn run(_: &[CommandDataOption]) -> String {
+	get_random_lore()
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

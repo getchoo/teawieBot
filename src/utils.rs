@@ -1,4 +1,4 @@
-use crate::consts::*;
+use crate::consts::{LORE, RESPONSES};
 use bottomify::bottom::{decode_string, encode_string};
 use include_dir::{include_dir, Dir};
 use rand::seq::SliceRandom;
@@ -8,14 +8,12 @@ use std::vec;
 const FILES: Dir = include_dir!("src/copypastas");
 
 pub fn parse_snowflake_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<T> {
-	std::env::var(key)
-		.ok()
-		.and_then(|v| u64::from_str_radix(&v, 10).map(&f).ok())
+	std::env::var(key).ok().and_then(|v| v.parse().map(&f).ok())
 }
 pub fn parse_snowflakes_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<Vec<T>> {
 	std::env::var(key).ok().and_then(|gs| {
 		gs.split(',')
-			.map(|g| u64::from_str_radix(g, 10).map(&f))
+			.map(|g| g.parse().map(&f))
 			.collect::<Result<Vec<_>, _>>()
 			.ok()
 	})
@@ -23,10 +21,10 @@ pub fn parse_snowflakes_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<
 /*
  * chooses a random element from an array
  */
-async fn random_choice<const N: usize>(arr: [&str; N]) -> String {
+fn random_choice<const N: usize>(arr: [&str; N]) -> String {
 	let mut rng = rand::thread_rng();
 	let resp = arr.choose(&mut rng).expect("couldn't choose random value!");
-	resp.to_string()
+	(*resp).to_string()
 }
 
 /*
@@ -34,12 +32,12 @@ async fn random_choice<const N: usize>(arr: [&str; N]) -> String {
  * from our consts
  */
 
-pub async fn get_random_response() -> String {
-	random_choice(RESPONSES).await
+pub fn get_random_response() -> String {
+	random_choice(RESPONSES)
 }
 
-pub async fn get_random_lore() -> String {
-	random_choice(LORE).await
+pub fn get_random_lore() -> String {
+	random_choice(LORE)
 }
 
 // waiting for `round_char_boundary` to stabilize
@@ -78,7 +76,7 @@ fn split_msg(mut msg: String) -> Vec<String> {
 /*
  * gets a random copypasta from include/
  */
-pub async fn get_copypasta(name: &str) -> Vec<String> {
+pub fn get_copypasta(name: &str) -> Vec<String> {
 	let mut files: HashMap<&str, &str> = HashMap::new();
 
 	for file in FILES.files() {
@@ -101,19 +99,19 @@ pub async fn get_copypasta(name: &str) -> Vec<String> {
 /*
  * encodes a message into bottom
  */
-pub async fn bottom_encode(msg: &str) -> String {
+pub fn bottom_encode(msg: &str) -> String {
 	encode_string(&msg)
 }
 
 /*
  * decodes a bottom string into english
  */
-pub async fn bottom_decode(msg: &str) -> String {
+pub fn bottom_decode(msg: &str) -> String {
 	let decoded = decode_string(&msg);
 	match decoded {
 		Ok(ret) => ret,
 		Err(why) => {
-			println!("couldn't decode {:?}! ({:?})", msg, why);
+			println!("couldn't decode {msg:?}! ({why:?})");
 			"couldn't decode that! sowwy 🥺".to_string()
 		}
 	}

@@ -107,14 +107,14 @@ impl EventHandler for Handler {
 		if let Interaction::ApplicationCommand(command) = interaction {
 			println!("Received command interaction: {command:#?}");
 			let content = match command.data.name.as_str() {
-				"ask" => commands::ask::run(&command.data.options).await,
-				"bottom" => commands::bottom::run(&command.data.options).await,
-				"convertto" => commands::convert::run(&command.data.options).await,
+				"ask" => commands::ask::run(&command.data.options),
+				"bottom" => commands::bottom::run(&command.data.options),
+				"convertto" => commands::convert::run(&command.data.options),
 				"copypasta" => {
 					commands::copypasta::run(&command.data.options, command.channel_id, &ctx.http)
 						.await
 				}
-				"random_lore" => commands::random_lore::run(&command.data.options).await,
+				"random_lore" => commands::random_lore::run(&command.data.options),
 				"random_teawie" => commands::random_teawie::run(&command.data.options).await,
 				_ => "not implemented :(".to_string(),
 			};
@@ -192,7 +192,7 @@ async fn bing(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn ask(ctx: &Context, msg: &Message) -> CommandResult {
-	let resp = utils::get_random_response().await;
+	let resp = utils::get_random_response();
 	msg.channel_id
 		.send_message(&ctx.http, |m| m.content(resp))
 		.await?;
@@ -202,7 +202,7 @@ async fn ask(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn random_lore(ctx: &Context, msg: &Message) -> CommandResult {
-	let resp = utils::get_random_lore().await;
+	let resp = utils::get_random_lore();
 	msg.channel_id
 		.send_message(&ctx.http, |m| m.content(resp))
 		.await?;
