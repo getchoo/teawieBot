@@ -5,7 +5,6 @@ use rand::seq::SliceRandom;
 use std::collections::HashMap;
 use std::vec;
 
-const CHAR_LIMIT: usize = 2000;
 const FILES: Dir = include_dir!("src/copypastas");
 
 /*
@@ -30,24 +29,37 @@ pub async fn get_random_lore() -> String {
 	random_choice(LORE).await
 }
 
+// waiting for `round_char_boundary` to stabilize
+fn floor_char_boundary(s: &str, index: usize) -> usize {
+	if index >= s.len() {
+		s.len()
+	} else {
+		let lower_bound = index.saturating_sub(3);
+		let new_index = s.as_bytes()[lower_bound..=index]
+			.iter()
+			.rposition(|&b| (b as i8) >= -0x40); // b.is_utf8_char_boundary
+
+		// Can be made unsafe but whatever
+		lower_bound + new_index.unwrap()
+	}
+}
+// waiting for `int_roundings` to stabilize
+fn div_ceil(a: usize, b: usize) -> usize {
+	(a + b - 1) / b
+}
+
 /*
  * splits a message into multiple parts so that
  * it can fit discord's character limit
  */
-fn split_msg(msg: &String) -> Vec<String> {
-	if msg.len() > CHAR_LIMIT {
-		let split = msg[CHAR_LIMIT..].to_string();
+fn split_msg(mut msg: String) -> Vec<String> {
+	const CHAR_LIMIT: usize = 2000;
+	let mut msgs = Vec::with_capacity(div_ceil(msg.len(), CHAR_LIMIT));
 
-		let add = split_msg(&split);
-		let mut ret = vec![msg[..CHAR_LIMIT].to_string()];
-
-		for v in add {
-			ret.push(v);
-		}
-
-		return ret;
+	while msg.len() > CHAR_LIMIT {
+		msgs.push(msg.split_off(floor_char_boundary(&msg, CHAR_LIMIT)));
 	}
-	vec![msg.to_string()]
+	msgs
 }
 
 /*
@@ -66,16 +78,11 @@ pub async fn get_copypasta(name: &str) -> Vec<String> {
 	}
 
 	if files.contains_key(&name) {
-		let reply = files[name];
-		// split message if it's too big
-		if reply.len() > CHAR_LIMIT {
-			return split_msg(&reply.to_string());
-		}
-		return vec![reply.to_string()];
+		let reply = files[name].to_string();
+		split_msg(reply)
+	} else {
+		vec![format!("couldn't find {name:?} in files")]
 	}
-
-	let err = format!("couldn't find {:?} in files", name);
-	vec![err]
 }
 
 /*
@@ -102,13 +109,13 @@ pub async fn bottom_decode(msg: &str) -> String {
 /*
  * converts celsius to fahrenheit
  */
-pub async fn celsius_to_fahrenheit(c: &f64) -> f64 {
+pub fn celsius_to_fahrenheit(c: f64) -> f64 {
 	(c * (9.0 / 5.0)) + 32.0
 }
 
 /*
  * converts fahrenheit to celsius
  */
-pub async fn fahrenheit_to_celsius(f: &f64) -> f64 {
+pub fn fahrenheit_to_celsius(f: f64) -> f64 {
 	(f - 32.0) * (5.0 / 9.0)
 }

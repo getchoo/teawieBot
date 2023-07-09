@@ -7,7 +7,6 @@ use serenity::model::prelude::interaction::application_command::{
 
 pub async fn run(options: &[CommandDataOption]) -> String {
 	let err = "failed to get nested option in";
-	let mut ret = "did you forget to enter a message?".to_string();
 
 	let data = options
 		.get(0)
@@ -16,6 +15,7 @@ pub async fn run(options: &[CommandDataOption]) -> String {
 	// get subcommand to decide whether to encode/decode
 	let subcommand = data.name.as_str();
 
+	// TODO: this is horrendous
 	// get message content
 	let option = data
 		.options
@@ -27,19 +27,13 @@ pub async fn run(options: &[CommandDataOption]) -> String {
 
 	if let CommandDataOptionValue::String(msg) = option {
 		match subcommand {
-			"encode" => {
-				ret = bottom_encode(msg).await;
-			}
-			"decode" => {
-				ret = bottom_decode(msg).await;
-			}
-			_ => {
-				ret = "something went wrong :(".to_string();
-			}
-		};
+			"encode" => bottom_encode(msg).await,
+			"decode" => bottom_decode(msg).await,
+			_ => "something went wrong :(".to_owned(),
+		}
+	} else {
+		"did you forget to enter a message?".to_owned()
 	}
-
-	ret
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
