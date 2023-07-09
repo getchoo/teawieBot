@@ -6,10 +6,15 @@ use serenity::framework::standard::{CommandResult, StandardFramework};
 use serenity::model::application::command::Command;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use utils::parse_snowflake_from_env;
+
+use crate::utils::parse_snowflakes_from_env;
+use crate::pinboard::PinBoard;
 
 mod api;
 mod commands;
 mod consts;
+mod pinboard;
 mod utils;
 
 const TEAWIE_GUILD: GuildId = GuildId(1055663552679137310);
@@ -19,14 +24,7 @@ fn is_guild_allowed(gid: GuildId) -> bool {
     // Had to be global state because Serenity doesn't allow you to store
     // extra state in frameworks
     static ALLOWED_GUILDS: Lazy<Vec<GuildId>> = Lazy::new(|| {
-    	std::env::var("ALLOWED_GUILDS")
-    		.ok()
-    		.and_then(|gs| {
-    			gs.split(',')
-    				.map(|g| u64::from_str_radix(g, 10).map(GuildId))
-    				.collect::<Result<Vec<_>, _>>()
-    				.ok()
-    		})
+        parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
     		.unwrap_or_else(|| vec![TEAWIE_GUILD, GuildId(1091969030694375444)])
     });
 
@@ -40,9 +38,16 @@ struct General;
 
 struct Handler {
 	bot: UserId,
+    pin_board: Option<PinBoard>,
 }
 
 impl Handler {
+    pub fn new() -> Self {
+        let bot = parse_snowflake_from_env("BOT", UserId).unwrap_or(BOT);
+        let pin_board = PinBoard::new();
+
+        Self { bot, pin_board }
+    }
 	fn should_echo(&self, msg: &Message) -> bool {
 		static MOYAI_REGEX: Lazy<Regex> =
 			Lazy::new(|| Regex::new(r"^<a?:\w*moy?ai\w*:\d+>$").unwrap());
@@ -77,6 +82,19 @@ impl EventHandler for Handler {
 			}
 		}
 	}
+
+    async fn channel_pins_update(&self, ctx: Context, pin: ChannelPinsUpdateEvent) {
+        let Some(pin_board) = &self.pin_board else { return; };
+
+        println!("audit log: {:#?}", pin.guild_id.unwrap().audit_logs(
+            &ctx.http,
+            Some(Action::Message(MessageAction::Pin).num()),
+            None,
+            None,
+            Some(1),
+        ).await);
+        pin_board.handle_pin(&ctx, &pin).await;
+    }
 
 	async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
 		if let Interaction::ApplicationCommand(command) = interaction {
@@ -134,20 +152,16 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().unwrap();
+
 	let framework = StandardFramework::new()
 		.configure(|c| c.prefix("!"))
 		.group(&GENERAL_GROUP);
 
 	let token = std::env::var("TOKEN").expect("couldn't find token in environment.");
 
-	let bot = std::env::var("BOT")
-		.ok()
-		.and_then(|b| u64::from_str_radix(&b, 10).map(UserId).ok())
-		.unwrap_or(BOT);
-
 	let intents = GatewayIntents::all();
-
-	let handler = Handler { bot };
+	let handler = Handler::new();
 
 	let mut client = Client::builder(token, intents)
 		.event_handler(handler)
@@ -201,7 +215,7 @@ async fn random_teawie(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn teawiespam(ctx: &Context, msg: &Message) -> CommandResult {
-	if !ALLOWED_GUILDS.contains(&msg.guild_id.unwrap_or_default()) {
+	if !is_guild_allowed(msg.guild_id.unwrap_or_default()) {
 		return Ok(());
 	}
 
