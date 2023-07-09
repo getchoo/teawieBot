@@ -8,8 +8,8 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use utils::parse_snowflake_from_env;
 
-use crate::utils::parse_snowflakes_from_env;
 use crate::pinboard::PinBoard;
+use crate::utils::parse_snowflakes_from_env;
 
 mod api;
 mod commands;
@@ -21,16 +21,15 @@ const TEAWIE_GUILD: GuildId = GuildId(1055663552679137310);
 const BOT: UserId = UserId(1056467120986271764);
 
 fn is_guild_allowed(gid: GuildId) -> bool {
-    // Had to be global state because Serenity doesn't allow you to store
-    // extra state in frameworks
-    static ALLOWED_GUILDS: Lazy<Vec<GuildId>> = Lazy::new(|| {
-        parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
-    		.unwrap_or_else(|| vec![TEAWIE_GUILD, GuildId(1091969030694375444)])
-    });
+	// Had to be global state because Serenity doesn't allow you to store
+	// extra state in frameworks
+	static ALLOWED_GUILDS: Lazy<Vec<GuildId>> = Lazy::new(|| {
+		parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
+			.unwrap_or_else(|| vec![TEAWIE_GUILD, GuildId(1091969030694375444)])
+	});
 
-    ALLOWED_GUILDS.contains(&gid)
+	ALLOWED_GUILDS.contains(&gid)
 }
-
 
 #[group]
 #[commands(bing, ask, random_lore, random_teawie, teawiespam)]
@@ -38,29 +37,29 @@ struct General;
 
 struct Handler {
 	bot: UserId,
-    pin_board: Option<PinBoard>,
+	pin_board: Option<PinBoard>,
 }
 
 impl Handler {
-    pub fn new() -> Self {
-        let bot = parse_snowflake_from_env("BOT", UserId).unwrap_or(BOT);
-        let pin_board = PinBoard::new();
+	pub fn new() -> Self {
+		let bot = parse_snowflake_from_env("BOT", UserId).unwrap_or(BOT);
+		let pin_board = PinBoard::new();
 
-        Self { bot, pin_board }
-    }
+		Self { bot, pin_board }
+	}
 	fn should_echo(&self, msg: &Message) -> bool {
 		static MOYAI_REGEX: Lazy<Regex> =
 			Lazy::new(|| Regex::new(r"^<a?:\w*moy?ai\w*:\d+>$").unwrap());
 
-        // Don't echo to anything we posted ourselves, and don't echo at all unless on certain
-        // servers
-        if msg.author.id == self.bot || !is_guild_allowed(msg.guild_id.unwrap_or_default()) {
-            return false;
-        }
+		// Don't echo to anything we posted ourselves, and don't echo at all unless on certain
+		// servers
+		if msg.author.id == self.bot || !is_guild_allowed(msg.guild_id.unwrap_or_default()) {
+			return false;
+		}
 
-        let content = &msg.content;
+		let content = &msg.content;
 
-        content == "🗿"
+		content == "🗿"
 			|| consts::TEAMOJIS.contains(&content.as_str())
 			|| MOYAI_REGEX.is_match(content)
 			|| content
@@ -83,18 +82,26 @@ impl EventHandler for Handler {
 		}
 	}
 
-    async fn channel_pins_update(&self, ctx: Context, pin: ChannelPinsUpdateEvent) {
-        let Some(pin_board) = &self.pin_board else { return; };
+	async fn channel_pins_update(&self, ctx: Context, pin: ChannelPinsUpdateEvent) {
+		let Some(pin_board) = &self.pin_board else {
+			return;
+		};
 
-        println!("audit log: {:#?}", pin.guild_id.unwrap().audit_logs(
-            &ctx.http,
-            Some(Action::Message(MessageAction::Pin).num()),
-            None,
-            None,
-            Some(1),
-        ).await);
-        pin_board.handle_pin(&ctx, &pin).await;
-    }
+		println!(
+			"audit log: {:#?}",
+			pin.guild_id
+				.unwrap()
+				.audit_logs(
+					&ctx.http,
+					Some(Action::Message(MessageAction::Pin).num()),
+					None,
+					None,
+					Some(1),
+				)
+				.await
+		);
+		pin_board.handle_pin(&ctx, &pin).await;
+	}
 
 	async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
 		if let Interaction::ApplicationCommand(command) = interaction {
@@ -152,7 +159,7 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().unwrap();
+	dotenvy::dotenv().unwrap();
 
 	let framework = StandardFramework::new()
 		.configure(|c| c.prefix("!"))

@@ -8,17 +8,17 @@ use std::vec;
 const FILES: Dir = include_dir!("src/copypastas");
 
 pub fn parse_snowflake_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<T> {
-    std::env::var(key).ok().and_then(|v| u64::from_str_radix(&v, 10).map(&f).ok())
+	std::env::var(key)
+		.ok()
+		.and_then(|v| u64::from_str_radix(&v, 10).map(&f).ok())
 }
 pub fn parse_snowflakes_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<Vec<T>> {
-    std::env::var(key)
-    	.ok()
-        .and_then(|gs| {
-        	gs.split(',')
-        		.map(|g| u64::from_str_radix(g, 10).map(&f))
-        		.collect::<Result<Vec<_>, _>>()
-        		.ok()
-        })
+	std::env::var(key).ok().and_then(|gs| {
+		gs.split(',')
+			.map(|g| u64::from_str_radix(g, 10).map(&f))
+			.collect::<Result<Vec<_>, _>>()
+			.ok()
+	})
 }
 /*
  * chooses a random element from an array
