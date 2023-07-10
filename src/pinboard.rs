@@ -1,7 +1,9 @@
 use crate::utils::{floor_char_boundary, parse_snowflake_from_env, parse_snowflakes_from_env};
-use serenity::model::prelude::*;
-use serenity::prelude::Context;
+use log::*;
+use poise::serenity_prelude::model::prelude::*;
+use poise::serenity_prelude::Context;
 
+#[derive(Clone)]
 pub struct PinBoard {
 	sources: Option<Vec<ChannelId>>,
 	target: ChannelId,
@@ -19,7 +21,8 @@ impl PinBoard {
 	pub async fn handle_pin(&self, ctx: &Context, pin: &ChannelPinsUpdateEvent) {
 		if let Some(sources) = &self.sources {
 			if !sources.contains(&pin.channel_id) {
-				return; // Not on the list of permitted sources
+				warn!("can't access source of pin!");
+				return;
 			}
 		}
 
@@ -104,6 +107,7 @@ async fn guess_pinner(ctx: &Context, pin: &ChannelPinsUpdateEvent) -> Option<Use
 		.map(|first| first.user_id)
 	} else {
 		// TODO: mayyyyybe we can guess who pinned something in a DM...?
+		warn!("couldn't figure out who pinned in {}!", pin.channel_id);
 		None
 	}
 }

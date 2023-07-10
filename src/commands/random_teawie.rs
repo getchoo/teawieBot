@@ -1,13 +1,17 @@
 use crate::api::guzzle::get_random_teawie;
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use crate::{Context, Error};
 
-pub async fn run(_: &[CommandDataOption]) -> String {
-	get_random_teawie().await
-}
-
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-	command
-		.name("random_teawie")
-		.description("get a random teawie!")
+/// get a random teawie
+#[poise::command(prefix_command, slash_command)]
+pub async fn random_teawie(ctx: Context<'_>) -> Result<(), Error> {
+	match get_random_teawie().await {
+		Ok(resp) => {
+			ctx.say(resp).await?;
+			Ok(())
+		}
+		Err(why) => {
+			ctx.say("i'm too lazy to send a selfie").await?;
+			Err(why)
+		}
+	}
 }
