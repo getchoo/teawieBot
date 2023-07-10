@@ -159,8 +159,6 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-	dotenvy::dotenv().unwrap();
-
 	let framework = StandardFramework::new()
 		.configure(|c| c.prefix("!"))
 		.group(&GENERAL_GROUP);
