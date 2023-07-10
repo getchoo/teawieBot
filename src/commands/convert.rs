@@ -5,7 +5,7 @@ use serenity::model::prelude::interaction::application_command::{
 	CommandDataOption, CommandDataOptionValue,
 };
 
-pub async fn run(options: &[CommandDataOption]) -> String {
+pub fn run(options: &[CommandDataOption]) -> String {
 	let err = "couldn't get convert subcommand!";
 	let data = options
 		.get(0)
@@ -20,19 +20,21 @@ pub async fn run(options: &[CommandDataOption]) -> String {
 		.as_ref()
 		.expect("failed to resolve string!");
 
-	let mut ret = 0.0;
-	if let CommandDataOptionValue::Number(number) = option {
+	let temp = if let &CommandDataOptionValue::Number(number) = option {
 		match subcommand {
-			"fahrenheit" => ret = utils::celsius_to_fahrenheit(number).await,
-			"celsius" => ret = utils::fahrenheit_to_celsius(number).await,
-			_ => ret = 0.0,
-		};
+			"fahrenheit" => Some(utils::celsius_to_fahrenheit(number)),
+			"celsius" => Some(utils::fahrenheit_to_celsius(number)),
+			_ => None,
+		}
+	} else {
+		None
 	};
 
-	if ret == 0.0 {
-		return "couldn't figure it out oops".to_string();
+	if let Some(temp) = temp {
+		format!("{temp:.2}")
+	} else {
+		"couldn't figure it out oops".to_owned()
 	}
-	format!("{:.2}", ret)
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

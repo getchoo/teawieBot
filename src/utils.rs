@@ -1,20 +1,30 @@
-use crate::consts::*;
+use crate::consts::{LORE, RESPONSES};
 use bottomify::bottom::{decode_string, encode_string};
 use include_dir::{include_dir, Dir};
 use rand::seq::SliceRandom;
 use std::collections::HashMap;
 use std::vec;
 
-const CHAR_LIMIT: usize = 2000;
 const FILES: Dir = include_dir!("src/copypastas");
 
+pub fn parse_snowflake_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<T> {
+	std::env::var(key).ok().and_then(|v| v.parse().map(&f).ok())
+}
+pub fn parse_snowflakes_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<Vec<T>> {
+	std::env::var(key).ok().and_then(|gs| {
+		gs.split(',')
+			.map(|g| g.parse().map(&f))
+			.collect::<Result<Vec<_>, _>>()
+			.ok()
+	})
+}
 /*
  * chooses a random element from an array
  */
-async fn random_choice<const N: usize>(arr: [&str; N]) -> String {
+fn random_choice<const N: usize>(arr: [&str; N]) -> String {
 	let mut rng = rand::thread_rng();
 	let resp = arr.choose(&mut rng).expect("couldn't choose random value!");
-	resp.to_string()
+	(*resp).to_string()
 }
 
 /*
@@ -22,38 +32,51 @@ async fn random_choice<const N: usize>(arr: [&str; N]) -> String {
  * from our consts
  */
 
-pub async fn get_random_response() -> String {
-	random_choice(RESPONSES).await
+pub fn get_random_response() -> String {
+	random_choice(RESPONSES)
 }
 
-pub async fn get_random_lore() -> String {
-	random_choice(LORE).await
+pub fn get_random_lore() -> String {
+	random_choice(LORE)
+}
+
+// waiting for `round_char_boundary` to stabilize
+pub fn floor_char_boundary(s: &str, index: usize) -> usize {
+	if index >= s.len() {
+		s.len()
+	} else {
+		let lower_bound = index.saturating_sub(3);
+		let new_index = s.as_bytes()[lower_bound..=index]
+			.iter()
+			.rposition(|&b| (b as i8) >= -0x40); // b.is_utf8_char_boundary
+
+		// Can be made unsafe but whatever
+		lower_bound + new_index.unwrap()
+	}
+}
+// waiting for `int_roundings` to stabilize
+fn div_ceil(a: usize, b: usize) -> usize {
+	(a + b - 1) / b
 }
 
 /*
  * splits a message into multiple parts so that
  * it can fit discord's character limit
  */
-fn split_msg(msg: &String) -> Vec<String> {
-	if msg.len() > CHAR_LIMIT {
-		let split = msg[CHAR_LIMIT..].to_string();
+fn split_msg(mut msg: String) -> Vec<String> {
+	const CHAR_LIMIT: usize = 2000;
+	let mut msgs = Vec::with_capacity(div_ceil(msg.len(), CHAR_LIMIT));
 
-		let add = split_msg(&split);
-		let mut ret = vec![msg[..CHAR_LIMIT].to_string()];
-
-		for v in add {
-			ret.push(v);
-		}
-
-		return ret;
+	while msg.len() > CHAR_LIMIT {
+		msgs.push(msg.split_off(floor_char_boundary(&msg, CHAR_LIMIT)));
 	}
-	vec![msg.to_string()]
+	msgs
 }
 
 /*
  * gets a random copypasta from include/
  */
-pub async fn get_copypasta(name: &str) -> Vec<String> {
+pub fn get_copypasta(name: &str) -> Vec<String> {
 	let mut files: HashMap<&str, &str> = HashMap::new();
 
 	for file in FILES.files() {
@@ -66,34 +89,29 @@ pub async fn get_copypasta(name: &str) -> Vec<String> {
 	}
 
 	if files.contains_key(&name) {
-		let reply = files[name];
-		// split message if it's too big
-		if reply.len() > CHAR_LIMIT {
-			return split_msg(&reply.to_string());
-		}
-		return vec![reply.to_string()];
+		let reply = files[name].to_string();
+		split_msg(reply)
+	} else {
+		vec![format!("couldn't find {name:?} in files")]
 	}
-
-	let err = format!("couldn't find {:?} in files", name);
-	vec![err]
 }
 
 /*
  * encodes a message into bottom
  */
-pub async fn bottom_encode(msg: &str) -> String {
+pub fn bottom_encode(msg: &str) -> String {
 	encode_string(&msg)
 }
 
 /*
  * decodes a bottom string into english
  */
-pub async fn bottom_decode(msg: &str) -> String {
+pub fn bottom_decode(msg: &str) -> String {
 	let decoded = decode_string(&msg);
 	match decoded {
 		Ok(ret) => ret,
 		Err(why) => {
-			println!("couldn't decode {:?}! ({:?})", msg, why);
+			println!("couldn't decode {msg:?}! ({why:?})");
 			"couldn't decode that! sowwy 🥺".to_string()
 		}
 	}
@@ -102,13 +120,13 @@ pub async fn bottom_decode(msg: &str) -> String {
 /*
  * converts celsius to fahrenheit
  */
-pub async fn celsius_to_fahrenheit(c: &f64) -> f64 {
+pub fn celsius_to_fahrenheit(c: f64) -> f64 {
 	(c * (9.0 / 5.0)) + 32.0
 }
 
 /*
  * converts fahrenheit to celsius
  */
-pub async fn fahrenheit_to_celsius(f: &f64) -> f64 {
+pub fn fahrenheit_to_celsius(f: f64) -> f64 {
 	(f - 32.0) * (5.0 / 9.0)
 }

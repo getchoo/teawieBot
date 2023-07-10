@@ -18,7 +18,7 @@ pub async fn run(options: &[CommandDataOption], channel_id: ChannelId, http: &Ar
 		.expect(err_msg);
 
 	if let CommandDataOptionValue::String(copypasta) = option {
-		let replies = utils::get_copypasta(copypasta).await;
+		let replies = utils::get_copypasta(copypasta);
 
 		if replies.len() > 1 {
 			for reply in replies {
