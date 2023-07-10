@@ -1,29 +1,26 @@
 use crate::api::REQWEST_CLIENT;
+use crate::Error;
 use reqwest::StatusCode;
 use serde::Deserialize;
 
 const URL: &str = "https://safebooru.donmai.us/posts/random.json?tags=kemomimi-chan_(naga_u)+naga_u&only=file_url";
-const ERROR_MSG: &str = "couldn't get a shiggy";
 
 #[derive(Deserialize)]
 struct SafebooruResponse {
 	file_url: String,
 }
 
-pub async fn get_random_shiggy() -> String {
-	let resp = match REQWEST_CLIENT
-		.execute(REQWEST_CLIENT.get(URL).build().unwrap())
-		.await
-	{
-		Ok(r) => r,
-		Err(e) => return format!("{} ({:?})", ERROR_MSG, e),
-	};
+pub async fn get_random_shiggy() -> Result<String, Error> {
+	let req = REQWEST_CLIENT.get(URL).build().unwrap();
 
-	match resp.status() {
-		StatusCode::OK => match resp.json::<SafebooruResponse>().await {
-			Ok(sr) => sr.file_url,
-			Err(e) => format!("{} ({:?})", ERROR_MSG, e),
-		},
-		other => format!("{} ({:?})", ERROR_MSG, other),
+	let resp = REQWEST_CLIENT.execute(req).await.unwrap();
+
+	if let StatusCode::OK = resp.status() {
+		match resp.json::<SafebooruResponse>().await {
+			Ok(data) => Ok(data.file_url),
+			Err(why) => Err(Box::new(why)),
+		}
+	} else {
+		Err(resp.status().to_string().into())
 	}
 }

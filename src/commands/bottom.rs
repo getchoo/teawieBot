@@ -1,70 +1,42 @@
-use crate::utils::{bottom_decode, bottom_encode};
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::command::CommandOptionType;
-use serenity::model::prelude::interaction::application_command::{
-	CommandDataOption, CommandDataOptionValue,
-};
+use crate::{Context, Error};
+use bottomify::bottom::{decode_string, encode_string};
 
-pub fn run(options: &[CommandDataOption]) -> String {
-	let err = "failed to get nested option in";
-
-	let data = options
-		.get(0)
-		.unwrap_or_else(|| panic!("{} {:?}", err, options));
-
-	// get subcommand to decide whether to encode/decode
-	let subcommand = data.name.as_str();
-
-	// TODO: this is horrendous
-	// get message content
-	let option = data
-		.options
-		.get(0)
-		.unwrap_or_else(|| panic!("{} {:?}", err, data))
-		.resolved
-		.as_ref()
-		.expect("failed to resolve string!"); // this is annoying
-
-	if let CommandDataOptionValue::String(msg) = option {
-		match subcommand {
-			"encode" => bottom_encode(msg),
-			"decode" => bottom_decode(msg),
-			_ => "something went wrong :(".to_owned(),
-		}
-	} else {
-		"did you forget to enter a message?".to_owned()
-	}
+fn decode_sync(s: &str) -> Result<String, bottomify::bottom::TranslationError> {
+	decode_string(&s)
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-	command
-		.name("bottom")
-		.description("teawie will translate something to/from bottom for you 🥺")
-		// nesting...so much nesting
-		.create_option(|option| {
-			option
-				.name("encode")
-				.description("teawie will encode a message in bottom for you 🥺")
-				.kind(CommandOptionType::SubCommand)
-				.create_sub_option(|suboption| {
-					suboption
-						.name("content")
-						.description("what teawie will translate into bottom")
-						.kind(CommandOptionType::String)
-						.required(true)
-				})
-		})
-		.create_option(|option| {
-			option
-				.name("decode")
-				.description("teawie will decode a message in bottom for you 🥸")
-				.kind(CommandOptionType::SubCommand)
-				.create_sub_option(|suboption| {
-					suboption
-						.name("content")
-						.description("what teawie will translate from bottom")
-						.kind(CommandOptionType::String)
-						.required(true)
-				})
-		})
+#[poise::command(slash_command, subcommands("encode", "decode"))]
+pub async fn bottom(_ctx: Context<'_>) -> Result<(), Error> {
+	Ok(())
+}
+
+/// teawie will translate to bottom 🥺
+#[poise::command(slash_command)]
+pub async fn encode(
+	ctx: Context<'_>,
+	#[description = "what teawie will translate into bottom"] message: String,
+) -> Result<(), Error> {
+	let encoded = encode_string(&message);
+	ctx.say(encoded).await?;
+	Ok(())
+}
+
+/// teawie will translate from bottom 🥸
+#[poise::command(slash_command)]
+pub async fn decode(
+	ctx: Context<'_>,
+	#[description = "what teawie will translate from bottom"] message: String,
+) -> Result<(), Error> {
+	let d = decode_sync(&message);
+	match d {
+		Ok(decoded) => {
+			ctx.say(decoded).await?;
+			Ok(())
+		}
+		Err(why) => {
+			ctx.say("couldn't decode that for you, i'm sowwy!! :((".to_string())
+				.await?;
+			Err(Box::new(why))
+		}
+	}
 }

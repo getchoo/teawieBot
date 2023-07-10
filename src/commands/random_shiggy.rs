@@ -1,13 +1,17 @@
 use crate::api::shiggy::get_random_shiggy;
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::application_command::CommandDataOption;
+use crate::{Context, Error};
 
-pub async fn run(_: &[CommandDataOption]) -> String {
-	get_random_shiggy().await
-}
-
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-	command
-		.name("random_shiggy")
-		.description("get a random shiggy!")
+/// get a random shiggy
+#[poise::command(prefix_command, slash_command)]
+pub async fn random_shiggy(ctx: Context<'_>) -> Result<(), Error> {
+	match get_random_shiggy().await {
+		Ok(resp) => {
+			ctx.say(resp).await?;
+			Ok(())
+		}
+		Err(why) => {
+			ctx.say("i can't get a shiggy right now :(").await?;
+			Err(why)
+		}
+	}
 }

@@ -1,11 +1,9 @@
-use crate::consts::{LORE, RESPONSES};
-use bottomify::bottom::{decode_string, encode_string};
-use include_dir::{include_dir, Dir};
-use rand::seq::SliceRandom;
-use std::collections::HashMap;
-use std::vec;
+use crate::consts::*;
+use crate::Error;
 
-const FILES: Dir = include_dir!("src/copypastas");
+use once_cell::sync::Lazy;
+use poise::serenity_prelude::GuildId;
+use rand::seq::SliceRandom;
 
 pub fn parse_snowflake_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<T> {
 	std::env::var(key).ok().and_then(|v| v.parse().map(&f).ok())
@@ -21,23 +19,13 @@ pub fn parse_snowflakes_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<
 /*
  * chooses a random element from an array
  */
-fn random_choice<const N: usize>(arr: [&str; N]) -> String {
+pub fn random_choice<const N: usize>(arr: [&str; N]) -> Result<String, Error> {
 	let mut rng = rand::thread_rng();
-	let resp = arr.choose(&mut rng).expect("couldn't choose random value!");
-	(*resp).to_string()
-}
-
-/*
- * pub functions to get random elements
- * from our consts
- */
-
-pub fn get_random_response() -> String {
-	random_choice(RESPONSES)
-}
-
-pub fn get_random_lore() -> String {
-	random_choice(LORE)
+	if let Some(resp) = arr.choose(&mut rng) {
+		Ok((*resp).to_string())
+	} else {
+		Err(Into::into("couldn't choose from arr!"))
+	}
 }
 
 // waiting for `round_char_boundary` to stabilize
@@ -54,79 +42,12 @@ pub fn floor_char_boundary(s: &str, index: usize) -> usize {
 		lower_bound + new_index.unwrap()
 	}
 }
-// waiting for `int_roundings` to stabilize
-fn div_ceil(a: usize, b: usize) -> usize {
-	(a + b - 1) / b
-}
 
-/*
- * splits a message into multiple parts so that
- * it can fit discord's character limit
- */
-fn split_msg(mut msg: String) -> Vec<String> {
-	const CHAR_LIMIT: usize = 2000;
-	let mut msgs = Vec::with_capacity(div_ceil(msg.len(), CHAR_LIMIT));
+pub fn is_guild_allowed(gid: GuildId) -> bool {
+	static ALLOWED_GUILDS: Lazy<Vec<GuildId>> = Lazy::new(|| {
+		parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
+			.unwrap_or_else(|| vec![TEAWIE_GUILD, GuildId(1091969030694375444)])
+	});
 
-	while msg.len() > CHAR_LIMIT {
-		msgs.push(msg.split_off(floor_char_boundary(&msg, CHAR_LIMIT)));
-	}
-	msgs
-}
-
-/*
- * gets a random copypasta from include/
- */
-pub fn get_copypasta(name: &str) -> Vec<String> {
-	let mut files: HashMap<&str, &str> = HashMap::new();
-
-	for file in FILES.files() {
-		let name = file.path().file_stem().unwrap().to_str().unwrap();
-
-		let contents = file.contents_utf8().unwrap();
-
-		// refer to files by their name w/o extension
-		files.insert(name, contents);
-	}
-
-	if files.contains_key(&name) {
-		let reply = files[name].to_string();
-		split_msg(reply)
-	} else {
-		vec![format!("couldn't find {name:?} in files")]
-	}
-}
-
-/*
- * encodes a message into bottom
- */
-pub fn bottom_encode(msg: &str) -> String {
-	encode_string(&msg)
-}
-
-/*
- * decodes a bottom string into english
- */
-pub fn bottom_decode(msg: &str) -> String {
-	let decoded = decode_string(&msg);
-	match decoded {
-		Ok(ret) => ret,
-		Err(why) => {
-			println!("couldn't decode {msg:?}! ({why:?})");
-			"couldn't decode that! sowwy 🥺".to_string()
-		}
-	}
-}
-
-/*
- * converts celsius to fahrenheit
- */
-pub fn celsius_to_fahrenheit(c: f64) -> f64 {
-	(c * (9.0 / 5.0)) + 32.0
-}
-
-/*
- * converts fahrenheit to celsius
- */
-pub fn fahrenheit_to_celsius(f: f64) -> f64 {
-	(f - 32.0) * (5.0 / 9.0)
+	ALLOWED_GUILDS.contains(&gid)
 }

@@ -1,21 +1,23 @@
-use crate::utils;
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::command::CommandOptionType;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use crate::consts;
+use crate::utils::random_choice;
+use crate::{Context, Error};
 
-pub fn run(_: &[CommandDataOption]) -> String {
-	utils::get_random_response()
-}
-
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-	command
-		.name("ask")
-		.description("ask lord teawie a question and they shall respond")
-		.create_option(|option| {
-			option
-				.name("question")
-				.description("the question you want to ask teawie")
-				.kind(CommandOptionType::String)
-				.required(true)
-		})
+/// ask teawie a question!
+#[poise::command(prefix_command, slash_command)]
+pub async fn ask(
+	ctx: Context<'_>,
+	#[description = "the question you want to ask teawie"]
+	#[rename = "question"]
+	_question: String,
+) -> Result<(), Error> {
+	match random_choice(consts::RESPONSES) {
+		Ok(resp) => {
+			ctx.say(resp).await?;
+			Ok(())
+		}
+		Err(why) => {
+			ctx.say("idk").await?;
+			Err(why)
+		}
+	}
 }

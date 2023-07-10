@@ -1,64 +1,71 @@
 use crate::utils;
-use serenity::builder::CreateApplicationCommand;
-use serenity::http::client::Http;
-use serenity::model::id::ChannelId;
-use serenity::model::prelude::command::CommandOptionType;
-use serenity::model::prelude::interaction::application_command::{
-	CommandDataOption, CommandDataOptionValue,
-};
-use std::sync::Arc;
+use crate::{Context, Error};
+use include_dir::{include_dir, Dir};
+use log::*;
+use std::collections::HashMap;
 
-pub async fn run(options: &[CommandDataOption], channel_id: ChannelId, http: &Arc<Http>) -> String {
-	let err_msg = "expected a copypasta";
-	let option = options
-		.get(0)
-		.expect(err_msg)
-		.resolved
-		.as_ref()
-		.expect(err_msg);
+const FILES: Dir = include_dir!("src/copypastas");
 
-	if let CommandDataOptionValue::String(copypasta) = option {
-		let replies = utils::get_copypasta(copypasta);
-
-		if replies.len() > 1 {
-			for reply in replies {
-				let resp = channel_id.send_message(&http, |m| m.content(reply)).await;
-
-				match resp {
-					Ok(_) => continue,
-					Err(why) => {
-						println!("couldn't send message: {:?}", why);
-						return "something went wrong!".to_string();
-					}
-				}
-			}
-			return "here's your copypasta:".to_string(); // yes this causes the
-			                                 // application to not respond.
-			                                 // no i don't care.
-		}
-		return replies[0].to_string();
-	}
-
-	"couldn't find a copypasta".to_string()
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Debug, poise::ChoiceParameter)]
+pub enum Copypastas {
+	Astral,
+	DVD,
+	Egrill,
+	HappyMeal,
+	//Ismah,
+	Sus,
+	TickTock,
+	Twitter,
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-	command
-		.name("copypasta")
-		.description("send funni copypasta")
-		.create_option(|option| {
-			option
-				.name("copypasta")
-				.description("the copypasta you want to send")
-				.kind(CommandOptionType::String)
-				.required(true)
-				.add_string_choice("astral", "astral")
-				.add_string_choice("dvd", "dvd")
-				.add_string_choice("egrill", "egrill")
-				.add_string_choice("happymeal", "happymeal")
-				.add_string_choice("ismah", "ismah")
-				.add_string_choice("sus", "sus")
-				.add_string_choice("ticktock", "ticktock")
-				.add_string_choice("twitter", "twitter")
-		})
+impl Copypastas {
+	fn as_str(&self) -> &str {
+		match self {
+			Copypastas::Astral => "astral",
+			Copypastas::DVD => "dvd",
+			Copypastas::Egrill => "egrill",
+			Copypastas::HappyMeal => "happymeal",
+			//Copypastas::Ismah => "ismah",
+			Copypastas::Sus => "sus",
+			Copypastas::TickTock => "ticktock",
+			Copypastas::Twitter => "twitter",
+		}
+	}
+}
+
+fn get_copypasta(name: Copypastas) -> String {
+	let mut files: HashMap<&str, &str> = HashMap::new();
+
+	for file in FILES.files() {
+		let name = file.path().file_stem().unwrap().to_str().unwrap();
+
+		let contents = file.contents_utf8().unwrap();
+
+		// refer to files by their name w/o extension
+		files.insert(name, contents);
+	}
+
+	if files.contains_key(name.as_str()) {
+		files[name.as_str()].to_string()
+	} else {
+		format!("i don't have a copypasta named {name} :(")
+	}
+}
+
+/// ask teawie to send funni copypasta
+#[poise::command(slash_command)]
+pub async fn copypasta(
+	ctx: Context<'_>,
+	#[description = "the copypasta you want to send"] copypasta: Copypastas,
+) -> Result<(), Error> {
+	let gid = ctx.guild_id().unwrap_or_default();
+	if !utils::is_guild_allowed(gid) {
+		info!("not running copypasta command in {gid}");
+		return Ok(());
+	}
+
+	ctx.say(get_copypasta(copypasta)).await?;
+
+	Ok(())
 }

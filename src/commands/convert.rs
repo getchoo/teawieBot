@@ -1,70 +1,28 @@
-use crate::utils;
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::command::CommandOptionType;
-use serenity::model::prelude::interaction::application_command::{
-	CommandDataOption, CommandDataOptionValue,
-};
+use crate::{Context, Error};
 
-pub fn run(options: &[CommandDataOption]) -> String {
-	let err = "couldn't get convert subcommand!";
-	let data = options
-		.get(0)
-		.unwrap_or_else(|| panic!("{} {:?}", err, options));
-	let subcommand = data.name.as_str();
-	// get message content
-	let option = data
-		.options
-		.get(0)
-		.unwrap_or_else(|| panic!("{} {:?}", err, data))
-		.resolved
-		.as_ref()
-		.expect("failed to resolve string!");
-
-	let temp = if let &CommandDataOptionValue::Number(number) = option {
-		match subcommand {
-			"fahrenheit" => Some(utils::celsius_to_fahrenheit(number)),
-			"celsius" => Some(utils::fahrenheit_to_celsius(number)),
-			_ => None,
-		}
-	} else {
-		None
-	};
-
-	if let Some(temp) = temp {
-		format!("{temp:.2}")
-	} else {
-		"couldn't figure it out oops".to_owned()
-	}
+#[poise::command(slash_command, subcommands("to_fahrenheit", "to_celsius"))]
+pub async fn convert(_ctx: Context<'_>) -> Result<(), Error> {
+	Ok(())
 }
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-	command
-		.name("convertto")
-		.description("ask teawie to convert something for you")
-		.create_option(|option| {
-			option
-				.name("fahrenheit")
-				.description("ask teawie to convert celsius to fahrenheit")
-				.kind(CommandOptionType::SubCommand)
-				.create_sub_option(|suboption| {
-					suboption
-						.name("degrees_celsius")
-						.description("what teawie will convert")
-						.kind(CommandOptionType::Number)
-						.required(true)
-				})
-		})
-		.create_option(|option| {
-			option
-				.name("celsius")
-				.description("ask teawie to convert fahrenheit to celsius")
-				.kind(CommandOptionType::SubCommand)
-				.create_sub_option(|suboption| {
-					suboption
-						.name("degrees_fahrenheit")
-						.description("what teawie will convert")
-						.kind(CommandOptionType::Number)
-						.required(true)
-				})
-		})
+/// ask teawie to convert °F to °C
+#[poise::command(slash_command)]
+pub async fn to_celsius(
+	ctx: Context<'_>,
+	#[description = "what teawie will convert"] degrees_fahrenheit: f32,
+) -> Result<(), Error> {
+	let temp = (degrees_fahrenheit - 32.0) * (5.0 / 9.0);
+	ctx.say(temp.to_string()).await?;
+	Ok(())
+}
+
+/// ask teawie to convert °C to °F
+#[poise::command(slash_command)]
+pub async fn to_fahrenheit(
+	ctx: Context<'_>,
+	#[description = "what teawie will convert"] degrees_celsius: f32,
+) -> Result<(), Error> {
+	let temp = (degrees_celsius * (9.0 / 5.0)) + 32.0;
+	ctx.say(temp.to_string()).await?;
+	Ok(())
 }

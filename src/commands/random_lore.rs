@@ -1,13 +1,16 @@
-use crate::utils::get_random_lore;
-use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use crate::{consts, utils, Context, Error};
 
-pub fn run(_: &[CommandDataOption]) -> String {
-	get_random_lore()
-}
-
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-	command
-		.name("random_lore")
-		.description("get a random piece of teawie lore!")
+/// get a random piece of teawie lore!
+#[poise::command(prefix_command, slash_command)]
+pub async fn random_lore(ctx: Context<'_>) -> Result<(), Error> {
+	match utils::random_choice(consts::LORE) {
+		Ok(resp) => {
+			ctx.say(resp).await?;
+			Ok(())
+		}
+		Err(why) => {
+			ctx.say("i can't think of any right now :(").await?;
+			Err(why)
+		}
+	}
 }
