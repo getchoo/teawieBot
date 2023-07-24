@@ -12,6 +12,6 @@ once_cell = "1.18.0"
 rand = "0.8.5"
 regex = "1.9.1"
 reqwest = { version = "0.11.18", default-features = false, features = ["rustls-tls", "json"] }
-serde = "1.0.171"
+serde = "1.0.175"
 serenity = "0.11.6"
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
