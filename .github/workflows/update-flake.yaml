@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v22
 
-      - uses: DeterminateSystems/update-flake-lock@v19
+      - uses: DeterminateSystems/update-flake-lock@v20
         id: update
         with:
           commit-msg: "deps(flake): update inputs"
