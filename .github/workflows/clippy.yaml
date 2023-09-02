@@ -1,0 +1,31 @@
+name: clippy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: Swatinem/rust-cache@v2
+
+      - name: enter shell
+        run: |
+          nix develop --accept-flake-config
+          nix shell --accept-flake-config github:getchoo/nix-exprs#clippy-sarif
+
+      - name: run clippy
+        run: |
+          cargo clippy --all --all-targets --message-format=json | clippy-sarif > /tmp/clippy.sarif
+
+      - name: upload results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: /tmp/clippy.sarif
