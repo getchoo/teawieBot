@@ -69,7 +69,7 @@ in {
         cfg = config.services.teawiebot;
         inherit (lib) mkEnableOption mkIf;
       in {
-        options.services.teawiebot.enable = mkEnableOption "enable teawiebot";
+        options.services.teawiebot.enable = mkEnableOption "teawiebot";
 
         config.systemd.services = mkIf cfg.enable {
           teawiebot = {

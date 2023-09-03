@@ -4,12 +4,23 @@
   ...
 }: {
   perSystem = {
+    config,
     craneLib,
     pkgs,
     system,
     toolchain,
     ...
   }: {
+    pre-commit = {
+      settings.hooks = {
+        actionlint.enable = true;
+        alejandra.enable = true;
+        deadnix.enable = true;
+        nil.enable = true;
+        statix.enable = true;
+      };
+    };
+
     checks = let
       inherit (craneLib) cargoAudit cargoClippy cleanCargoSource cargoFmt;
 
@@ -28,24 +39,11 @@
         });
 
       fmt = cargoFmt commonArgs;
-
-      pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
-        src = self;
-        hooks = {
-          actionlint.enable = true;
-          alejandra.enable = true;
-          deadnix.enable = true;
-          nil.enable = true;
-          statix.enable = true;
-        };
-      };
     };
 
-    devShells = let
-      inherit (pkgs) mkShell;
-    in {
-      default = mkShell {
-        inherit (self.checks.${system}.pre-commit-check) shellHook;
+    devShells = {
+      default = pkgs.mkShell {
+        shellHook = config.pre-commit.installationScript;
         packages = with pkgs; [
           actionlint
           alejandra
