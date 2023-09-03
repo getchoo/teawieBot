@@ -1,5 +1,6 @@
 builds:
-  exclude: []
+  exclude:
+    - "packages.x86_64-linux.container"
   include:
     - "checks.x86_64-linux.*"
     - "packages.x86_64-linux.*"

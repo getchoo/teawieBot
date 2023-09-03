@@ -3,20 +3,15 @@ name: upload to registry
 # changes are made to `main`
 
 on:
-  check_suite:
-    types: [completed]
-
-# https://github.com/garnix-io/issues/issues/63
-concurrency:
-  group: upload-${{ github.ref }}
-  cancel-in-progress: true
+  push:
+    branches:
+      - main
 
 permissions:
   packages: write
 
 jobs:
   upload:
-    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     env:
@@ -25,7 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v22
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: fetch docker image
         run: |
