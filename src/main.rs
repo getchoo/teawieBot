@@ -1,5 +1,4 @@
 use once_cell::sync::Lazy;
-use regex::Regex;
 use serenity::async_trait;
 use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
@@ -48,9 +47,6 @@ impl Handler {
 		Self { bot, pin_board }
 	}
 	fn should_echo(&self, msg: &Message) -> bool {
-		static MOYAI_REGEX: Lazy<Regex> =
-			Lazy::new(|| Regex::new(r"^<a?:\w*moy?ai\w*:\d+>$").unwrap());
-
 		// Don't echo to anything we posted ourselves, and don't echo at all unless on certain
 		// servers
 		if msg.author.id == self.bot || !is_guild_allowed(msg.guild_id.unwrap_or_default()) {
@@ -61,7 +57,7 @@ impl Handler {
 
 		content == "🗿"
 			|| consts::TEAMOJIS.contains(&content.as_str())
-			|| MOYAI_REGEX.is_match(content)
+			|| content.to_ascii_lowercase() == "moyai"
 			|| content
 				.to_ascii_lowercase()
 				.contains("twitter's recommendation algorithm")
