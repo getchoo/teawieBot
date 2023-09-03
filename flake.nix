@@ -13,18 +13,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
-
-    flake-parts = {
+    parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
-
-    # this is just to avoid having multiple versions in flake.lock
-    flake-utils.url = "github:numtide/flake-utils";
 
     # used for cargo audit
     advisory-db = {
@@ -36,8 +28,8 @@
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-compat.follows = "flake-compat";
-      inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-compat.follows = "compat";
+      inputs.flake-utils.follows = "utils";
     };
 
     # toolchain management
@@ -46,17 +38,33 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    pre-commit-hooks = {
+    pre-commit = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nixpkgs-stable.follows = "nixpkgs";
-      inputs.flake-compat.follows = "flake-compat";
-      inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-compat.follows = "compat";
+      inputs.flake-utils.follows = "utils";
     };
+
+    # this is just to avoid having multiple versions in flake.lock
+    compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
+
+    # ditto
+    utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = inputs:
-    inputs.flake-parts.lib.mkFlake
-    {inherit inputs;}
-    {imports = [./parts];};
+  outputs = {
+    parts,
+    pre-commit,
+    ...
+  } @ inputs:
+    parts.lib.mkFlake {inherit inputs;} {
+      imports = [
+        pre-commit.flakeModule
+        ./parts
+      ];
+    };
 }
