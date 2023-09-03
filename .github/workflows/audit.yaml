@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v22
+      - uses: DeterminateSystems/nix-installer-action@main
 
       - name: run audit
         run: |
