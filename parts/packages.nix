@@ -4,25 +4,11 @@
     pkgs,
     system,
     ...
-  }: let
-    inherit (pkgs.lib) licenses maintainers platforms;
-    inherit (craneLib) buildPackage;
-  in {
+  }: {
     packages = {
-      cargoArtifacts = craneLib.buildDepsOnly {src = self;};
+      cargoArtifacts = craneLib.buildDepsOnly {src = craneLib.cleanCargoSource self;};
 
-      teawiebot = buildPackage {
-        src = self;
-        inherit (self.packages.${system}) cargoArtifacts;
-
-        meta = {
-          description = "funni bot";
-          homepage = "https://github.com/getchoo/teawiebot";
-          license = licenses.mit;
-          platforms = platforms.unix;
-          maintainers = with maintainers; [getchoo];
-        };
-      };
+      teawiebot = pkgs.callPackage ./derivation.nix {inherit craneLib self;};
 
       teawiebot-smol =
         self.packages.${system}.teawiebot.overrideAttrs (_: {
