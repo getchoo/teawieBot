@@ -23,12 +23,11 @@ jobs:
       - name: enter shell
         run: |
           nix develop --accept-flake-config
-          nix shell --accept-flake-config github:getchoo/nix-exprs#clippy-sarif
 
       - name: run clippy
         run: |
-          mkdir -p /tmp
-          cargo clippy --all --all-targets --message-format=json | clippy-sarif > /tmp/clippy.sarif
+          cargo clippy --all --all-targets --message-format=json \
+            | nix run --accept-flake-config github:getchoo/nix-exprs#clippy-sarif > /tmp/clippy.sarif
 
       - name: upload results
         uses: github/codeql-action/upload-sarif@v2
