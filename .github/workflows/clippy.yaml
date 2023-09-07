@@ -11,6 +11,10 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
@@ -23,6 +27,7 @@ jobs:
 
       - name: run clippy
         run: |
+          mkdir -p /tmp
           cargo clippy --all --all-targets --message-format=json | clippy-sarif > /tmp/clippy.sarif
 
       - name: upload results
