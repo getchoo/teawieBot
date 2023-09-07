@@ -4,16 +4,13 @@
     pkgs,
     system,
     ...
-  }: let
-    inherit (pkgs) dockerTools;
-    inherit (self.packages.${system}) teawiebot-smol;
-  in {
+  }: {
     packages = {
-      container = dockerTools.buildLayeredImage {
+      container = pkgs.dockerTools.buildLayeredImage {
         name = "teawiebot";
         tag = "latest";
-        contents = [dockerTools.caCertificates];
-        config.Cmd = ["${lib.getExe teawiebot-smol}"];
+        contents = [pkgs.dockerTools.caCertificates];
+        config.Cmd = [(lib.getExe self.packages.${system}.teawiebot-smol)];
       };
     };
   };
