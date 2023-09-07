@@ -1,14 +1,13 @@
 {self, ...}: {
   perSystem = {
-    lib,
     pkgs,
-    system,
+    self',
     ...
   }: {
-    packages = lib.fix (f: {
+    packages = {
       teawiebot = pkgs.callPackage ./derivation.nix {inherit self;};
-      teawiebot-smol = f.teawiebot.override {optimizeSize = true;};
-      default = self.packages.${system}.teawiebot;
-    });
+      teawiebot-smol = self'.packages.teawiebot.override {optimizeSize = true;};
+      default = self'.packages.teawiebot;
+    };
   };
 }

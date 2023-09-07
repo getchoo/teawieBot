@@ -2,7 +2,7 @@
   perSystem = {
     lib,
     pkgs,
-    system,
+    self',
     ...
   }: {
     packages = {
@@ -10,7 +10,7 @@
         name = "teawiebot";
         tag = "latest";
         contents = [pkgs.dockerTools.caCertificates];
-        config.Cmd = [(lib.getExe self.packages.${system}.teawiebot-smol)];
+        config.Cmd = [(lib.getExe self'.packages.teawiebot-smol)];
       };
     };
   };
