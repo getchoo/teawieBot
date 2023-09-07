@@ -1,9 +1,8 @@
-name: update nix flake
-# this is to make sure we can build against a
-# recent version of nixos-unstable
+name: update flake lock
 
 on:
   schedule:
+    # run every saturday
     - cron: "0 0 * * 6"
   workflow_dispatch:
 
@@ -12,20 +11,22 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-flake:
+  update:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - uses: DeterminateSystems/update-flake-lock@v20
+      - name: update lockfile
+        uses: DeterminateSystems/update-flake-lock@v20
         id: update
         with:
-          commit-msg: "deps(flake): update inputs"
-          pr-title: "deps(flake): update inputs"
+          commit-msg: "flake: update inputs"
+          pr-title: "flake: update inputs"
+          token: ${{ github.token }}
 
-      - name: auto-merge pull request
+      - name: enable auto-merge
         shell: bash
         run: gh pr merge --auto --rebase "$PR_ID"
         env:
