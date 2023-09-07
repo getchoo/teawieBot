@@ -24,6 +24,9 @@ jobs:
         run: |
           nix develop --accept-flake-config
 
+      - name: fetch cargo deps
+        run: cargo fetch --locked --target x86_64-unknown-linux-gnu
+
       - name: run clippy
         run: |
           cargo clippy --all --all-targets --message-format=json \
