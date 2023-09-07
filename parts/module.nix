@@ -10,8 +10,8 @@ self: {
     (lib)
     getExe
     literalExpression
+    mdDoc
     mkDefault
-    mkDoc
     mkEnableOption
     mkIf
     mkOption
@@ -23,7 +23,7 @@ in {
     enable = mkEnableOption "teawiebot";
     package = mkPackageOption self.packages.${pkgs.stdenv.hostPlatform.system} "teawiebot" {};
     environmentFile = mkOption {
-      description = mkDoc ''
+      description = mdDoc ''
         Environment file as defined in {manpage}`systemd.exec(5)`
       '';
       type = types.nullOr types.path;
