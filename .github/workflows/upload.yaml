@@ -30,7 +30,7 @@ jobs:
           readlink result | xargs -I {} cp {} teawiebot.tar.gz
 
       - name: login to registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.USERNAME }}
