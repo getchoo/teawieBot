@@ -8,12 +8,12 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  packages: write
-
 jobs:
   upload:
     runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
 
     env:
       REGISTRY: ghcr.io
