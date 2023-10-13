@@ -111,6 +111,7 @@ impl EventHandler for Handler {
 						.await
 				}
 				"random_lore" => commands::random_lore::run(&command.data.options),
+				"random_shiggy" => commands::random_shiggy::run(&command.data.options).await,
 				"random_teawie" => commands::random_teawie::run(&command.data.options).await,
 				_ => "not implemented :(".to_string(),
 			};
@@ -145,6 +146,7 @@ impl EventHandler for Handler {
 				.create_application_command(commands::bottom::register)
 				.create_application_command(commands::convert::register)
 				.create_application_command(commands::random_lore::register)
+				.create_application_command(commands::random_shiggy::register)
 				.create_application_command(commands::random_teawie::register)
 		})
 		.await;
