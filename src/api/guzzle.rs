@@ -1,4 +1,4 @@
-use once_cell::sync::Lazy;
+use crate::api::REQWEST_CLIENT;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
@@ -8,13 +8,6 @@ struct GuzzleResponse {
 }
 
 const GUZZLE: &str = "https://api.mydadleft.me";
-
-pub static REQWEST_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
-	reqwest::Client::builder()
-		.user_agent("teawieBot/0.1.0")
-		.build()
-		.unwrap_or_default()
-});
 
 pub async fn get_random_teawie() -> String {
 	let endpoint = "get_random_teawie";
