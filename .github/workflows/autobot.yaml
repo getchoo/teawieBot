@@ -23,4 +23,4 @@ jobs:
         run: gh pr merge --auto --rebase "$PR"
         env:
           PR: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
