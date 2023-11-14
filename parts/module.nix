@@ -35,7 +35,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    systemd.services = {
+    systemd.services."teawiebot" = {
       enable = true;
       wantedBy = mkDefault ["multi-user.target"];
       after = mkDefault ["network.target"];
