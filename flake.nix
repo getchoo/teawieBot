@@ -18,6 +18,16 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    naersk = {
+      url = "github:nix-community/naersk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     pre-commit = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -25,14 +35,10 @@
     };
   };
 
-  outputs = {
-    parts,
-    pre-commit,
-    ...
-  } @ inputs:
+  outputs = {parts, ...} @ inputs:
     parts.lib.mkFlake {inherit inputs;} {
       imports = [
-        pre-commit.flakeModule
+        inputs.pre-commit.flakeModule
 
         ./parts/deployment.nix
         ./parts/dev.nix
