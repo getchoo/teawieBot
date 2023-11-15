@@ -1,13 +1,21 @@
-{self, ...}: {
+{
+  self,
+  inputs,
+  ...
+}: {
   perSystem = {
     pkgs,
-    self',
+    system,
+    config,
     ...
   }: {
     packages = {
-      teawiebot = pkgs.callPackage ./derivation.nix {inherit self;};
-      teawiebot-smol = self'.packages.teawiebot.override {optimizeSize = true;};
-      default = self'.packages.teawiebot;
+      teawiebot = pkgs.callPackage ./derivation.nix {
+        version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
+        naersk = inputs.naersk.lib.${system};
+      };
+
+      default = config.packages.teawiebot;
     };
   };
 }

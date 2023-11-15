@@ -1,7 +1,7 @@
 {
   lib,
-  rustPlatform,
-  self,
+  naersk,
+  version,
   lto ? true,
   optimizeSize ? false,
 }: let
@@ -25,13 +25,11 @@
       inherit filter;
     };
 in
-  rustPlatform.buildRustPackage {
+  naersk.buildPackage {
     pname = "teawiebot";
-    version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
+    inherit version;
 
-    src = filterSource self;
-
-    cargoLock.lockFile = ../Cargo.lock;
+    src = filterSource ../.;
 
     RUSTFLAGS =
       lib.optionalString lto " -C lto=thin -C embed-bitcode=yes"
