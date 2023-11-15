@@ -2,8 +2,7 @@ name: clippy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -12,27 +11,39 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
       security-events: write
 
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: Swatinem/rust-cache@v2
 
-      - name: enter shell
-        run: |
-          nix develop --accept-flake-config
+      - name: install rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: clippy
+
+      - name: setup rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: install sarif tools
+        run: cargo install clippy-sarif sarif-fmt
 
       - name: fetch cargo deps
-        run: cargo fetch --locked --target x86_64-unknown-linux-gnu
+        run: cargo fetch --locked
 
       - name: run clippy
+        continue-on-error: true
         run: |
-          cargo clippy --all --all-targets --message-format=json \
-            | nix run --accept-flake-config github:getchoo/nix-exprs#clippy-sarif > /tmp/clippy.sarif
+          set -euxo pipefail
+
+          cargo clippy \
+            --all-features \
+            --all-targets \
+            --message-format=json \
+          | clippy-sarif | tee /tmp/clippy.sarif | sarif-fmt
 
       - name: upload results
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: /tmp/clippy.sarif
+          wait-for-processing: true
