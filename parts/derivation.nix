@@ -2,7 +2,7 @@
   lib,
   naersk,
   version,
-  lto ? true,
+  lto ? false,
   optimizeSize ? false,
 }: let
   filter = path: type: let
