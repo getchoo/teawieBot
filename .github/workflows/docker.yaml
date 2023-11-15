@@ -1,0 +1,89 @@
+name: upload to registry
+# this is for uploading images to a container registry when
+# changes are made to `main`
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+          - amd64
+          - arm64v8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install nix
+        uses: DeterminateSystems/nix-installer-action@v7
+
+      - uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: build docker image
+        id: build
+        run: |
+          nix build -L --accept-flake-config .#container-${{ matrix.arch }}
+          [ ! -L result ] && exit 1
+          echo "path=$(realpath result)" >> "$GITHUB_OUTPUT"
+
+      - name: upload image
+        uses: actions/upload-artifacts@v3
+        with:
+          name: container-${{ matrix.arch }}
+          path: ${{ steps.build.outputs.path }}
+          if-no-files-found: error
+          retention-days: 1
+
+  upload:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
+    env:
+      REGISTRY: ghcr.io
+      USERNAME: getchoo
+      IMAGE_NAME: ${{ github.repository }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: download images
+        uses: actions/download-artifacts@v3
+        with:
+          path: images
+
+      - name: list files
+        run: ls -R images/
+
+      - name: login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.USERNAME }}
+          password: ${{ github.token }}
+
+      - name: upload to registry
+        env:
+          TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        run: |
+          set -eux
+
+          architectures=("amd64" "arm64v8")
+          for arch in "${architectures[@]}"; do
+            docker load < image/container-"$arch"
+            docker tag ${{ env.IMAGE_NAME }}:latest-"$arch" ${{ env.TAG }}-"$arch"
+            docker push ${{ env.TAG }}-"$arch"
+          done
+
+          docker manifest create ${{ env.TAG }} \
+            --amend ${{ env.TAG }}-amd64 \
+            --amend ${{ env.TAG }}-arm64v8
+
+          docker manifest push ${{ env.TAG }}
