@@ -32,7 +32,7 @@ jobs:
           echo "path=$(realpath result)" >> "$GITHUB_OUTPUT"
 
       - name: upload image
-        uses: actions/upload-artifacts@v3
+        uses: actions/upload-artifact@v3
         with:
           name: container-${{ matrix.arch }}
           path: ${{ steps.build.outputs.path }}
