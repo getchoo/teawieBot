@@ -1,7 +1,6 @@
-use poise::serenity_prelude::{GuildId, UserId};
+use poise::serenity_prelude::GuildId;
 
 pub const TEAWIE_GUILD: GuildId = GuildId(1055663552679137310);
-pub const BOT: UserId = UserId(1056467120986271764);
 
 pub const TEAMOJIS: [&str; 15] = [
 	"<:teawiecry:1056438041872433303>",

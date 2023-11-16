@@ -1,16 +1,14 @@
 use std::time::Duration;
 use std::{env, error};
 
+use handler::pinboard::PinBoard;
 use log::*;
-use pinboard::PinBoard;
 use poise::serenity_prelude as serentiy;
-use poise::serenity_prelude::*;
 
 mod api;
 mod commands;
 mod consts;
 mod handler;
-mod pinboard;
 mod utils;
 
 type Error = Box<dyn error::Error + Send + Sync>;
@@ -18,7 +16,6 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[derive(Clone)]
 pub struct Data {
-	bot: serentiy::UserId,
 	pin_board: Option<PinBoard>,
 }
 
@@ -30,10 +27,9 @@ impl Default for Data {
 
 impl Data {
 	pub fn new() -> Self {
-		let bot = utils::parse_snowflake_from_env("BOT", UserId).unwrap_or(consts::BOT);
 		let pin_board = PinBoard::new();
 
-		Self { bot, pin_board }
+		Self { pin_board }
 	}
 }
 
@@ -58,13 +54,8 @@ async fn main() {
 
 	let options = poise::FrameworkOptions {
 		commands: commands::to_global_commands(),
-		event_handler: |ctx, event, _, data| {
-			Box::pin(async move {
-				// yes this is dumb. no i don't care.
-				let handler = handler::Handler::new(data.clone());
-				event.clone().dispatch(ctx.clone(), &handler).await;
-				Ok(())
-			})
+		event_handler: |ctx, event, framework, data| {
+			Box::pin(handler::handle(ctx, event, framework, data))
 		},
 		prefix_options: poise::PrefixFrameworkOptions {
 			prefix: Some("!".into()),
@@ -73,9 +64,7 @@ async fn main() {
 		},
 		on_error: |error| Box::pin(on_error(error)),
 		command_check: Some(|ctx| {
-			Box::pin(async move {
-				Ok(ctx.author().id != ctx.framework().bot_id && ctx.author().id != consts::BOT)
-			})
+			Box::pin(async move { Ok(ctx.author().id != ctx.framework().bot_id) })
 		}),
 		..Default::default()
 	};
@@ -86,10 +75,9 @@ async fn main() {
 		.intents(serentiy::GatewayIntents::all())
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
-				info!("logged in as {}", _ready.user.name);
-
 				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 				info!("registered global commands!");
+
 				poise::builtins::register_in_guild(
 					ctx,
 					&commands::to_guild_commands(),
