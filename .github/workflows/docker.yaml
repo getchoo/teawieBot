@@ -49,18 +49,18 @@ jobs:
     env:
       REGISTRY: ghcr.io
       USERNAME: getchoo
-      IMAGE_NAME: ${{ github.repository }}
 
     steps:
+      - name: set image name
+        run: |
+          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
 
       - name: download images
         uses: actions/download-artifact@v3
         with:
           path: images
-
-      - name: list files
-        run: ls -R images/
 
       - name: login to registry
         uses: docker/login-action@v3

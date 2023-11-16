@@ -13,7 +13,7 @@
     inputs',
     ...
   }: let
-    name = "getchoo/teawieBot";
+    name = "getchoo/teawiebot";
 
     crossPkgsFor = lib.fix (finalAttrs: {
       "x86_64-linux" = {
