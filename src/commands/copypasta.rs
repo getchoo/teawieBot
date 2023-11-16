@@ -31,7 +31,7 @@ impl Copypastas {
 			Copypastas::Sus => "sus",
 			Copypastas::TickTock => "ticktock",
 			Copypastas::Twitter => "twitter",
-			Copypastas::WYSI => "wysi",
+			Copypastas::WYSI => "WYSI",
 		}
 	}
 }
