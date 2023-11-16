@@ -50,7 +50,7 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 #[tokio::main]
 async fn main() {
 	env_logger::init();
-	dotenvy::dotenv().unwrap();
+	dotenvy::dotenv().ok();
 
 	let options = poise::FrameworkOptions {
 		commands: commands::to_global_commands(),
