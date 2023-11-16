@@ -7,3 +7,4 @@ pub mod random_lore;
 pub mod random_shiggy;
 pub mod random_teawie;
 pub mod teawiespam;
+pub mod version;
