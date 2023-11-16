@@ -1,10 +1,8 @@
 use std::time::Duration;
 use std::{env, error};
 
-use crate::commands::*;
-use crate::consts::*;
-use crate::pinboard::PinBoard;
 use log::*;
+use pinboard::PinBoard;
 use poise::serenity_prelude as serentiy;
 use poise::serenity_prelude::*;
 
@@ -58,21 +56,8 @@ async fn main() {
 	env_logger::init();
 	dotenvy::dotenv().unwrap();
 
-	let guild_commands = vec![copypasta::copypasta(), teawiespam::teawiespam()];
-
 	let options = poise::FrameworkOptions {
-		commands: vec![
-			ask::ask(),
-			bing::bing(),
-			bottom::bottom(),
-			convert::convert(),
-			random_lore::random_lore(),
-			random_shiggy::random_shiggy(),
-			random_teawie::random_teawie(),
-			copypasta::copypasta(),
-			teawiespam::teawiespam(),
-			version::version(),
-		],
+		commands: commands::to_global_commands(),
 		event_handler: |ctx, event, _, data| {
 			Box::pin(async move {
 				// yes this is dumb. no i don't care.
@@ -105,7 +90,12 @@ async fn main() {
 
 				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 				info!("registered global commands!");
-				poise::builtins::register_in_guild(ctx, &guild_commands, TEAWIE_GUILD).await?;
+				poise::builtins::register_in_guild(
+					ctx,
+					&commands::to_guild_commands(),
+					consts::TEAWIE_GUILD,
+				)
+				.await?;
 				info!("registered guild commands!");
 
 				Ok(Data::new())
