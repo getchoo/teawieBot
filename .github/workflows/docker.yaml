@@ -77,7 +77,7 @@ jobs:
 
           architectures=("amd64" "arm64v8")
           for arch in "${architectures[@]}"; do
-            docker load < image/container-"$arch"
+            docker load < images/container-"$arch"/*.tar.gz
             docker tag ${{ env.IMAGE_NAME }}:latest-"$arch" ${{ env.TAG }}-"$arch"
             docker push ${{ env.TAG }}-"$arch"
           done
