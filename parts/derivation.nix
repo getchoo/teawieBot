@@ -1,7 +1,7 @@
 {
   lib,
   naersk,
-  version,
+  self,
   lto ? false,
   optimizeSize ? false,
 }: let
@@ -27,9 +27,11 @@
 in
   naersk.buildPackage {
     pname = "teawiebot";
-    inherit version;
+    version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
 
     src = filterSource ../.;
+
+    GIT_SHA = builtins.substring 0 7 self.rev or "dirty";
 
     RUSTFLAGS =
       lib.optionalString lto " -C lto=thin -C embed-bitcode=yes"

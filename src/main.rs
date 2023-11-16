@@ -71,6 +71,7 @@ async fn main() {
 			random_teawie::random_teawie(),
 			copypasta::copypasta(),
 			teawiespam::teawiespam(),
+			version::version(),
 		],
 		event_handler: |ctx, event, _, data| {
 			Box::pin(async move {
