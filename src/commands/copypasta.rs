@@ -17,7 +17,7 @@ pub enum Copypastas {
 	Sus,
 	TickTock,
 	Twitter,
-    seventwnetyseven,
+    WSYI,
 }
 
 impl Copypastas {
@@ -31,7 +31,7 @@ impl Copypastas {
 			Copypastas::Sus => "sus",
 			Copypastas::TickTock => "ticktock",
 			Copypastas::Twitter => "twitter",
-			Copypastas::seventwentyseven => "727",
+			Copypastas::WYSI => "wysi",
 		}
 	}
 }
