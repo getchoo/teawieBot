@@ -24,7 +24,7 @@ pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
 
 	ctx.send(|c| {
 		c.embed(|e| {
-			e.title("Vesion Information")
+			e.title("Version Information")
 				.description("powered by poise!")
 				.fields(fields)
 				.color((136, 199, 253))
