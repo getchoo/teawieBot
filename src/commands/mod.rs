@@ -2,9 +2,7 @@ pub mod ask;
 pub mod bing;
 pub mod convert;
 pub mod copypasta;
-pub mod random_lore;
-pub mod random_shiggy;
-pub mod random_teawie;
+pub mod random;
 pub mod teawiespam;
 pub mod version;
 
@@ -16,9 +14,7 @@ pub fn to_global_commands() -> Vec<Command<Data, Error>> {
 		ask::ask(),
 		bing::bing(),
 		convert::convert(),
-		random_lore::random_lore(),
-		random_shiggy::random_shiggy(),
-		random_teawie::random_teawie(),
+		random::random(),
 		copypasta::copypasta(),
 		teawiespam::teawiespam(),
 		version::version(),
