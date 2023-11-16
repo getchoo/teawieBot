@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [amd64, arm64v8]
+        arch: [x86_64, aarch64]
 
     # https://github.com/sellout/bash-strict-mode/commit/9bf1d65c2f786a9887facfcb81e06d8b8b5f4667
     if: github.event.check_suite.app.name == 'Garnix CI'
@@ -85,7 +85,7 @@ jobs:
         run: |
           set -eux
 
-          architectures=("amd64" "arm64v8")
+          architectures=("x86_64" "aarch64")
           for arch in "${architectures[@]}"; do
             docker load < images/container-"$arch"/*.tar.gz
             docker tag ${{ env.IMAGE_NAME }}:latest-"$arch" ${{ env.TAG }}-"$arch"
@@ -93,7 +93,7 @@ jobs:
           done
 
           docker manifest create ${{ env.TAG }} \
-            --amend ${{ env.TAG }}-amd64 \
-            --amend ${{ env.TAG }}-arm64v8
+            --amend ${{ env.TAG }}-x86_64 \
+            --amend ${{ env.TAG }}-aarch64
 
           docker manifest push ${{ env.TAG }}

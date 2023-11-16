@@ -17,30 +17,25 @@
 
     crossPkgsFor = lib.fix (finalAttrs: {
       "x86_64-linux" = {
-        "amd64" = pkgs.pkgsStatic;
-        "arm64v8" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
+        "x86_64" = pkgs.pkgsStatic;
+        "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
       };
 
       "aarch64-linux" = {
-        "amd64" = pkgs.pkgsCross.musl64;
-        "arm64v8" = pkgs.pkgsStatic;
+        "x86_64" = pkgs.pkgsCross.musl64;
+        "aarch64" = pkgs.pkgsStatic;
       };
 
       "x86_64-darwin" = {
-        "amd64" = pkgs.pkgsCross.musl64;
-        "arm64v8" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
+        "x86_64" = pkgs.pkgsCross.musl64;
+        "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
       };
 
       "aarch64-darwin" = finalAttrs."x86_64-darwin";
     });
 
-    nativeArchFor = {
-      "amd64" = "x86_64";
-      "arm64v8" = "aarch64";
-    };
-
     wieFor = arch: let
-      target = "${nativeArchFor.${arch}}-unknown-linux-musl";
+      target = "${arch}-unknown-linux-musl";
       target' = builtins.replaceStrings ["-"] ["_"] target;
       targetUpper = lib.toUpper target';
 
@@ -73,22 +68,19 @@
           }))
       );
 
-    toContainer = arch:
-      assert lib.assertMsg (
-        arch == "arch64" -> pkgs.stdenv.isLinux
-      ) "aarch64 images are only supported on linux!";
-        pkgs.dockerTools.buildLayeredImage {
-          inherit name;
-          tag = "latest-${arch}";
-          contents = [pkgs.dockerTools.caCertificates];
-          config.Cmd = [(wieFor arch)];
+    containerFor = arch:
+      pkgs.dockerTools.buildLayeredImage {
+        inherit name;
+        tag = "latest-${arch}";
+        contents = [pkgs.dockerTools.caCertificates];
+        config.Cmd = [(wieFor arch)];
 
-          architecture = crossPkgsFor.${system}.${arch}.go.GOARCH;
-        };
+        architecture = crossPkgsFor.${system}.${arch}.go.GOARCH;
+      };
   in {
     packages = {
-      container-amd64 = toContainer "amd64";
-      container-arm64v8 = toContainer "arm64v8";
+      container-x86_64 = containerFor "x86_64";
+      container-aarch64 = containerFor "aarch64";
     };
   };
 }
