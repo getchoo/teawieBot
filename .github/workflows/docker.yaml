@@ -3,8 +3,8 @@ name: upload to registry
 # changes are made to `main`
 
 on:
-  push:
-    branches: [main]
+  check_suite:
+    types: [completed]
   workflow_dispatch:
 
 jobs:
@@ -12,9 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch:
-          - amd64
-          - arm64v8
+        arch: [amd64, arm64v8]
+
+    # https://github.com/sellout/bash-strict-mode/commit/9bf1d65c2f786a9887facfcb81e06d8b8b5f4667
+    if: github.event.check_suite.app.name == 'Garnix CI'
+      && github.event.check_suite.conclusion == 'success'
+      && github.event.check_suite.latest_check_runs_count > 1
+      && github.event.check_suite.head_branch == 'main'
 
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +53,12 @@ jobs:
     env:
       REGISTRY: ghcr.io
       USERNAME: getchoo
+
+    # ditto
+    if: github.event.check_suite.app.name == 'Garnix CI'
+      && github.event.check_suite.conclusion == 'success'
+      && github.event.check_suite.latest_check_runs_count > 1
+      && github.event.check_suite.head_branch == 'main'
 
     steps:
       - name: set image name
