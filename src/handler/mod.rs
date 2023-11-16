@@ -1,34 +1,35 @@
-use crate::utils;
-use crate::{consts, Data};
-use log::*;
+use crate::{Data, Error};
+use poise::serenity_prelude as serenity;
+use poise::Event;
 
-use poise::serenity_prelude::Message;
+mod message;
+pub mod pinboard;
 
-mod events;
-
-pub struct Handler {
-	data: Data,
-}
-
-impl Handler {
-	pub fn new(data: Data) -> Self {
-		Self { data }
-	}
-
-	fn should_echo(&self, msg: &Message) -> bool {
-		let gid = msg.guild_id.unwrap_or_default();
-		if msg.author.id == self.data.bot || !utils::is_guild_allowed(gid) {
-			info!("not running copypasta command in {gid}");
-			return false;
+pub async fn handle(
+	ctx: &serenity::Context,
+	event: &Event<'_>,
+	_framework: poise::FrameworkContext<'_, Data, Error>,
+	data: &Data,
+) -> Result<(), Error> {
+	match event {
+		Event::Ready { data_about_bot } => {
+			log::info!("logged in as {}", data_about_bot.user.name)
 		}
 
-		let content = &msg.content;
+		Event::Message { new_message } => {
+			message::handle(ctx, event, _framework, data, new_message).await?;
+		}
 
-		content == "🗿"
-			|| consts::TEAMOJIS.contains(&content.as_str())
-			|| content.to_ascii_lowercase() == "moyai"
-			|| content
-				.to_ascii_lowercase()
-				.contains("twitter's recommendation algorithm")
+		Event::ChannelPinsUpdate { pin } => {
+			let Some(pin_board) = &data.pin_board else {
+				return Ok(());
+			};
+
+			pin_board.handle_pin(ctx, pin).await;
+		}
+
+		_ => {}
 	}
+
+	Ok(())
 }
