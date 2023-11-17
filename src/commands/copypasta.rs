@@ -13,7 +13,6 @@ pub enum Copypastas {
 	DVD,
 	Egrill,
 	HappyMeal,
-	//Ismah,
 	Sus,
 	TickTock,
 	Twitter,
@@ -26,7 +25,6 @@ impl Copypastas {
 			Copypastas::DVD => "dvd",
 			Copypastas::Egrill => "egrill",
 			Copypastas::HappyMeal => "happymeal",
-			//Copypastas::Ismah => "ismah",
 			Copypastas::Sus => "sus",
 			Copypastas::TickTock => "ticktock",
 			Copypastas::Twitter => "twitter",
@@ -49,6 +47,7 @@ fn get_copypasta(name: Copypastas) -> String {
 	if files.contains_key(name.as_str()) {
 		files[name.as_str()].to_string()
 	} else {
+		warn!("copypasta {} not found!", name);
 		format!("i don't have a copypasta named {name} :(")
 	}
 }
