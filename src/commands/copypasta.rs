@@ -1,8 +1,9 @@
-use crate::utils;
-use crate::{Context, Error};
+use crate::{utils, Context, Error};
+
+use std::collections::HashMap;
+
 use include_dir::{include_dir, Dir};
 use log::*;
-use std::collections::HashMap;
 
 const FILES: Dir = include_dir!("src/copypastas");
 

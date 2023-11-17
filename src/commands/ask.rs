@@ -1,5 +1,5 @@
 use crate::consts;
-use crate::utils::random_choice;
+use crate::utils;
 use crate::{Context, Error};
 
 /// ask teawie a question!
@@ -10,7 +10,7 @@ pub async fn ask(
 	#[rename = "question"]
 	_question: String,
 ) -> Result<(), Error> {
-	match random_choice(consts::RESPONSES) {
+	match utils::random_choice(consts::RESPONSES) {
 		Ok(resp) => {
 			ctx.say(resp).await?;
 			Ok(())
