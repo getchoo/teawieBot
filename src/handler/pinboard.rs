@@ -1,4 +1,5 @@
-use crate::utils::{floor_char_boundary, parse_snowflake_from_env, parse_snowflakes_from_env};
+use crate::utils;
+
 use log::*;
 use poise::serenity_prelude::model::prelude::*;
 use poise::serenity_prelude::Context;
@@ -10,10 +11,10 @@ pub struct PinBoard {
 }
 impl PinBoard {
 	pub fn new() -> Option<Self> {
-		let Some(target) = parse_snowflake_from_env("PIN_BOARD_TARGET", ChannelId) else {
+		let Some(target) = utils::parse_snowflake_from_env("PIN_BOARD_TARGET", ChannelId) else {
 			return None;
 		};
-		let sources = parse_snowflakes_from_env("PIN_BOARD_SOURCES", ChannelId);
+		let sources = utils::parse_snowflakes_from_env("PIN_BOARD_SOURCES", ChannelId);
 
 		Some(Self { sources, target })
 	}
@@ -43,7 +44,7 @@ impl PinBoard {
 	async fn redirect(&self, ctx: &Context, pin: &Message, pinner: Option<UserId>) {
 		let pinner = pinner.map_or("*someone*".to_owned(), |u| format!("<@{u}>"));
 
-		let truncation_point = floor_char_boundary(&pin.content, 700);
+		let truncation_point = utils::floor_char_boundary(&pin.content, 700);
 		let truncated_content = if pin.content.len() <= truncation_point {
 			pin.content.to_string()
 		} else {

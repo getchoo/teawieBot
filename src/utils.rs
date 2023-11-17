@@ -1,5 +1,4 @@
-use crate::consts::*;
-use crate::Error;
+use crate::{consts, Error};
 
 use once_cell::sync::Lazy;
 use poise::serenity_prelude::GuildId;
@@ -46,7 +45,7 @@ pub fn floor_char_boundary(s: &str, index: usize) -> usize {
 pub fn is_guild_allowed(gid: GuildId) -> bool {
 	static ALLOWED_GUILDS: Lazy<Vec<GuildId>> = Lazy::new(|| {
 		parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
-			.unwrap_or_else(|| vec![TEAWIE_GUILD, GuildId(1091969030694375444)])
+			.unwrap_or_else(|| vec![consts::TEAWIE_GUILD, GuildId(1091969030694375444)])
 	});
 
 	ALLOWED_GUILDS.contains(&gid)

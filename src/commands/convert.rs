@@ -1,5 +1,5 @@
 use crate::{Context, Error};
-use bottomify::bottom::{decode_string, encode_string};
+use bottomify::bottom;
 
 #[poise::command(
 	slash_command,
@@ -37,7 +37,7 @@ pub async fn to_bottom(
 	ctx: Context<'_>,
 	#[description = "what teawie will translate into bottom"] message: String,
 ) -> Result<(), Error> {
-	let encoded = encode_string(&message);
+	let encoded = bottom::encode_string(&message);
 	ctx.say(encoded).await?;
 	Ok(())
 }
@@ -48,7 +48,7 @@ pub async fn from_bottom(
 	ctx: Context<'_>,
 	#[description = "what teawie will translate from bottom"] message: String,
 ) -> Result<(), Error> {
-	let d = decode_string(&message);
+	let d = bottom::decode_string(&message);
 	match d {
 		Ok(decoded) => {
 			ctx.say(decoded).await?;
