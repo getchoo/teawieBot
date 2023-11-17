@@ -1,3 +1,4 @@
+use crate::colors::Colors;
 use crate::{Context, Error};
 
 /// get version info
@@ -27,7 +28,7 @@ pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
 			e.title("Version Information")
 				.description("powered by poise!")
 				.fields(fields)
-				.color((136, 199, 253))
+				.color(Colors::Blue)
 		})
 	})
 	.await?;
