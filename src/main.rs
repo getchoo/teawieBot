@@ -1,5 +1,4 @@
-use std::time::Duration;
-use std::{env, error};
+use std::{error, time};
 
 use handler::pinboard::PinBoard;
 use log::*;
@@ -19,17 +18,17 @@ pub struct Data {
 	pin_board: Option<PinBoard>,
 }
 
-impl Default for Data {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl Data {
 	pub fn new() -> Self {
 		let pin_board = PinBoard::new();
 
 		Self { pin_board }
+	}
+}
+
+impl Default for Data {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 
@@ -59,7 +58,9 @@ async fn main() {
 		},
 		prefix_options: poise::PrefixFrameworkOptions {
 			prefix: Some("!".into()),
-			edit_tracker: Some(poise::EditTracker::for_timespan(Duration::from_secs(3600))),
+			edit_tracker: Some(poise::EditTracker::for_timespan(time::Duration::from_secs(
+				3600,
+			))),
 			..Default::default()
 		},
 		on_error: |error| Box::pin(on_error(error)),
@@ -71,8 +72,10 @@ async fn main() {
 
 	let framework = poise::Framework::builder()
 		.options(options)
-		.token(env::var("TOKEN").expect("couldn't find token in environment."))
-		.intents(serentiy::GatewayIntents::all())
+		.token(std::env::var("TOKEN").expect("couldn't find token in environment."))
+		.intents(
+			serentiy::GatewayIntents::non_privileged() | serentiy::GatewayIntents::MESSAGE_CONTENT,
+		)
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
 				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
