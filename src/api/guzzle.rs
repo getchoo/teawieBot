@@ -1,6 +1,7 @@
 use crate::api::REQWEST_CLIENT;
 use crate::Error;
 
+use log::*;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
@@ -19,14 +20,30 @@ pub async fn get_random_teawie() -> Result<String, Error> {
 		.build()
 		.unwrap();
 
+	info!("making request to {}", req.url());
 	let resp = REQWEST_CLIENT.execute(req).await.unwrap();
+	let status = resp.status();
 
-	if let StatusCode::OK = resp.status() {
+	if let StatusCode::OK = status {
 		match resp.json::<GuzzleResponse>().await {
 			Ok(data) => Ok(data.url),
-			Err(why) => Err(Box::new(why)),
+			Err(why) => {
+				if let Some(url) = why.url() {
+					error!("error parsing json from {}! {}", url, why)
+				} else {
+					error!("couldn't even get the url! {}", why);
+				}
+
+				Err(Box::new(why))
+			}
 		}
 	} else {
-		Err(resp.status().to_string().into())
+		error!(
+			"couldn't fetch random teawie from {}! {}",
+			resp.url(),
+			status
+		);
+
+		Err(status.to_string().into())
 	}
 }
