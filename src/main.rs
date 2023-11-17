@@ -5,6 +5,7 @@ use log::*;
 use poise::serenity_prelude as serentiy;
 
 mod api;
+mod colors;
 mod commands;
 mod consts;
 mod handler;
