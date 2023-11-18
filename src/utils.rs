@@ -1,8 +1,10 @@
-use crate::{consts, Error};
+use crate::{colors, consts, Context, Error};
 
+use log::*;
 use once_cell::sync::Lazy;
 use poise::serenity_prelude::GuildId;
 use rand::seq::SliceRandom;
+use url::Url;
 
 pub fn parse_snowflake_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<T> {
 	std::env::var(key).ok().and_then(|v| v.parse().map(&f).ok())
@@ -49,4 +51,33 @@ pub fn is_guild_allowed(gid: GuildId) -> bool {
 	});
 
 	ALLOWED_GUILDS.contains(&gid)
+}
+
+pub async fn send_url_as_embed(ctx: Context<'_>, url: String) -> Result<(), Error> {
+	match Url::parse(&url) {
+		Ok(parsed) => {
+			let title = parsed
+				.path_segments()
+				.unwrap()
+				.last()
+				.unwrap_or_else(|| "wie")
+				.replace("%20", " ");
+
+			ctx.send(|c| {
+				c.embed(|e| {
+					e.title(title)
+						.image(&url)
+						.url(url)
+						.color(colors::Colors::Blue)
+				})
+			})
+			.await?;
+		}
+		Err(why) => {
+			error!("failed to parse url {}! {}", url, why);
+			ctx.say("i can't get that for you right now :(").await?;
+		}
+	}
+
+	Ok(())
 }
