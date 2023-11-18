@@ -4,9 +4,9 @@ pub enum Colors {
 	Blue,
 }
 
-impl Into<Colour> for Colors {
-	fn into(self) -> Colour {
-		match self {
+impl From<Colors> for Colour {
+	fn from(val: Colors) -> Self {
+		match val {
 			Colors::Blue => Colour::from((136, 199, 253)),
 		}
 	}
