@@ -60,7 +60,7 @@ pub async fn send_url_as_embed(ctx: Context<'_>, url: String) -> Result<(), Erro
 				.path_segments()
 				.unwrap()
 				.last()
-				.unwrap_or_else(|| "wie")
+				.unwrap_or("image")
 				.replace("%20", " ");
 
 			ctx.send(|c| {
