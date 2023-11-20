@@ -58,6 +58,18 @@ impl PinBoard {
 			.and_then(|(role, _)| role.to_role_cached(&ctx.cache))
 			.map(|role| role.colour);
 
+		let attachment = pin
+			.attachments
+			.iter()
+			.filter(|a| {
+				a.content_type
+					.as_ref()
+					.filter(|ct| ct.contains("image/"))
+					.is_some()
+			})
+			.map(|a| a.url.clone())
+			.next();
+
 		self.target
 			.send_message(&ctx.http, |m| {
 				m.allowed_mentions(|am| am.empty_parse())
@@ -70,6 +82,18 @@ impl PinBoard {
 						if let Some(color) = color {
 							embed.color(color);
 						}
+
+						if let Some(attachment) = attachment {
+							embed.image(attachment);
+						}
+
+						if !pin.attachments.is_empty() {
+							embed.footer(|footer| {
+								// yes it will say '1 attachments' no i do not care
+								footer.text(format!("{} attachment(s)", pin.attachments.len()))
+							});
+						}
+
 						embed.description(truncated_content)
 					})
 			})
