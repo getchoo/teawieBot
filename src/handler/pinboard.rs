@@ -72,19 +72,16 @@ impl PinBoard {
 
 		let attachments_len = pin.attachments.len();
 
-		let embeds = pin
-			.embeds
-			.iter()
-			.take(9) // 10 embeds max per message, this should never matter but better safe than sorry :^)
-			.cloned()
-			.map(|e| e.into())
-			.collect::<Vec<CreateEmbed>>();
-
 		self.target
 			.send_message(&ctx.http, |m| {
 				m.allowed_mentions(|am| am.empty_parse())
 					.content(format!("📌'd by {pinner} in {}", pin.link()))
 					.add_embed(|embed| {
+						// only use the first embed if it's in the message, since more could be a little spammy
+						if let Some(pinned_embed) = pin.embeds.first() {
+							embed.clone_from(&CreateEmbed::from(pinned_embed.clone()))
+						}
+
 						embed.author(|author| {
 							author.name(&pin.author.name).icon_url(pin.author.face())
 						});
@@ -106,7 +103,6 @@ impl PinBoard {
 
 						embed.description(truncated_content)
 					})
-					.add_embeds(embeds)
 			})
 			.await
 			.expect("couldn't redirect message");
