@@ -1,14 +1,14 @@
-name: upload to registry
-# this is for uploading images to a container registry when
-# changes are made to `main`
+name: Push to image registry
 
 on:
   check_suite:
-    types: [completed]
+    types: ["completed"]
   workflow_dispatch:
 
 jobs:
   build:
+    name: Build image
+
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,19 +23,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: install nix
+      - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v8
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
 
-      - name: build docker image
+      - name: Build Docker image
         id: build
         run: |
           nix build -L --accept-flake-config .#container-${{ matrix.arch }}
           [ ! -L result ] && exit 1
           echo "path=$(realpath result)" >> "$GITHUB_OUTPUT"
 
-      - name: upload image
+      - name: Upload image
         uses: actions/upload-artifact@v3
         with:
           name: container-${{ matrix.arch }}
@@ -43,7 +44,9 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  upload:
+  push:
+    name: Push image
+
     needs: build
     runs-on: ubuntu-latest
 
@@ -61,25 +64,25 @@ jobs:
       && github.event.check_suite.head_branch == 'main'
 
     steps:
-      - name: set image name
+      - name: Set image name
         run: |
           echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v4
 
-      - name: download images
+      - name: Download images
         uses: actions/download-artifact@v3
         with:
           path: images
 
-      - name: login to registry
+      - name: Login to registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.USERNAME }}
           password: ${{ github.token }}
 
-      - name: upload to registry
+      - name: Push to registry
         env:
           TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         run: |

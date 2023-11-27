@@ -1,13 +1,13 @@
-name: clippy
+name: Clippy
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
   pull_request:
-  workflow_dispatch:
 
 jobs:
   clippy:
+    name: Run Clippy scan
     runs-on: ubuntu-latest
 
     permissions:
@@ -16,22 +16,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: install rust
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           components: clippy
 
-      - name: setup rust cache
+      - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: install sarif tools
+      - name: Install SARIF tools
         run: cargo install clippy-sarif sarif-fmt
 
-      - name: fetch cargo deps
+      - name: Fetch Cargo deps
         run: cargo fetch --locked
 
-      - name: run clippy
+      - name: Run Clippy
         continue-on-error: true
         run: |
           set -euxo pipefail
@@ -42,7 +42,7 @@ jobs:
             --message-format=json \
           | clippy-sarif | tee /tmp/clippy.sarif | sarif-fmt
 
-      - name: upload results
+      - name: Upload results
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: /tmp/clippy.sarif
