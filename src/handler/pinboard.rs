@@ -2,7 +2,7 @@ use crate::utils;
 
 use log::*;
 use poise::serenity_prelude::model::prelude::*;
-use poise::serenity_prelude::Context;
+use poise::serenity_prelude::{Context, CreateEmbed};
 
 #[derive(Clone)]
 pub struct PinBoard {
@@ -72,6 +72,14 @@ impl PinBoard {
 
 		let attachments_len = pin.attachments.len();
 
+		let embeds = pin
+			.embeds
+			.iter()
+			.take(9) // 10 embeds max per message, this should never matter but better safe than sorry :^)
+			.cloned()
+			.map(|e| e.into())
+			.collect::<Vec<CreateEmbed>>();
+
 		self.target
 			.send_message(&ctx.http, |m| {
 				m.allowed_mentions(|am| am.empty_parse())
@@ -98,6 +106,7 @@ impl PinBoard {
 
 						embed.description(truncated_content)
 					})
+					.add_embeds(embeds)
 			})
 			.await
 			.expect("couldn't redirect message");
