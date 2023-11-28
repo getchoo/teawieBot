@@ -4,11 +4,12 @@ use poise::Event;
 
 mod message;
 pub mod pinboard;
+mod reactboard;
 
 pub async fn handle(
 	ctx: &serenity::Context,
 	event: &Event<'_>,
-	_framework: poise::FrameworkContext<'_, Data, Error>,
+	framework: poise::FrameworkContext<'_, Data, Error>,
 	data: &Data,
 ) -> Result<(), Error> {
 	match event {
@@ -17,15 +18,19 @@ pub async fn handle(
 		}
 
 		Event::Message { new_message } => {
-			message::handle(ctx, event, _framework, data, new_message).await?;
+			message::handle(ctx, event, framework, data, new_message).await?
 		}
 
 		Event::ChannelPinsUpdate { pin } => {
-			let Some(pin_board) = &data.pin_board else {
-				return Ok(());
-			};
+			if let Some(settings) = &data.settings {
+				pinboard::handle(ctx, pin, settings).await
+			}
+		}
 
-			pin_board.handle_pin(ctx, pin).await;
+		Event::ReactionAdd { add_reaction } => {
+			if let Some(settings) = &data.settings {
+				reactboard::handle(ctx, add_reaction, settings).await?
+			}
 		}
 
 		_ => {}

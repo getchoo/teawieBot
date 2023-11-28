@@ -1,14 +1,15 @@
 use std::{error, time};
 
-use handler::pinboard::PinBoard;
 use log::*;
 use poise::serenity_prelude as serentiy;
+use settings::Settings;
 
 mod api;
 mod colors;
 mod commands;
 mod consts;
 mod handler;
+mod settings;
 mod utils;
 
 type Error = Box<dyn error::Error + Send + Sync>;
@@ -16,14 +17,14 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[derive(Clone)]
 pub struct Data {
-	pin_board: Option<PinBoard>,
+	settings: Option<Settings>,
 }
 
 impl Data {
 	pub fn new() -> Self {
-		let pin_board = PinBoard::new();
+		let settings = Settings::new();
 
-		Self { pin_board }
+		Self { settings }
 	}
 }
 
