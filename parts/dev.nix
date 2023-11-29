@@ -52,12 +52,16 @@
     devShells = {
       default = pkgs.mkShell {
         packages = with pkgs; [
+          # general
           actionlint
           nodePackages_latest.prettier
 
           # rust
+          cargo
+          rustc
           clippy
           rustfmt
+          rust-analyzer
 
           # nix
           config.formatter
@@ -66,7 +70,7 @@
           statix
         ];
 
-        inputsFrom = [config.packages.default];
+        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
       };
     };
 
