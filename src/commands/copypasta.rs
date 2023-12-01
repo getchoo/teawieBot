@@ -1,7 +1,8 @@
-use crate::{utils, Context, Error};
+use crate::{utils, Context};
 
 use std::collections::HashMap;
 
+use color_eyre::eyre::{eyre, Result};
 use include_dir::{include_dir, Dir};
 use log::*;
 
@@ -58,8 +59,11 @@ fn get_copypasta(name: Copypastas) -> String {
 pub async fn copypasta(
 	ctx: Context<'_>,
 	#[description = "the copypasta you want to send"] copypasta: Copypastas,
-) -> Result<(), Error> {
-	let gid = ctx.guild_id().unwrap_or_default();
+) -> Result<()> {
+	let gid = ctx
+		.guild_id()
+		.ok_or_else(|| eyre!("couldnt get guild from message!"))?;
+
 	if !utils::is_guild_allowed(gid) {
 		info!("not running copypasta command in {gid}");
 		return Ok(());
