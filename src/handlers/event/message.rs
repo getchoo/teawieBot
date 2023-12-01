@@ -20,13 +20,14 @@ pub async fn handle(
 }
 
 fn should_echo(
-	framework: FrameworkContext<'_, Data, Report>,
+	_framework: FrameworkContext<'_, Data, Report>,
 	msg: &Message,
 	settings: &Settings,
 ) -> bool {
 	let gid = msg.guild_id.unwrap_or_default();
-	if msg.author.id == framework.bot_id {
+	if msg.author.bot && msg.webhook_id.is_none() {
 		info!("I don't like repeating myself...");
+		return false;
 	}
 
 	if !settings.is_guild_allowed(gid) {
