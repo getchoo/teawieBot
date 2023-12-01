@@ -1,6 +1,10 @@
 {
   lib,
+  stdenv,
   naersk,
+  CoreFoundation,
+  Security,
+  SystemConfiguration,
   self,
   lto ? false,
   optimizeSize ? false,
@@ -31,6 +35,12 @@ in
 
     src = filterSource ../.;
 
+    buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
+      CoreFoundation
+      Security
+      SystemConfiguration
+    ];
+
     GIT_SHA = builtins.substring 0 7 self.rev or "dirty";
 
     RUSTFLAGS =
@@ -42,7 +52,7 @@ in
       description = "funni bot";
       homepage = "https://github.com/getchoo/teawiebot";
       license = licenses.mit;
-      platforms = with platforms; unix;
+      platforms = with platforms; linux ++ darwin;
       maintainers = with maintainers; [getchoo];
     };
   }
