@@ -1,9 +1,11 @@
 use crate::colors::Colors;
-use crate::{Context, Error};
+use crate::Context;
+
+use color_eyre::eyre::Result;
 
 /// get version info
 #[poise::command(slash_command)]
-pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn version(ctx: Context<'_>) -> Result<()> {
 	let sha = option_env!("GIT_SHA").unwrap_or("main");
 
 	let revision_url = format!(

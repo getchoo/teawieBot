@@ -1,6 +1,6 @@
 use crate::api::REQWEST_CLIENT;
-use crate::Error;
 
+use color_eyre::eyre::{eyre, Result};
 use log::*;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -11,32 +11,20 @@ struct GuzzleResponse {
 }
 
 const GUZZLE: &str = "https://api.mydadleft.me";
+const RANDOM_TEAWIE: &str = "/random_teawie";
 
-pub async fn get_random_teawie() -> Result<String, Error> {
-	let endpoint = "/get_random_teawie";
-
+pub async fn get_random_teawie() -> Result<String> {
 	let req = REQWEST_CLIENT
-		.get(format!("{GUZZLE}{endpoint}"))
-		.build()
-		.unwrap();
+		.get(format!("{GUZZLE}{RANDOM_TEAWIE}"))
+		.build()?;
 
 	info!("making request to {}", req.url());
-	let resp = REQWEST_CLIENT.execute(req).await.unwrap();
+	let resp = REQWEST_CLIENT.execute(req).await?;
 	let status = resp.status();
 
 	if let StatusCode::OK = status {
-		match resp.json::<GuzzleResponse>().await {
-			Ok(data) => Ok(data.url),
-			Err(why) => {
-				if let Some(url) = why.url() {
-					error!("error parsing json from {}! {}", url, why)
-				} else {
-					error!("couldn't even get the url! {}", why);
-				}
-
-				Err(Box::new(why))
-			}
-		}
+		let data = resp.json::<GuzzleResponse>().await?;
+		Ok(data.url)
 	} else {
 		error!(
 			"couldn't fetch random teawie from {}! {}",
@@ -44,6 +32,6 @@ pub async fn get_random_teawie() -> Result<String, Error> {
 			status
 		);
 
-		Err(status.to_string().into())
+		Err(eyre!("failed to get random teawie with {status}"))
 	}
 }

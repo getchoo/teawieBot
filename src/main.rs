@@ -1,19 +1,21 @@
-use std::{error, time};
+use std::time::Duration;
 
+use color_eyre::eyre::{eyre, Context as _, Report, Result};
 use log::*;
-use poise::serenity_prelude as serentiy;
+use poise::{
+	serenity_prelude as serenity, EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
+};
 use settings::Settings;
 
 mod api;
 mod colors;
 mod commands;
 mod consts;
-mod handler;
+mod handlers;
 mod settings;
 mod utils;
 
-type Error = Box<dyn error::Error + Send + Sync>;
-type Context<'a> = poise::Context<'a, Data, Error>;
+type Context<'a> = poise::Context<'a, Data, Report>;
 
 #[derive(Clone)]
 pub struct Data {
@@ -34,54 +36,43 @@ impl Default for Data {
 	}
 }
 
-async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
-	match error {
-		poise::FrameworkError::Setup { error, .. } => panic!("failed to start bot: {error:?}"),
-		poise::FrameworkError::Command { error, ctx } => {
-			error!("error in command {}: {:?}", ctx.command().name, error);
-		}
-		error => {
-			if let Err(e) = poise::builtins::on_error(error).await {
-				error!("error while handling an error: {}", e);
-			}
-		}
-	}
-}
-
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+	color_eyre::install()?;
 	env_logger::init();
 	dotenvy::dotenv().ok();
 
-	let options = poise::FrameworkOptions {
+	let token =
+		std::env::var("TOKEN").wrap_err_with(|| eyre!("Couldn't find token in environment!"))?;
+
+	let intents =
+		serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
+
+	let options = FrameworkOptions {
 		commands: commands::to_global_commands(),
-		event_handler: |ctx, event, framework, data| {
-			Box::pin(handler::handle(ctx, event, framework, data))
-		},
-		prefix_options: poise::PrefixFrameworkOptions {
-			prefix: Some("!".into()),
-			edit_tracker: Some(poise::EditTracker::for_timespan(time::Duration::from_secs(
-				3600,
-			))),
-			..Default::default()
-		},
-		on_error: |error| Box::pin(on_error(error)),
+		on_error: |error| Box::pin(handlers::handle_error(error)),
 		command_check: Some(|ctx| {
 			Box::pin(async move { Ok(ctx.author().id != ctx.framework().bot_id) })
 		}),
+		event_handler: |ctx, event, framework, data| {
+			Box::pin(handlers::handle_event(ctx, event, framework, data))
+		},
+		prefix_options: PrefixFrameworkOptions {
+			prefix: Some("!".into()),
+			edit_tracker: Some(EditTracker::for_timespan(Duration::from_secs(3600))),
+			..Default::default()
+		},
 		..Default::default()
 	};
 
-	let framework = poise::Framework::builder()
+	let framework = Framework::builder()
+		.token(token)
+		.intents(intents)
 		.options(options)
-		.token(std::env::var("TOKEN").expect("couldn't find token in environment."))
-		.intents(
-			serentiy::GatewayIntents::non_privileged() | serentiy::GatewayIntents::MESSAGE_CONTENT,
-		)
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
 				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-				info!("registered global commands!");
+				info!("Registered global commands!");
 
 				poise::builtins::register_in_guild(
 					ctx,
@@ -89,11 +80,17 @@ async fn main() {
 					consts::TEAWIE_GUILD,
 				)
 				.await?;
-				info!("registered guild commands!");
+				info!("Registered guild commands to {}", consts::TEAWIE_GUILD);
 
 				Ok(Data::new())
 			})
 		});
 
-	framework.run().await.unwrap()
+	tokio::select! {
+		result = framework.run() => { result.map_err(Report::from) },
+		_ = tokio::signal::ctrl_c() => {
+			info!("Interrupted! Exiting...");
+			std::process::exit(130);
+		}
+	}
 }

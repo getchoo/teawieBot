@@ -1,6 +1,6 @@
-use crate::{colors, consts, Context, Error};
+use crate::{colors, consts, Context};
 
-use log::*;
+use color_eyre::eyre::{eyre, Result};
 use once_cell::sync::Lazy;
 use poise::serenity_prelude as serenity;
 use rand::seq::SliceRandom;
@@ -21,13 +21,13 @@ pub fn parse_snowflakes_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<
 /*
  * chooses a random element from an array
  */
-pub fn random_choice<const N: usize>(arr: [&str; N]) -> Result<String, Error> {
+pub fn random_choice<const N: usize>(arr: [&str; N]) -> Result<String> {
 	let mut rng = rand::thread_rng();
-	if let Some(resp) = arr.choose(&mut rng) {
-		Ok((*resp).to_string())
-	} else {
-		Err(Into::into("couldn't choose from arr!"))
-	}
+	let resp = arr
+		.choose(&mut rng)
+		.ok_or_else(|| eyre!("couldn't choose from array!"))?;
+
+	Ok((*resp).to_string())
 }
 
 // waiting for `round_char_boundary` to stabilize
@@ -54,31 +54,25 @@ pub fn is_guild_allowed(gid: GuildId) -> bool {
 	ALLOWED_GUILDS.contains(&gid)
 }
 
-pub async fn send_url_as_embed(ctx: Context<'_>, url: String) -> Result<(), Error> {
-	match Url::parse(&url) {
-		Ok(parsed) => {
-			let title = parsed
-				.path_segments()
-				.unwrap()
-				.last()
-				.unwrap_or("image")
-				.replace("%20", " ");
+pub async fn send_url_as_embed(ctx: Context<'_>, url: String) -> Result<()> {
+	let parsed = Url::parse(&url)?;
 
-			ctx.send(|c| {
-				c.embed(|e| {
-					e.title(title)
-						.image(&url)
-						.url(url)
-						.color(colors::Colors::Blue)
-				})
-			})
-			.await?;
-		}
-		Err(why) => {
-			error!("failed to parse url {}! {}", url, why);
-			ctx.say("i can't get that for you right now :(").await?;
-		}
-	}
+	let title = parsed
+		.path_segments()
+		.unwrap()
+		.last()
+		.unwrap_or("image")
+		.replace("%20", " ");
+
+	ctx.send(|c| {
+		c.embed(|e| {
+			e.title(title)
+				.image(&url)
+				.url(url)
+				.color(colors::Colors::Blue)
+		})
+	})
+	.await?;
 
 	Ok(())
 }
