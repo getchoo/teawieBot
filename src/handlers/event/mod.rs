@@ -19,18 +19,14 @@ pub async fn handle(
 			log::info!("logged in as {}", data_about_bot.user.name)
 		}
 
-		Event::Message { new_message } => message::handle(ctx, framework, new_message).await?,
-
-		Event::ChannelPinsUpdate { pin } => {
-			if let Some(settings) = &data.settings {
-				pinboard::handle(ctx, pin, settings).await
-			}
+		Event::Message { new_message } => {
+			message::handle(ctx, framework, new_message, &data.settings).await?
 		}
 
+		Event::ChannelPinsUpdate { pin } => pinboard::handle(ctx, pin, &data.settings).await,
+
 		Event::ReactionAdd { add_reaction } => {
-			if let Some(settings) = &data.settings {
-				reactboard::handle(ctx, add_reaction, settings).await?
-			}
+			reactboard::handle(ctx, add_reaction, &data.settings).await?
 		}
 
 		_ => {}

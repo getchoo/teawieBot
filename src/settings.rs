@@ -1,9 +1,10 @@
-use crate::utils;
+use crate::{consts, utils};
 use log::*;
-use poise::serenity_prelude::{ChannelId, EmojiId, MessageReaction, ReactionType};
+use poise::serenity_prelude::{ChannelId, EmojiId, GuildId, MessageReaction, ReactionType};
 
 #[derive(Clone)]
 pub struct Settings {
+	pub allowed_guilds: Vec<GuildId>,
 	pub pinboard_target: ChannelId,
 	pub pinboard_sources: Option<Vec<ChannelId>>,
 	pub reactboard_target: ChannelId,
@@ -14,6 +15,9 @@ pub struct Settings {
 
 impl Settings {
 	pub fn new() -> Option<Self> {
+		let allowed_guilds = utils::parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
+			.unwrap_or_else(|| vec![consts::TEAWIE_GUILD, GuildId(1091969030694375444)]);
+
 		let Some(pinboard_target) = utils::parse_snowflake_from_env("PIN_BOARD_TARGET", ChannelId)
 		else {
 			return None;
@@ -56,6 +60,7 @@ impl Settings {
 		);
 
 		Some(Self {
+			allowed_guilds,
 			pinboard_target,
 			pinboard_sources,
 			reactboard_target,
@@ -76,5 +81,9 @@ impl Settings {
 			// no other types exist yet, so assume we can't use them :p
 			_ => false,
 		}
+	}
+
+	pub fn is_guild_allowed(&self, gid: GuildId) -> bool {
+		self.allowed_guilds.contains(&gid)
 	}
 }
