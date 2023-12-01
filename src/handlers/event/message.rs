@@ -26,7 +26,7 @@ fn should_echo(
 ) -> bool {
 	let gid = msg.guild_id.unwrap_or_default();
 	if msg.author.bot && msg.webhook_id.is_none() {
-		info!("I don't like repeating myself...");
+		info!("Not repeating another bot");
 		return false;
 	}
 
