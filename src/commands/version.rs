@@ -22,7 +22,7 @@ pub async fn version(ctx: Context<'_>) -> Result<()> {
 			false,
 		),
 		("Revision:", &revision_url, false),
-		("User Agent:", crate::api::USER_AGENT, false),
+		("User Agent:", &crate::api::USER_AGENT, false),
 	];
 
 	ctx.send(|c| {
