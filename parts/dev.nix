@@ -49,12 +49,17 @@
         pkgs.linkFarm "ci-gate" paths;
     };
 
+    proc.groups.daemons.processes = {
+      redis.command = lib.getExe' pkgs.redis "redis-server";
+    };
+
     devShells = {
       default = pkgs.mkShell {
         packages = with pkgs; [
           # general
           actionlint
           nodePackages_latest.prettier
+          config.proc.groups.daemons.package
 
           # rust
           cargo

@@ -22,6 +22,18 @@ in {
   options.services.teawiebot = {
     enable = mkEnableOption "teawiebot";
     package = mkPackageOption self.packages.${pkgs.stdenv.hostPlatform.system} "teawiebot" {};
+
+    redisUrl = mkOption {
+      description = mdDoc ''
+        Redis URL for teawieBot
+      '';
+      type = types.str;
+      default = "unix:${config.services.redis.servers.teawiebot.unixSocket}";
+      example = literalExpression ''
+        "redis://localhost/"
+      '';
+    };
+
     environmentFile = mkOption {
       description = mdDoc ''
         Environment file as defined in {manpage}`systemd.exec(5)`
@@ -35,6 +47,8 @@ in {
   };
 
   config = mkIf cfg.enable {
+    services.redis.servers.teawiebot.enable = true;
+
     systemd.services."teawiebot" = {
       enable = true;
       wantedBy = mkDefault ["multi-user.target"];
@@ -48,6 +62,7 @@ in {
         Restart = "always";
 
         EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
+        Environment = ["REDIS_URL=${cfg.redisUrl}"];
 
         # hardening
         DynamicUser = true;

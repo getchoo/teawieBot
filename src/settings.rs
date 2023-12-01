@@ -45,17 +45,17 @@ impl Settings {
 			})
 			.unwrap_or_default();
 
-		info!("pinboard target is {}", pinboard_target);
+		info!("PinBoard target is {}", pinboard_target);
 		if let Some(sources) = &pinboard_sources {
-			info!("pinboard sources are {:#?}", sources);
+			info!("PinBoard sources are {:#?}", sources);
 		}
-		info!("reactboard target is {}", reactboard_target);
+		info!("ReactBoard target is {}", reactboard_target);
 		info!(
-			"reactboard custom reactions are {:#?}",
+			"ReactBoard custom reactions are {:#?}",
 			reactboard_custom_reactions
 		);
 		info!(
-			"reactboard unicode reactions are {:#?}",
+			"ReactBoard unicode reactions are {:#?}",
 			reactboard_unicode_reactions
 		);
 

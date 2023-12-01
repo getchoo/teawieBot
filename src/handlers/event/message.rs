@@ -1,8 +1,8 @@
-use crate::settings::Settings;
+use crate::Settings;
 use crate::{consts, Data};
 
 use color_eyre::eyre::{Report, Result};
-use log::*;
+use log::info;
 use poise::serenity_prelude::{Context, Message};
 use poise::FrameworkContext;
 
@@ -10,9 +10,9 @@ pub async fn handle(
 	ctx: &Context,
 	framework: FrameworkContext<'_, Data, Report>,
 	msg: &Message,
-	settings: &Settings,
+	data: &Data,
 ) -> Result<()> {
-	if should_echo(framework, msg, settings) {
+	if should_echo(framework, msg, &data.settings) {
 		msg.reply(ctx, &msg.content).await?;
 	}
 
@@ -25,8 +25,12 @@ fn should_echo(
 	settings: &Settings,
 ) -> bool {
 	let gid = msg.guild_id.unwrap_or_default();
-	if msg.author.id == framework.bot_id || !settings.is_guild_allowed(gid) {
-		info!("not running copypasta command in {gid}");
+	if msg.author.id == framework.bot_id {
+		info!("I don't like repeating myself...");
+	}
+
+	if !settings.is_guild_allowed(gid) {
+		info!("Not echoing in guild {gid}");
 		return false;
 	}
 

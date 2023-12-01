@@ -1,15 +1,15 @@
-use crate::settings::Settings;
-use crate::utils;
+use crate::{utils, Data};
 
+use color_eyre::eyre::{eyre, Context as _, Result};
 use log::*;
 use poise::serenity_prelude::model::prelude::*;
 use poise::serenity_prelude::Context;
 
-pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, settings: &Settings) {
-	if let Some(sources) = &settings.pinboard_sources {
+pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) -> Result<()> {
+	if let Some(sources) = &data.settings.pinboard_sources {
 		if !sources.contains(&pin.channel_id) {
-			warn!("can't access source of pin!");
-			return;
+			warn!("Can't access source of pin!");
+			return Ok(());
 		}
 	}
 
@@ -18,16 +18,23 @@ pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, settings: &Sett
 		.channel_id
 		.pins(&ctx.http)
 		.await
-		.expect("couldn't get a list of pins!?");
+		.expect("Couldn't get a list of pins!?");
 
 	for pin in pins {
 		// We call `take` because it's supposed to be just for the latest message.
-		redirect(ctx, &pin, pinner.take(), settings.pinboard_target).await;
-		pin.unpin(&ctx).await.expect("couldn't unpin message");
+		redirect(ctx, &pin, pinner.take(), data.settings.pinboard_target).await?;
+		pin.unpin(&ctx).await?;
 	}
+
+	Ok(())
 }
 
-async fn redirect(ctx: &Context, pin: &Message, pinner: Option<UserId>, target: ChannelId) {
+async fn redirect(
+	ctx: &Context,
+	pin: &Message,
+	pinner: Option<UserId>,
+	target: ChannelId,
+) -> Result<()> {
 	let pinner = pinner.map_or("*someone*".to_owned(), |u| format!("<@{u}>"));
 	let embed = utils::resolve_message_to_embed(ctx, pin).await;
 
@@ -38,7 +45,9 @@ async fn redirect(ctx: &Context, pin: &Message, pinner: Option<UserId>, target: 
 				.set_embed(embed)
 		})
 		.await
-		.expect("couldn't redirect message");
+		.wrap_err_with(|| eyre!("couldn't redirect message"))?;
+
+	Ok(())
 }
 
 /// (Desperate, best-effort) attempt to get the user that pinned the last message
