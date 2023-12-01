@@ -16,18 +16,16 @@ pub async fn handle(
 ) -> Result<()> {
 	match event {
 		Event::Ready { data_about_bot } => {
-			log::info!("logged in as {}", data_about_bot.user.name)
+			log::info!("Logged in as {}!", data_about_bot.user.name)
 		}
 
 		Event::Message { new_message } => {
-			message::handle(ctx, framework, new_message, &data.settings).await?
+			message::handle(ctx, framework, new_message, data).await?
 		}
 
-		Event::ChannelPinsUpdate { pin } => pinboard::handle(ctx, pin, &data.settings).await,
+		Event::ChannelPinsUpdate { pin } => pinboard::handle(ctx, pin, data).await?,
 
-		Event::ReactionAdd { add_reaction } => {
-			reactboard::handle(ctx, add_reaction, &data.settings).await?
-		}
+		Event::ReactionAdd { add_reaction } => reactboard::handle(ctx, add_reaction, data).await?,
 
 		_ => {}
 	}

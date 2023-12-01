@@ -24,7 +24,7 @@ pub fn random_choice<const N: usize>(arr: [&str; N]) -> Result<String> {
 	let mut rng = rand::thread_rng();
 	let resp = arr
 		.choose(&mut rng)
-		.ok_or_else(|| eyre!("couldn't choose from array!"))?;
+		.ok_or_else(|| eyre!("Couldn't choose random object from array:\n{arr:#?}!"))?;
 
 	Ok((*resp).to_string())
 }

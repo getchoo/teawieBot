@@ -29,3 +29,5 @@ result
 .vs/
 .vscode/
 
+# redis
+dump.rdb

@@ -28,6 +28,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    proc-flake.url = "github:srid/proc-flake";
+    flake-root.url = "github:srid/flake-root";
+
     pre-commit = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -39,6 +42,8 @@
     parts.lib.mkFlake {inherit inputs;} {
       imports = [
         inputs.pre-commit.flakeModule
+        inputs.proc-flake.flakeModule
+        inputs.flake-root.flakeModule
 
         ./parts/deployment.nix
         ./parts/dev.nix
