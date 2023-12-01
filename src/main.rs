@@ -19,20 +19,15 @@ type Context<'a> = poise::Context<'a, Data, Report>;
 
 #[derive(Clone)]
 pub struct Data {
-	settings: Option<Settings>,
+	settings: Settings,
 }
 
 impl Data {
-	pub fn new() -> Self {
-		let settings = Settings::new();
+	pub fn new() -> Result<Self> {
+		let settings =
+			Settings::new().ok_or_else(|| eyre!("Couldn't create new settings object!"))?;
 
-		Self { settings }
-	}
-}
-
-impl Default for Data {
-	fn default() -> Self {
-		Self::new()
+		Ok(Self { settings })
 	}
 }
 
@@ -82,7 +77,8 @@ async fn main() -> Result<()> {
 				.await?;
 				info!("Registered guild commands to {}", consts::TEAWIE_GUILD);
 
-				Ok(Data::new())
+				let data = Data::new()?;
+				Ok(data)
 			})
 		});
 

@@ -1,4 +1,4 @@
-use crate::{utils, Context};
+use crate::Context;
 
 use std::collections::HashMap;
 
@@ -34,23 +34,29 @@ impl Copypastas {
 	}
 }
 
-fn get_copypasta(name: Copypastas) -> String {
+fn get_copypasta(name: Copypastas) -> Result<String> {
 	let mut files: HashMap<&str, &str> = HashMap::new();
 
 	for file in FILES.files() {
-		let name = file.path().file_stem().unwrap().to_str().unwrap();
+		let name = file
+			.path()
+			.file_stem()
+			.ok_or_else(|| eyre!("couldn't get file stem from {file:#?}"))?
+			.to_str()
+			.ok_or_else(|| eyre!("couldn't convert file stem to str!"))?;
 
-		let contents = file.contents_utf8().unwrap();
+		let contents = file
+			.contents_utf8()
+			.ok_or_else(|| eyre!("couldnt get contents from copypasta!"))?;
 
 		// refer to files by their name w/o extension
 		files.insert(name, contents);
 	}
 
 	if files.contains_key(name.as_str()) {
-		files[name.as_str()].to_string()
+		Ok(files[name.as_str()].to_string())
 	} else {
-		warn!("copypasta {} not found!", name);
-		format!("i don't have a copypasta named {name} :(")
+		Err(eyre!("couldnt find copypasta {name}!"))
 	}
 }
 
@@ -64,12 +70,12 @@ pub async fn copypasta(
 		.guild_id()
 		.ok_or_else(|| eyre!("couldnt get guild from message!"))?;
 
-	if !utils::is_guild_allowed(gid) {
+	if !ctx.data().settings.is_guild_allowed(gid) {
 		info!("not running copypasta command in {gid}");
 		return Ok(());
 	}
 
-	ctx.say(get_copypasta(copypasta)).await?;
+	ctx.say(get_copypasta(copypasta)?).await?;
 
 	Ok(())
 }

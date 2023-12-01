@@ -1,10 +1,9 @@
-use crate::{colors, consts, Context};
+use crate::{colors, Context};
 
 use color_eyre::eyre::{eyre, Result};
-use once_cell::sync::Lazy;
 use poise::serenity_prelude as serenity;
 use rand::seq::SliceRandom;
-use serenity::{CreateEmbed, GuildId, Message};
+use serenity::{CreateEmbed, Message};
 use url::Url;
 
 pub fn parse_snowflake_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<T> {
@@ -43,15 +42,6 @@ pub fn floor_char_boundary(s: &str, index: usize) -> usize {
 		// Can be made unsafe but whatever
 		lower_bound + new_index.unwrap()
 	}
-}
-
-pub fn is_guild_allowed(gid: GuildId) -> bool {
-	static ALLOWED_GUILDS: Lazy<Vec<GuildId>> = Lazy::new(|| {
-		parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
-			.unwrap_or_else(|| vec![consts::TEAWIE_GUILD, GuildId(1091969030694375444)])
-	});
-
-	ALLOWED_GUILDS.contains(&gid)
 }
 
 pub async fn send_url_as_embed(ctx: Context<'_>, url: String) -> Result<()> {
