@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{Context, Settings};
 
 use color_eyre::eyre::Result;
 use log::*;
@@ -7,9 +7,10 @@ use log::*;
 #[poise::command(slash_command, prefix_command)]
 pub async fn teawiespam(ctx: Context<'_>) -> Result<()> {
 	let gid = ctx.guild_id().unwrap_or_default();
+	let settings = Settings::from_redis(&ctx.data().redis, &gid).await?;
 
-	if !ctx.data().settings.is_guild_allowed(gid) {
-		info!("not running teawiespam command in {gid}");
+	if !settings.optional_commands_enabled {
+		debug!("Not running teawiespam in {gid} since it's disabled");
 		return Ok(());
 	}
 

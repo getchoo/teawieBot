@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{Context, Settings};
 
 use std::collections::HashMap;
 
@@ -66,12 +66,11 @@ pub async fn copypasta(
 	ctx: Context<'_>,
 	#[description = "the copypasta you want to send"] copypasta: Copypastas,
 ) -> Result<()> {
-	let gid = ctx
-		.guild_id()
-		.ok_or_else(|| eyre!("couldnt get guild from message!"))?;
+	let gid = ctx.guild_id().unwrap_or_default();
+	let settings = Settings::from_redis(&ctx.data().redis, &gid).await?;
 
-	if !ctx.data().settings.is_guild_allowed(gid) {
-		info!("not running copypasta command in {gid}");
+	if !settings.optional_commands_enabled {
+		debug!("Not running copypasta command in {gid} since it's disabled");
 		return Ok(());
 	}
 

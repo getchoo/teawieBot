@@ -1,5 +1,4 @@
 use crate::{api, consts, utils, Context};
-
 use color_eyre::eyre::Result;
 
 #[poise::command(slash_command, subcommands("lore", "teawie", "shiggy"))]

@@ -1,4 +1,4 @@
-use crate::{utils, Data};
+use crate::{utils, Data, Settings};
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::*;
@@ -52,14 +52,24 @@ async fn send_to_reactboard(
 	msg: &Message,
 	data: &Data,
 ) -> Result<()> {
+	let gid = msg.guild_id.unwrap_or_default();
+	let settings = Settings::from_redis(&data.redis, &gid).await?;
+
 	// make sure everything is in order...
-	if !data.settings.can_use_reaction(reaction) {
-		info!("Reaction {} can't be used!", reaction.reaction_type);
+	let target = if let Some(target) = settings.reactboard_channel {
+		target
+	} else {
+		debug!("Reactboard is disabled in {gid}, ignoring");
+		return Ok(());
+	};
+
+	if !settings.can_use_reaction(&reaction.reaction_type) {
+		debug!("Reaction {} can't be used!", reaction.reaction_type);
 		return Ok(());
 	}
 
-	if reaction.count < data.settings.reactboard_requirement.unwrap_or(5) {
-		info!(
+	if reaction.count < settings.reactboard_requirement.unwrap_or(5) {
+		debug!(
 			"Ignoring message {} on reactboard, not enough reactions",
 			msg.id
 		);
@@ -137,9 +147,7 @@ async fn send_to_reactboard(
 	} else {
 		let embed = utils::resolve_message_to_embed(ctx, msg).await;
 
-		let resp = data
-			.settings
-			.reactboard_target
+		let resp = target
 			.send_message(ctx, |m| {
 				m.allowed_mentions(|am| am.empty_parse())
 					.content(content)

@@ -1,8 +1,7 @@
-use crate::Settings;
-use crate::{consts, Data};
+use crate::{consts, Data, Settings};
 
-use color_eyre::eyre::{Report, Result};
-use log::info;
+use color_eyre::eyre::{eyre, Report, Result};
+use log::*;
 use poise::serenity_prelude::{Context, Message};
 use poise::FrameworkContext;
 
@@ -12,35 +11,39 @@ pub async fn handle(
 	msg: &Message,
 	data: &Data,
 ) -> Result<()> {
-	if should_echo(framework, msg, &data.settings) {
+	if should_echo(framework, msg, data).await? {
 		msg.reply(ctx, &msg.content).await?;
 	}
 
 	Ok(())
 }
 
-fn should_echo(
+async fn should_echo(
 	_framework: FrameworkContext<'_, Data, Report>,
 	msg: &Message,
-	settings: &Settings,
-) -> bool {
-	let gid = msg.guild_id.unwrap_or_default();
+	data: &Data,
+) -> Result<bool> {
 	if msg.author.bot && msg.webhook_id.is_none() {
-		info!("Not repeating another bot");
-		return false;
+		debug!("Not repeating another bot");
+		return Ok(false);
 	}
 
-	if !settings.is_guild_allowed(gid) {
-		info!("Not echoing in guild {gid}");
-		return false;
+	let gid = msg
+		.guild_id
+		.ok_or_else(|| eyre!("Couldn't get GuildId from {}!", msg.id))?;
+	let settings = Settings::from_redis(&data.redis, &gid).await?;
+
+	if !settings.optional_commands_enabled {
+		debug!("Not echoing in guild {gid}");
+		return Ok(false);
 	}
 
 	let content = &msg.content;
 
-	content == "🗿"
+	Ok(content == "🗿"
 		|| consts::TEAMOJIS.contains(&content.as_str())
 		|| content.to_ascii_lowercase() == "moyai"
 		|| content
 			.to_ascii_lowercase()
-			.contains("twitter's recommendation algorithm")
+			.contains("twitter's recommendation algorithm"))
 }

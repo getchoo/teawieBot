@@ -1,4 +1,4 @@
-use crate::{utils, Data};
+use crate::{utils, Data, Settings};
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::*;
@@ -6,9 +6,23 @@ use poise::serenity_prelude::model::prelude::*;
 use poise::serenity_prelude::Context;
 
 pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) -> Result<()> {
-	if let Some(sources) = &data.settings.pinboard_sources {
+	let gid = pin.guild_id.unwrap_or_default();
+	let settings = Settings::from_redis(&data.redis, &gid).await?;
+
+	let target = if let Some(target) = settings.reactboard_channel {
+		target
+	} else {
+		debug!("PinBoard is disabled in {gid}, ignoring");
+		return Ok(());
+	};
+
+	if let Some(sources) = settings.pinboard_watch {
 		if !sources.contains(&pin.channel_id) {
-			warn!("Can't access source of pin!");
+			debug!(
+				"{} not listed in PinBoard settings for {gid}, ignoring",
+				&pin.channel_id
+			);
+
 			return Ok(());
 		}
 	}
@@ -22,7 +36,7 @@ pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) ->
 
 	for pin in pins {
 		// We call `take` because it's supposed to be just for the latest message.
-		redirect(ctx, &pin, pinner.take(), data.settings.pinboard_target).await?;
+		redirect(ctx, &pin, pinner.take(), target).await?;
 		pin.unpin(&ctx).await?;
 	}
 

@@ -8,7 +8,7 @@ use poise::FrameworkError;
 
 pub async fn handle(error: poise::FrameworkError<'_, Data, Report>) {
 	match error {
-		FrameworkError::Setup { error, .. } => error!("error setting up client! {error:#?}"),
+		FrameworkError::Setup { error, .. } => error!("Error setting up client!\n{error:#?}"),
 
 		FrameworkError::Command { error, ctx } => {
 			error!("Error in command {}:\n{error:?}", ctx.command().name);
@@ -27,10 +27,10 @@ pub async fn handle(error: poise::FrameworkError<'_, Data, Report>) {
 		FrameworkError::EventHandler {
 			error,
 			ctx: _,
-			event: _,
+			event,
 			framework: _,
 		} => {
-			error!("Error while handling event:\n{error:#?}");
+			error!("Error while handling event {}:\n{error:?}", event.name());
 		}
 
 		error => {

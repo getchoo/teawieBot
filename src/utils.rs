@@ -6,17 +6,6 @@ use rand::seq::SliceRandom;
 use serenity::{CreateEmbed, Message};
 use url::Url;
 
-pub fn parse_snowflake_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<T> {
-	std::env::var(key).ok().and_then(|v| v.parse().map(&f).ok())
-}
-pub fn parse_snowflakes_from_env<T, F: Fn(u64) -> T>(key: &str, f: F) -> Option<Vec<T>> {
-	std::env::var(key).ok().and_then(|gs| {
-		gs.split(',')
-			.map(|g| g.parse().map(&f))
-			.collect::<Result<Vec<_>, _>>()
-			.ok()
-	})
-}
 /*
  * chooses a random element from an array
  */

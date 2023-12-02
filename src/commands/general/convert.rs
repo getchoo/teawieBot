@@ -1,5 +1,4 @@
 use crate::Context;
-
 use bottomify::bottom;
 use color_eyre::eyre::Result;
 

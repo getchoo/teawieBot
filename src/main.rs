@@ -19,29 +19,25 @@ type Context<'a> = poise::Context<'a, Data, Report>;
 
 #[derive(Clone)]
 pub struct Data {
-	settings: Settings,
 	redis: redis::Client,
 }
 
 impl Data {
 	pub fn new() -> Result<Self> {
-		let settings =
-			Settings::new().ok_or_else(|| eyre!("Couldn't create new settings object!"))?;
-
 		let redis_url = std::env::var("REDIS_URL")
 			.wrap_err_with(|| eyre!("Couldn't find Redis URL in environment!"))?;
 
 		let redis = redis::Client::open(redis_url)?;
 
-		Ok(Self { settings, redis })
+		Ok(Self { redis })
 	}
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+	dotenvy::dotenv().ok();
 	color_eyre::install()?;
 	env_logger::init();
-	dotenvy::dotenv().ok();
 
 	let token =
 		std::env::var("TOKEN").wrap_err_with(|| eyre!("Couldn't find token in environment!"))?;

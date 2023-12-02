@@ -4,6 +4,7 @@ use color_eyre::eyre::{Report, Result};
 use poise::serenity_prelude as serenity;
 use poise::{Event, FrameworkContext};
 
+mod guild;
 mod message;
 mod pinboard;
 mod reactboard;
@@ -26,6 +27,12 @@ pub async fn handle(
 		Event::ChannelPinsUpdate { pin } => pinboard::handle(ctx, pin, data).await?,
 
 		Event::ReactionAdd { add_reaction } => reactboard::handle(ctx, add_reaction, data).await?,
+
+		Event::GuildCreate { guild, is_new } => guild::handle_create(guild, is_new, data).await?,
+		Event::GuildDelete {
+			incomplete,
+			full: _,
+		} => guild::handle_delete(incomplete, data).await?,
 
 		_ => {}
 	}
