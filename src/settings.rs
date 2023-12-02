@@ -1,89 +1,88 @@
-use crate::{consts, utils};
-use log::*;
-use poise::serenity_prelude::{ChannelId, EmojiId, GuildId, MessageReaction, ReactionType};
+use color_eyre::eyre::{Context as _, Result};
+use poise::serenity_prelude::{ChannelId, GuildId, ReactionType};
+use redis::{AsyncCommands as _, Client};
+use redis_macros::{FromRedisValue, ToRedisArgs};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
+const ROOT_KEY: &str = "settings-v1";
+
+#[derive(poise::ChoiceParameter)]
+pub enum SettingsProperties {
+	GuildId,
+	PinBoardChannel,
+	PinBoardWatch,
+	ReactBoardChannel,
+	ReactBoardRequirement,
+	ReactBoardReactions,
+	OptionalCommandsEnabled,
+}
+
+#[derive(Clone, Default, PartialEq, Serialize, Deserialize, FromRedisValue, ToRedisArgs)]
 pub struct Settings {
-	pub allowed_guilds: Vec<GuildId>,
-	pub pinboard_target: ChannelId,
-	pub pinboard_sources: Option<Vec<ChannelId>>,
-	pub reactboard_target: ChannelId,
+	pub guild_id: GuildId,
+	pub pinboard_channel: Option<ChannelId>,
+	pub pinboard_watch: Option<Vec<ChannelId>>,
+	pub reactboard_channel: Option<ChannelId>,
 	pub reactboard_requirement: Option<u64>,
-	pub reactboard_custom_reactions: Vec<EmojiId>,
-	pub reactboard_unicode_reactions: Vec<String>,
+	pub reactboard_reactions: Option<Vec<ReactionType>>,
+	pub optional_commands_enabled: bool,
 }
 
 impl Settings {
-	pub fn new() -> Option<Self> {
-		let allowed_guilds = utils::parse_snowflakes_from_env("ALLOWED_GUILDS", GuildId)
-			.unwrap_or_else(|| vec![consts::TEAWIE_GUILD, GuildId(1091969030694375444)]);
-
-		let Some(pinboard_target) = utils::parse_snowflake_from_env("PIN_BOARD_TARGET", ChannelId)
-		else {
-			return None;
-		};
-		let pinboard_sources = utils::parse_snowflakes_from_env("PIN_BOARD_SOURCES", ChannelId);
-
-		let Some(reactboard_target) =
-			utils::parse_snowflake_from_env("REACT_BOARD_TARGET", ChannelId)
-		else {
-			return None;
+	pub async fn new_redis(redis: &Client, gid: &GuildId) -> Result<()> {
+		let key = format!("{ROOT_KEY}:{gid}");
+		let settings = Self {
+			guild_id: *gid,
+			optional_commands_enabled: false,
+			..Default::default()
 		};
 
-		let reactboard_requirement = utils::parse_snowflake_from_env("REACT_BOARD_MIN", u64::from);
+		let mut con = redis.get_async_connection().await?;
+		con.set(&key, settings)
+			.await
+			.wrap_err_with(|| format!("Couldn't set key {key} in Redis!"))?;
 
-		let reactboard_custom_reactions =
-			utils::parse_snowflakes_from_env("REACT_BOARD_CUSTOM_REACTIONS", EmojiId)
-				.unwrap_or_default();
-
-		let reactboard_unicode_reactions = std::env::var("REACT_BOARD_UNICODE_REACTIONS")
-			.ok()
-			.map(|v| {
-				v.split(',')
-					.map(|vs| vs.to_string())
-					.collect::<Vec<String>>()
-			})
-			.unwrap_or_default();
-
-		info!("PinBoard target is {}", pinboard_target);
-		if let Some(sources) = &pinboard_sources {
-			info!("PinBoard sources are {:#?}", sources);
-		}
-		info!("ReactBoard target is {}", reactboard_target);
-		info!(
-			"ReactBoard custom reactions are {:#?}",
-			reactboard_custom_reactions
-		);
-		info!(
-			"ReactBoard unicode reactions are {:#?}",
-			reactboard_unicode_reactions
-		);
-
-		Some(Self {
-			allowed_guilds,
-			pinboard_target,
-			pinboard_sources,
-			reactboard_target,
-			reactboard_requirement,
-			reactboard_custom_reactions,
-			reactboard_unicode_reactions,
-		})
+		Ok(())
 	}
 
-	pub fn can_use_reaction(&self, reaction: &MessageReaction) -> bool {
-		match &reaction.reaction_type {
-			ReactionType::Custom {
-				animated: _,
-				id,
-				name: _,
-			} => self.reactboard_custom_reactions.contains(id),
-			ReactionType::Unicode(name) => self.reactboard_unicode_reactions.contains(name),
-			// no other types exist yet, so assume we can't use them :p
-			_ => false,
-		}
+	pub async fn from_redis(redis: &Client, gid: &GuildId) -> Result<Self> {
+		let key = format!("{ROOT_KEY}:{gid}");
+		let mut con = redis.get_async_connection().await?;
+
+		let settings: Settings = con
+			.get(&key)
+			.await
+			.wrap_err_with(|| format!("Couldn't get {key} from Redis!"))?;
+
+		Ok(settings)
 	}
 
-	pub fn is_guild_allowed(&self, gid: GuildId) -> bool {
-		self.allowed_guilds.contains(&gid)
+	pub async fn delete(&self, redis: &Client) -> Result<()> {
+		let key = format!("{ROOT_KEY}:{}", self.guild_id);
+		let mut con = redis.get_async_connection().await?;
+
+		con.del(&key)
+			.await
+			.wrap_err_with(|| format!("Couldn't delete {key} from Redis!"))?;
+
+		Ok(())
+	}
+
+	pub async fn save(&self, redis: &Client) -> Result<()> {
+		let key = format!("{ROOT_KEY}:{}", self.guild_id);
+		let mut con = redis.get_async_connection().await?;
+
+		con.set(&key, self)
+			.await
+			.wrap_err_with(|| format!("Couldn't save {key} in Redis!"))?;
+		Ok(())
+	}
+
+	pub fn can_use_reaction(&self, reaction: &ReactionType) -> bool {
+		if let Some(reactions) = &self.reactboard_reactions {
+			reactions.iter().any(|r| r == reaction)
+		} else {
+			false
+		}
 	}
 }

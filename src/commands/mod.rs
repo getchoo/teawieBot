@@ -1,28 +1,23 @@
-pub mod ask;
-pub mod bing;
-pub mod convert;
-pub mod copypasta;
-pub mod random;
-pub mod teawiespam;
-pub mod version;
-
 use crate::Data;
 
 use color_eyre::eyre::Report;
 use poise::Command;
 
+mod general;
+mod moderation;
+mod optional;
+
 pub fn to_global_commands() -> Vec<Command<Data, Report>> {
 	vec![
-		ask::ask(),
-		bing::bing(),
-		convert::convert(),
-		random::random(),
-		copypasta::copypasta(),
-		teawiespam::teawiespam(),
-		version::version(),
+		general::ask(),
+		general::bing(),
+		general::convert(),
+		general::random(),
+		general::version(),
+		moderation::config(),
 	]
 }
 
 pub fn to_guild_commands() -> Vec<Command<Data, Report>> {
-	vec![copypasta::copypasta(), teawiespam::teawiespam()]
+	vec![optional::copypasta(), optional::teawiespam()]
 }

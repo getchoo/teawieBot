@@ -1,6 +1,5 @@
 use crate::colors::Colors;
 use crate::Context;
-
 use color_eyre::eyre::Result;
 
 /// get version info
