@@ -5,17 +5,18 @@ self: {
   ...
 }: let
   cfg = config.services.teawiebot;
+  defaultUser = "teawiebot";
 
   inherit
     (lib)
     getExe
     literalExpression
     mdDoc
-    mkDefault
     mkEnableOption
     mkIf
     mkOption
     mkPackageOption
+    optionals
     types
     ;
 in {
@@ -23,12 +24,40 @@ in {
     enable = mkEnableOption "teawiebot";
     package = mkPackageOption self.packages.${pkgs.stdenv.hostPlatform.system} "teawiebot" {};
 
-    redisUrl = mkOption {
+    user = mkOption {
       description = mdDoc ''
-        Redis URL for teawieBot
+        User under which the service should run. If this is the default value,
+            the user will be created, with the specified group as the primary
+            group.
       '';
       type = types.str;
-      default = "unix:${config.services.redis.servers.teawiebot.unixSocket}";
+      default = defaultUser;
+      example = literalExpression ''
+        "bob"
+      '';
+    };
+
+    group = mkOption {
+      description = mdDoc ''
+        Group under which the service should run. If this is the default value,
+        the group will be created.
+      '';
+      type = types.str;
+      default = defaultUser;
+      example = literalExpression ''
+        "discordbots"
+      '';
+    };
+
+    redisUrl = mkOption {
+      description = mdDoc ''
+        Connection to a redis server. If this needs to include credentials
+        that shouldn't be world-readable in the Nix store, set environmentFile
+        and override the `REDIS_URL` entry.
+        Pass the string `local` to setup a local Redis database.
+      '';
+      type = types.str;
+      default = "local";
       example = literalExpression ''
         "redis://localhost/"
       '';
@@ -47,35 +76,68 @@ in {
   };
 
   config = mkIf cfg.enable {
-    services.redis.servers.teawiebot.enable = true;
+    services.redis.servers.teawiebot = mkIf (cfg.redisUrl == "local") {
+      enable = true;
+      inherit (cfg) user;
+      port = 0; # disable tcp listener
+    };
 
     systemd.services."teawiebot" = {
       enable = true;
-      wantedBy = mkDefault ["multi-user.target"];
-      after = mkDefault ["network.target"];
+      wantedBy = ["multi-user.target"];
+      after =
+        ["network.target"]
+        ++ optionals (cfg.redisUrl == "local") ["redis-teawiebot.service"];
+
       script = ''
         ${getExe cfg.package}
       '';
+
+      environment = {
+        REDIS_URL =
+          if cfg.redisUrl == "local"
+          then "unix:${config.services.redis.servers.teawiebot.unixSocket}"
+          else cfg.redisUrl;
+      };
 
       serviceConfig = {
         Type = "simple";
         Restart = "always";
 
         EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
-        Environment = ["REDIS_URL=${cfg.redisUrl}"];
+
+        User = cfg.user;
+        Group = cfg.group;
 
         # hardening
-        DynamicUser = true;
-        PrivateTmp = true;
         NoNewPrivileges = true;
-        RestrictNamespaces = "uts ipc pid user cgroup";
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
         PrivateDevices = true;
+        PrivateTmp = true;
+        PrivateUsers = true;
+        ProtectClock = true;
+        ProtectControlGroups = true;
+        ProtectHome = true;
+        ProtectHostname = true;
+        ProtectKernelLogs = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        ProtectSystem = "strict";
+        RestrictNamespaces = "uts ipc pid user cgroup";
         RestrictSUIDSGID = true;
+        Umask = "0007";
+      };
+    };
+
+    users = {
+      users = mkIf (cfg.user == defaultUser) {
+        ${defaultUser} = {
+          isSystemUser = true;
+          inherit (cfg) group;
+        };
+      };
+
+      groups = mkIf (cfg.group == defaultUser) {
+        ${defaultUser} = {};
       };
     };
   };
