@@ -11,7 +11,7 @@ pub static USER_AGENT: Lazy<String> = Lazy::new(|| {
 
 pub static REQWEST_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
 	reqwest::Client::builder()
-		.user_agent(format!("{:#?}", USER_AGENT))
+		.user_agent(USER_AGENT.to_string())
 		.build()
 		.unwrap_or_default()
 });
