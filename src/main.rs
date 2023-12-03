@@ -5,6 +5,7 @@ use log::*;
 use poise::{
 	serenity_prelude as serenity, EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
 };
+use redis::AsyncCommands;
 use settings::Settings;
 
 mod api;
@@ -68,18 +69,33 @@ async fn main() -> Result<()> {
 		.options(options)
 		.setup(|ctx, _ready, framework| {
 			Box::pin(async move {
+				let data = Data::new()?;
+
 				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 				info!("Registered global commands!");
 
-				poise::builtins::register_in_guild(
-					ctx,
-					&commands::to_guild_commands(),
-					consts::TEAWIE_GUILD,
-				)
-				.await?;
-				info!("Registered guild commands to {}", consts::TEAWIE_GUILD);
+				// register "extra" commands in guilds that allow it
+				let mut con = data.redis.get_async_connection().await?;
 
-				let data = Data::new()?;
+				info!("Fetching all guild settings from Redis...this might take a while");
+				let guilds: Vec<String> = con.keys(format!("{}:*", settings::ROOT_KEY)).await?;
+
+				for guild in guilds {
+					let settings: Settings = con.get(guild).await?;
+
+					if settings.optional_commands_enabled {
+						poise::builtins::register_in_guild(
+							ctx,
+							&commands::to_guild_commands(),
+							settings.guild_id,
+						)
+						.await?;
+						info!("Registered guild commands to {}", settings.guild_id);
+					} else {
+						debug!("Not registering guild commands to {} since optional_commands_enabled is False", settings.guild_id);
+					}
+				}
+
 				Ok(data)
 			})
 		});

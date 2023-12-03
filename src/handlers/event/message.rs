@@ -7,23 +7,19 @@ use poise::FrameworkContext;
 
 pub async fn handle(
 	ctx: &Context,
-	framework: FrameworkContext<'_, Data, Report>,
+	_framework: FrameworkContext<'_, Data, Report>,
 	msg: &Message,
 	data: &Data,
 ) -> Result<()> {
-	if should_echo(framework, msg, data).await? {
+	if should_echo(ctx, msg, data).await? {
 		msg.reply(ctx, &msg.content).await?;
 	}
 
 	Ok(())
 }
 
-async fn should_echo(
-	_framework: FrameworkContext<'_, Data, Report>,
-	msg: &Message,
-	data: &Data,
-) -> Result<bool> {
-	if msg.author.bot && msg.webhook_id.is_none() {
+async fn should_echo(ctx: &Context, msg: &Message, data: &Data) -> Result<bool> {
+	if (msg.author.bot && msg.webhook_id.is_none()) || msg.is_own(ctx) {
 		debug!("Not repeating another bot");
 		return Ok(false);
 	}

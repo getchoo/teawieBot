@@ -4,7 +4,7 @@ use redis::{AsyncCommands as _, Client};
 use redis_macros::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
-const ROOT_KEY: &str = "settings-v1";
+pub const ROOT_KEY: &str = "settings-v1";
 
 #[derive(poise::ChoiceParameter)]
 pub enum SettingsProperties {
