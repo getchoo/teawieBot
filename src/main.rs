@@ -87,7 +87,11 @@ async fn main() -> Result<()> {
 		serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
 	let options = FrameworkOptions {
-		commands: commands::to_global_commands(),
+		commands: {
+			let mut commands = commands::to_global_commands();
+			commands.append(&mut commands::to_optional_commands());
+			commands
+		},
 		on_error: |error| Box::pin(handlers::handle_error(error)),
 
 		command_check: Some(|ctx| {
