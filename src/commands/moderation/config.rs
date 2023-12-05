@@ -8,11 +8,13 @@ use color_eyre::eyre::{eyre, Result};
 use log::*;
 use poise::serenity_prelude::{GuildChannel, ReactionType};
 
-fn split_list<T>(list: String) -> Vec<T>
+fn split_argument<T>(list: String) -> Vec<T>
 where
 	T: FromStr,
 {
-	list.split(',').filter_map(|s| s.parse().ok()).collect()
+	list.split(',')
+		.filter_map(|s| s.trim().parse().ok())
+		.collect()
 }
 
 fn prop_to_val(setting: &SettingsProperties, settings: &Settings) -> String {
@@ -35,6 +37,7 @@ fn prop_to_val(setting: &SettingsProperties, settings: &Settings) -> String {
 
 #[poise::command(
 	slash_command,
+	prefix_command,
 	subcommands("set", "get"),
 	default_member_permissions = "MANAGE_GUILD"
 )]
@@ -43,7 +46,7 @@ pub async fn config(_ctx: Context<'_>) -> Result<()> {
 }
 
 #[allow(clippy::too_many_arguments)]
-#[poise::command(slash_command, ephemeral, guild_only)]
+#[poise::command(slash_command, prefix_command, ephemeral, guild_only)]
 pub async fn set(
 	ctx: Context<'_>,
 	#[channel_types("Text")]
@@ -74,7 +77,7 @@ pub async fn set(
 	}
 
 	if let Some(watch) = pinboard_watch {
-		let channels = split_list(watch);
+		let channels = split_argument(watch);
 		debug!("Setting pinboard_watch to {channels:#?} for {gid}");
 
 		settings.pinboard_watch = Some(channels);
@@ -126,7 +129,7 @@ pub async fn set(
 	Ok(())
 }
 
-#[poise::command(slash_command, ephemeral, guild_only)]
+#[poise::command(slash_command, prefix_command, ephemeral, guild_only)]
 pub async fn get(
 	ctx: Context<'_>,
 	#[description = "The setting you want to get"] setting: SettingsProperties,
