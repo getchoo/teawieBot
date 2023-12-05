@@ -1,9 +1,18 @@
+use std::str::FromStr;
+
 use crate::{storage, Context};
 use storage::SettingsProperties;
 
-use color_eyre::eyre::{eyre, Context as _, ContextCompat, Result};
+use color_eyre::eyre::{eyre, Result};
 use log::*;
 use poise::serenity_prelude::{GuildChannel, ReactionType};
+
+fn split_list<T>(list: String) -> Vec<T>
+where
+	T: FromStr,
+{
+	list.split(',').filter_map(|s| s.parse().ok()).collect()
+}
 
 #[poise::command(
 	slash_command,
@@ -20,13 +29,12 @@ pub async fn set(
 	#[channel_types("Text")]
 	#[description = "Where to redirect pins from channels. If empty (the default), the PinBoard is disabled."]
 	pinboard_channel: Option<GuildChannel>,
-	#[channel_types("Text")]
-	#[description = "A channel that PinBoard will redirect pins from. This will be all channels if empty."]
-	pinboard_watch: Option<GuildChannel>,
+	#[description = "Comma separated list of channels PinBoard redirects. If empty, this will be all channels"]
+	pinboard_watch: Option<String>,
 	#[channel_types("Text")]
 	#[description = "Where to post messages that made it to the ReactBoard. If left empty, ReactBoard is disabled."]
 	reactboard_channel: Option<GuildChannel>,
-	#[description = "An emoji that will get messages on the ReactBoard. If empty, ReactBoard is disabled."]
+	#[description = "Comma separated list of emojis that will count towards ReactBoard. If empty, ReactBoard is disabled."]
 	reactboard_reaction: Option<String>,
 	#[description = "Minimum number of reactions a message needs to make it to the ReactBoard (defaults to 5)"]
 	reactboard_requirement: Option<u64>,
@@ -39,55 +47,37 @@ pub async fn set(
 	let previous_settings = settings.clone();
 
 	if let Some(channel) = pinboard_channel {
+		debug!("Setting pinboard_channel to {channel} for {gid}");
 		settings.pinboard_channel = Some(channel.id);
 	}
 
 	if let Some(watch) = pinboard_watch {
-		if let Some(mut prev) = settings.pinboard_watch {
-			prev.push(watch.id);
-			settings.pinboard_watch = Some(prev);
-		} else {
-			let new = Vec::from([watch.id]);
-			debug!("Setting pinboard_watch to {new:#?} for {}", gid);
+		let channels = split_list(watch);
+		debug!("Setting pinboard_watch to {channels:#?} for {gid}");
 
-			settings.pinboard_watch = Some(new);
-		}
+		settings.pinboard_watch = Some(channels);
 	}
 
 	if let Some(channel) = reactboard_channel {
-		debug!("Setting reactboard_channel to {channel} for {}", gid);
-
+		debug!("Setting reactboard_channel to {channel} for {gid}");
 		settings.reactboard_channel = Some(channel.id);
 	}
 
 	if let Some(requirement) = reactboard_requirement {
-		debug!(
-			"Setting reactboard_requirement to {requirement} for {}",
-			gid
-		);
-
+		debug!("Setting reactboard_requirement to {requirement} for {gid}");
 		settings.reactboard_requirement = Some(requirement);
 	}
 
 	if let Some(reaction) = reactboard_reaction {
-		let emoji = reaction
-			.parse::<ReactionType>()
-			.wrap_err_with(|| format!("Couldn't parse {reaction} as string!"))?;
+		let emojis: Vec<ReactionType> =
+			reaction.split(',').filter_map(|r| r.parse().ok()).collect();
+		debug!("Setting reactboard_reactions to {emojis:#?} for {gid}");
 
-		if let Some(mut prev) = settings.reactboard_reactions {
-			prev.push(emoji);
-			settings.reactboard_reactions = Some(prev);
-		} else {
-			let new = Vec::from([emoji]);
-			debug!("Setting pinboard_watch to {new:#?} for {}", gid);
-
-			settings.reactboard_reactions = Some(new);
-		}
+		settings.reactboard_reactions = Some(emojis);
 	}
 
 	if let Some(enabled) = optional_commands_enabled {
 		debug!("Setting optional_commands_enabled to {enabled} for {}", gid);
-
 		settings.optional_commands_enabled = enabled;
 	}
 
@@ -111,7 +101,7 @@ pub async fn get(
 ) -> Result<()> {
 	let gid = &ctx
 		.guild_id()
-		.wrap_err_with(|| eyre!("Failed to get GuildId from context!"))?;
+		.ok_or_else(|| eyre!("Failed to get GuildId from context!"))?;
 
 	let settings = ctx.data().storage.get_guild_settings(gid).await?;
 
