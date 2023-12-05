@@ -3,7 +3,7 @@ use storage::{ReactBoardEntry, REACT_BOARD_KEY};
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::*;
-use poise::serenity_prelude::{Context, Message, MessageReaction, Reaction};
+use poise::serenity_prelude::{Context, GuildId, Message, MessageReaction, Reaction};
 
 pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<()> {
 	let msg = reaction
@@ -24,7 +24,14 @@ pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<(
 			)
 		})?;
 
-	send_to_reactboard(ctx, &matched, &msg, data).await?;
+	send_to_reactboard(
+		ctx,
+		&matched,
+		&msg,
+		&reaction.guild_id.unwrap_or_default(),
+		data,
+	)
+	.await?;
 
 	Ok(())
 }
@@ -33,17 +40,17 @@ async fn send_to_reactboard(
 	ctx: &Context,
 	reaction: &MessageReaction,
 	msg: &Message,
+	guild_id: &GuildId,
 	data: &Data,
 ) -> Result<()> {
 	let storage = &data.storage;
-	let gid = msg.guild_id.unwrap_or_default();
-	let settings = storage.get_guild_settings(&gid).await?;
+	let settings = storage.get_guild_settings(guild_id).await?;
 
 	// make sure everything is in order...
 	let target = if let Some(target) = settings.reactboard_channel {
 		target
 	} else {
-		debug!("Reactboard is disabled in {gid}, ignoring");
+		debug!("Reactboard is disabled in {guild_id}, ignoring");
 		return Ok(());
 	};
 
