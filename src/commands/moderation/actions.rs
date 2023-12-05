@@ -11,6 +11,12 @@ fn create_moderation_embed(
 	delete_messages_days: Option<u8>,
 	reason: String,
 ) -> impl FnOnce(&mut CreateEmbed) -> &mut CreateEmbed {
+	let reason = if reason.is_empty() {
+		"n/a".to_string()
+	} else {
+		reason
+	};
+
 	let fields = [
 		("User", format!("{} ({})", user.name, user.id), false),
 		("Reason", reason, false),
@@ -42,14 +48,10 @@ pub async fn ban_user(
 		.guild()
 		.ok_or_else(|| eyre!("Couldn't get guild from message; Unable to ban!"))?;
 
-	let reason = reason.unwrap_or("n/a".to_string());
+	let reason = reason.unwrap_or_default();
 
 	debug!("Banning user {} with reason {reason}", user.id);
-	if reason != "n/a" {
-		guild.ban_with_reason(ctx, &user, days, &reason).await?;
-	} else {
-		guild.ban(ctx, &user, days).await?;
-	}
+	guild.ban_with_reason(ctx, &user, days, &reason).await?;
 
 	let embed = create_moderation_embed("User banned!".to_string(), &user, Some(days), reason);
 
@@ -70,14 +72,10 @@ pub async fn kick_user(ctx: Context<'_>, user: User, reason: Option<String>) -> 
 		.guild()
 		.ok_or_else(|| eyre!("Couldn't get guild from message; Unable to ban!"))?;
 
-	let reason = reason.unwrap_or("n/a".to_string());
+	let reason = reason.unwrap_or_default();
 
 	debug!("Kicking user {} for reason {reason}", user.id);
-	if reason != "n/a" {
-		guild.kick_with_reason(ctx, &user, &reason).await?;
-	} else {
-		guild.kick(ctx, &user).await?;
-	}
+	guild.kick_with_reason(ctx, &user, &reason).await?;
 
 	let embed = create_moderation_embed("User kicked!".to_string(), &user, None, reason);
 	ctx.send(|m| m.embed(embed)).await?;
