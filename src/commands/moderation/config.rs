@@ -39,6 +39,7 @@ fn prop_to_val(setting: &SettingsProperties, settings: &Settings) -> String {
 	slash_command,
 	prefix_command,
 	subcommands("set", "get"),
+	required_permissions = "MANAGE_GUILD",
 	default_member_permissions = "MANAGE_GUILD"
 )]
 pub async fn config(_ctx: Context<'_>) -> Result<()> {
@@ -46,7 +47,13 @@ pub async fn config(_ctx: Context<'_>) -> Result<()> {
 }
 
 #[allow(clippy::too_many_arguments)]
-#[poise::command(slash_command, prefix_command, ephemeral, guild_only)]
+#[poise::command(
+	slash_command,
+	prefix_command,
+	ephemeral,
+	guild_only,
+	required_permissions = "MANAGE_GUILD"
+)]
 pub async fn set(
 	ctx: Context<'_>,
 	#[channel_types("Text")]
@@ -129,7 +136,13 @@ pub async fn set(
 	Ok(())
 }
 
-#[poise::command(slash_command, prefix_command, ephemeral, guild_only)]
+#[poise::command(
+	slash_command,
+	prefix_command,
+	ephemeral,
+	guild_only,
+	required_permissions = "MANAGE_GUILD"
+)]
 pub async fn get(
 	ctx: Context<'_>,
 	#[description = "The setting you want to get"] setting: SettingsProperties,
