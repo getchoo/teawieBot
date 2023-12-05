@@ -1,4 +1,4 @@
-use crate::{consts, Data, Settings};
+use crate::{consts, Data};
 
 use color_eyre::eyre::{eyre, Report, Result};
 use log::*;
@@ -27,7 +27,7 @@ async fn should_echo(ctx: &Context, msg: &Message, data: &Data) -> Result<bool> 
 	let gid = msg
 		.guild_id
 		.ok_or_else(|| eyre!("Couldn't get GuildId from {}!", msg.id))?;
-	let settings = Settings::from_redis(&data.redis, &gid).await?;
+	let settings = data.storage.get_guild_settings(&gid).await?;
 
 	if !settings.optional_commands_enabled {
 		debug!("Not echoing in guild {gid}");

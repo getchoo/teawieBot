@@ -1,5 +1,5 @@
-use crate::settings::{Settings, SettingsProperties};
-use crate::Context;
+use crate::{storage, Context};
+use storage::SettingsProperties;
 
 use color_eyre::eyre::{eyre, Context as _, ContextCompat, Result};
 use log::*;
@@ -33,9 +33,9 @@ pub async fn set(
 	#[description = "Enables 'extra' commands like teawiespam and copypasta. Defaults to false."]
 	optional_commands_enabled: Option<bool>,
 ) -> Result<()> {
-	let redis = &ctx.data().redis;
+	let storage = &ctx.data().storage;
 	let gid = ctx.guild_id().unwrap_or_default();
-	let mut settings = Settings::from_redis(redis, &gid).await?;
+	let mut settings = storage.get_guild_settings(&gid).await?;
 	let previous_settings = settings.clone();
 
 	if let Some(channel) = pinboard_channel {
@@ -48,24 +48,21 @@ pub async fn set(
 			settings.pinboard_watch = Some(prev);
 		} else {
 			let new = Vec::from([watch.id]);
-			debug!("Setting pinboard_watch to {new:#?} for {} in Redis", gid);
+			debug!("Setting pinboard_watch to {new:#?} for {}", gid);
 
 			settings.pinboard_watch = Some(new);
 		}
 	}
 
 	if let Some(channel) = reactboard_channel {
-		debug!(
-			"Setting reactboard_channel to {channel} for {} in Redis",
-			gid
-		);
+		debug!("Setting reactboard_channel to {channel} for {}", gid);
 
 		settings.reactboard_channel = Some(channel.id);
 	}
 
 	if let Some(requirement) = reactboard_requirement {
 		debug!(
-			"Setting reactboard_requirement to {requirement} for {} in Redis",
+			"Setting reactboard_requirement to {requirement} for {}",
 			gid
 		);
 
@@ -82,25 +79,24 @@ pub async fn set(
 			settings.reactboard_reactions = Some(prev);
 		} else {
 			let new = Vec::from([emoji]);
-			debug!("Setting pinboard_watch to {new:#?} for {} in Redis", gid);
+			debug!("Setting pinboard_watch to {new:#?} for {}", gid);
 
 			settings.reactboard_reactions = Some(new);
 		}
 	}
 
 	if let Some(enabled) = optional_commands_enabled {
-		debug!(
-			"Setting optional_commands_enabled to {enabled} for {} in Redis",
-			gid
-		);
+		debug!("Setting optional_commands_enabled to {enabled} for {}", gid);
 
 		settings.optional_commands_enabled = enabled;
 	}
 
 	if previous_settings != settings {
-		settings.save(redis).await?;
+		debug!("Updating settings key for {gid}");
+		storage.create_settings_key(settings).await?;
 		ctx.reply("Configuration updated!").await?;
 	} else {
+		debug!("Not updating settings key for {gid} since no changes were made");
 		ctx.reply("No changes made, so i'm not updating anything")
 			.await?;
 	}
@@ -117,7 +113,7 @@ pub async fn get(
 		.guild_id()
 		.wrap_err_with(|| eyre!("Failed to get GuildId from context!"))?;
 
-	let settings = Settings::from_redis(&ctx.data().redis, gid).await?;
+	let settings = ctx.data().storage.get_guild_settings(gid).await?;
 
 	let value = match setting {
 		SettingsProperties::GuildId => settings.guild_id.to_string(),

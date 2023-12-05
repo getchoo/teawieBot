@@ -5,32 +5,31 @@ use log::*;
 use poise::{
 	serenity_prelude as serenity, EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
 };
-use redis::AsyncCommands;
-use settings::Settings;
+use storage::Storage;
 
 mod api;
 mod colors;
 mod commands;
 mod consts;
 mod handlers;
-mod settings;
+mod storage;
 mod utils;
 
 type Context<'a> = poise::Context<'a, Data, Report>;
 
 #[derive(Clone)]
 pub struct Data {
-	redis: redis::Client,
+	storage: Storage,
 }
 
 impl Data {
 	pub fn new() -> Result<Self> {
 		let redis_url = std::env::var("REDIS_URL")
-			.wrap_err_with(|| eyre!("Couldn't find Redis URL in environment!"))?;
+			.wrap_err_with(|| "Couldn't find Redis URL in environment!")?;
 
-		let redis = redis::Client::open(redis_url)?;
+		let storage = Storage::new(&redis_url)?;
 
-		Ok(Self { redis })
+		Ok(Self { storage })
 	}
 }
 
@@ -75,25 +74,18 @@ async fn main() -> Result<()> {
 				info!("Registered global commands!");
 
 				// register "extra" commands in guilds that allow it
-				let mut con = data.redis.get_async_connection().await?;
-
-				info!("Fetching all guild settings from Redis...this might take a while");
-				let guilds: Vec<String> = con.keys(format!("{}:*", settings::ROOT_KEY)).await?;
+				info!("Fetching opted guilds");
+				let guilds = data.storage.get_opted_guilds().await?;
 
 				for guild in guilds {
-					let settings: Settings = con.get(guild).await?;
+					poise::builtins::register_in_guild(
+						ctx,
+						&commands::to_optional_commands(),
+						guild,
+					)
+					.await?;
 
-					if settings.optional_commands_enabled {
-						poise::builtins::register_in_guild(
-							ctx,
-							&commands::to_guild_commands(),
-							settings.guild_id,
-						)
-						.await?;
-						info!("Registered guild commands to {}", settings.guild_id);
-					} else {
-						debug!("Not registering guild commands to {} since optional_commands_enabled is False", settings.guild_id);
-					}
+					info!("Registered guild commands to {}", guild);
 				}
 
 				Ok(data)

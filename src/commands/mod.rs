@@ -20,6 +20,6 @@ pub fn to_global_commands() -> Vec<Command<Data, Report>> {
 	]
 }
 
-pub fn to_guild_commands() -> Vec<Command<Data, Report>> {
+pub fn to_optional_commands() -> Vec<Command<Data, Report>> {
 	vec![optional::copypasta(), optional::teawiespam()]
 }

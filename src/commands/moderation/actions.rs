@@ -2,6 +2,7 @@ use crate::colors::Colors;
 use crate::Context;
 
 use color_eyre::eyre::{eyre, Result};
+use log::*;
 use poise::serenity_prelude::{CreateEmbed, User};
 
 fn create_moderation_embed(
@@ -23,7 +24,7 @@ fn create_moderation_embed(
 	|e: &mut CreateEmbed| e.title(title).fields(fields).color(Colors::Red)
 }
 
-// ban a user
+/// ban a user
 #[poise::command(
 	slash_command,
 	prefix_command,
@@ -42,6 +43,7 @@ pub async fn ban_user(
 
 	let reason = reason.unwrap_or("n/a".to_string());
 
+	debug!("Banning user {} with reason {reason}", user.id);
 	if reason != "n/a" {
 		guild.ban_with_reason(ctx, &user, days, &reason).await?;
 	} else {
@@ -55,7 +57,7 @@ pub async fn ban_user(
 	Ok(())
 }
 
-// kick a user
+/// kick a user
 #[poise::command(
 	slash_command,
 	prefix_command,
@@ -68,6 +70,7 @@ pub async fn kick_user(ctx: Context<'_>, user: User, reason: Option<String>) -> 
 
 	let reason = reason.unwrap_or("n/a".to_string());
 
+	debug!("Kicking user {} for reason {reason}", user.id);
 	if reason != "n/a" {
 		guild.kick_with_reason(ctx, &user, &reason).await?;
 	} else {

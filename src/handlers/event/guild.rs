@@ -2,25 +2,33 @@ use color_eyre::eyre::Result;
 use log::*;
 use poise::serenity_prelude::{Guild, UnavailableGuild};
 
-use crate::{Data, Settings};
+use crate::{storage, Data};
+use storage::settings::Settings;
+use storage::Storage;
 
-pub async fn handle_create(guild: &Guild, is_new: &bool, data: &Data) -> Result<()> {
-	if !is_new && Settings::from_redis(&data.redis, &guild.id).await.is_ok() {
-		debug!("Not recreating Redis key for {}", guild.id);
+pub async fn handle_create(guild: &Guild, _is_new: &bool, data: &Data) -> Result<()> {
+	let storage = &data.storage;
+	let key = Storage::format_settings_key(guild.id);
+
+	if storage.key_exists(&key).await? {
+		debug!("Not recreating settings key for {}", guild.id);
 		return Ok(());
 	}
 
-	info!("Creating new Redis key for {}", guild.id);
-	Settings::new_redis(&data.redis, &guild.id).await?;
+	let settings = Settings {
+		guild_id: guild.id,
+		optional_commands_enabled: false,
+		..Default::default()
+	};
+
+	warn!("Creating new settings key {key}:\n{settings:#?}");
+	storage.create_settings_key(settings).await?;
+
 	Ok(())
 }
 
 pub async fn handle_delete(guild: &UnavailableGuild, data: &Data) -> Result<()> {
-	let redis = &data.redis;
-
-	info!("Deleting redis key for {}", guild.id);
-	let settings = Settings::from_redis(redis, &guild.id).await?;
-	settings.delete(redis).await?;
-
+	let key = Storage::format_settings_key(guild.id);
+	data.storage.delete_key(&key).await?;
 	Ok(())
 }
