@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use color_eyre::eyre::{eyre, Context as _, Report, Result};
 use log::*;
-use poise::{
-	serenity_prelude as serenity, EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
-};
+use poise::serenity_prelude as serenity;
+use poise::{EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions};
+use redis::ConnectionLike;
 use storage::Storage;
 
 mod api;
@@ -33,6 +33,36 @@ impl Data {
 	}
 }
 
+async fn setup(
+	ctx: &serenity::Context,
+	_ready: &serenity::Ready,
+	framework: &Framework<Data, Report>,
+) -> Result<Data> {
+	let data = Data::new()?;
+	let mut client = data.storage.client.clone();
+
+	if !client.check_connection() {
+		return Err(eyre!(
+			"Couldn't connect to storage! Is your daemon running?"
+		));
+	}
+
+	poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+	info!("Registered global commands!");
+
+	// register "extra" commands in guilds that allow it
+	info!("Fetching opted guilds");
+	let guilds = data.storage.get_opted_guilds().await?;
+
+	for guild in guilds {
+		poise::builtins::register_in_guild(ctx, &commands::to_optional_commands(), guild).await?;
+
+		info!("Registered guild commands to {}", guild);
+	}
+
+	Ok(data)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
 	dotenvy::dotenv().ok();
@@ -48,17 +78,21 @@ async fn main() -> Result<()> {
 	let options = FrameworkOptions {
 		commands: commands::to_global_commands(),
 		on_error: |error| Box::pin(handlers::handle_error(error)),
+
 		command_check: Some(|ctx| {
 			Box::pin(async move { Ok(ctx.author().id != ctx.framework().bot_id) })
 		}),
+
 		event_handler: |ctx, event, framework, data| {
 			Box::pin(handlers::handle_event(ctx, event, framework, data))
 		},
+
 		prefix_options: PrefixFrameworkOptions {
 			prefix: Some("!".into()),
 			edit_tracker: Some(EditTracker::for_timespan(Duration::from_secs(3600))),
 			..Default::default()
 		},
+
 		..Default::default()
 	};
 
@@ -66,34 +100,10 @@ async fn main() -> Result<()> {
 		.token(token)
 		.intents(intents)
 		.options(options)
-		.setup(|ctx, _ready, framework| {
-			Box::pin(async move {
-				let data = Data::new()?;
-
-				poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-				info!("Registered global commands!");
-
-				// register "extra" commands in guilds that allow it
-				info!("Fetching opted guilds");
-				let guilds = data.storage.get_opted_guilds().await?;
-
-				for guild in guilds {
-					poise::builtins::register_in_guild(
-						ctx,
-						&commands::to_optional_commands(),
-						guild,
-					)
-					.await?;
-
-					info!("Registered guild commands to {}", guild);
-				}
-
-				Ok(data)
-			})
-		});
+		.setup(|ctx, ready, framework| Box::pin(setup(ctx, ready, framework)));
 
 	tokio::select! {
-		result = framework.run() => { result.map_err(Report::from) },
+		result = framework.run() => result.map_err(Report::from),
 		_ = tokio::signal::ctrl_c() => {
 			info!("Interrupted! Exiting...");
 			std::process::exit(130);

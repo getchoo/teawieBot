@@ -13,7 +13,7 @@ pub use settings::*;
 
 #[derive(Clone, Debug)]
 pub struct Storage {
-	client: Client,
+	pub client: Client,
 }
 
 impl Storage {
