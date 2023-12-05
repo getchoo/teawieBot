@@ -1,4 +1,4 @@
-use crate::{utils, Data, Settings};
+use crate::{utils, Data};
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::*;
@@ -7,9 +7,9 @@ use poise::serenity_prelude::Context;
 
 pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) -> Result<()> {
 	let gid = pin.guild_id.unwrap_or_default();
-	let settings = Settings::from_redis(&data.redis, &gid).await?;
+	let settings = data.storage.get_guild_settings(&gid).await?;
 
-	let target = if let Some(target) = settings.reactboard_channel {
+	let target = if let Some(target) = settings.pinboard_channel {
 		target
 	} else {
 		debug!("PinBoard is disabled in {gid}, ignoring");
@@ -94,7 +94,7 @@ async fn guess_pinner(ctx: &Context, pin: &ChannelPinsUpdateEvent) -> Option<Use
 		.map(|first| first.user_id)
 	} else {
 		// TODO: mayyyyybe we can guess who pinned something in a DM...?
-		warn!("couldn't figure out who pinned in {}!", pin.channel_id);
+		warn!("Couldn't figure out who pinned in {}!", pin.channel_id);
 		None
 	}
 }

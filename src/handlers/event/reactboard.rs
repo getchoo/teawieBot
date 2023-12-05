@@ -1,26 +1,9 @@
-use crate::{utils, Data, Settings};
+use crate::{storage, utils, Data};
+use storage::{ReactBoardEntry, REACT_BOARD_KEY};
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::*;
-use poise::serenity_prelude::{ChannelId, Context, Message, MessageId, MessageReaction, Reaction};
-use redis::AsyncCommands as _;
-use redis_macros::{FromRedisValue, ToRedisArgs};
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, Serialize, Deserialize, FromRedisValue, ToRedisArgs)]
-struct ReactBoardEntry {
-	original_id: MessageId,
-	reaction_count: u64,
-	channel_id: ChannelId,
-	message_id: MessageId,
-}
-
-#[derive(Default, Serialize, Deserialize, FromRedisValue, ToRedisArgs)]
-struct ReactBoardInfo {
-	reactions: Vec<ReactBoardEntry>,
-}
-
-const REACT_BOARD_KEY: &str = "reactboard-v1";
+use poise::serenity_prelude::{Context, Message, MessageReaction, Reaction};
 
 pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<()> {
 	let msg = reaction
@@ -52,8 +35,9 @@ async fn send_to_reactboard(
 	msg: &Message,
 	data: &Data,
 ) -> Result<()> {
+	let storage = &data.storage;
 	let gid = msg.guild_id.unwrap_or_default();
-	let settings = Settings::from_redis(&data.redis, &gid).await?;
+	let settings = storage.get_guild_settings(&gid).await?;
 
 	// make sure everything is in order...
 	let target = if let Some(target) = settings.reactboard_channel {
@@ -76,22 +60,7 @@ async fn send_to_reactboard(
 		return Ok(());
 	}
 
-	let mut con = data.redis.get_async_connection().await?;
-	let req = con.get(REACT_BOARD_KEY).await;
-
-	let mut reactboard: ReactBoardInfo = if let Err(why) = req {
-		// set the value to the default if the key is uninitialized
-		match why.kind() {
-			redis::ErrorKind::TypeError => {
-				warn!("Initializing {REACT_BOARD_KEY} key in Redis...");
-				con.set(REACT_BOARD_KEY, ReactBoardInfo::default()).await?;
-				con.get(REACT_BOARD_KEY).await?
-			}
-			_ => return Err(why.into()),
-		}
-	} else {
-		req?
-	};
+	let mut reactboard = storage.get_reactboard_info().await?;
 
 	// try to find previous reactboard entry by the id of the original message
 	let old_index = reactboard
@@ -107,11 +76,11 @@ async fn send_to_reactboard(
 
 		// bail if we don't need to edit anything
 		if old_entry.reaction_count >= reaction.count {
-			info!("Message {} doesn't need updating", msg.id);
+			debug!("Message {} doesn't need updating", msg.id);
 			return Ok(());
 		}
 
-		info!(
+		debug!(
 			"Bumping {} reaction count from {} to {}",
 			msg.id, old_entry.reaction_count, reaction.count
 		);
@@ -138,11 +107,11 @@ async fn send_to_reactboard(
 		reactboard.reactions.remove(old_index);
 		reactboard.reactions.push(new_entry.clone());
 
-		info!(
-			"Updating ReactBoard entry {} in {REACT_BOARD_KEY}\nOld:\n{old_entry:#?}\nNew:\n{new_entry:#?}",
+		debug!(
+			"Updating ReactBoard entry {}\nOld entry:\n{old_entry:#?}\n\nNew:\n{new_entry:#?}\n",
 			msg.id
 		);
-		con.set(REACT_BOARD_KEY, reactboard).await?;
+		storage.create_reactboard_info_key(reactboard).await?;
 	// make new message and add entry to redis otherwise
 	} else {
 		let embed = utils::resolve_message_to_embed(ctx, msg).await;
@@ -164,11 +133,11 @@ async fn send_to_reactboard(
 
 		reactboard.reactions.push(entry.clone());
 
-		info!(
+		debug!(
 			"Creating new ReactBoard entry {} in {REACT_BOARD_KEY}:\n{:#?}",
 			msg.id, entry
 		);
-		con.set(REACT_BOARD_KEY, reactboard).await?;
+		storage.create_reactboard_info_key(reactboard).await?;
 	}
 
 	Ok(())
