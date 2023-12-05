@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
 use crate::{storage, Context};
-use storage::SettingsProperties;
+use settings::{Settings, SettingsProperties};
+use storage::settings;
 
 use color_eyre::eyre::{eyre, Result};
 use log::*;
@@ -14,6 +15,24 @@ where
 	list.split(',').filter_map(|s| s.parse().ok()).collect()
 }
 
+fn prop_to_val(setting: &SettingsProperties, settings: &Settings) -> String {
+	match setting {
+		SettingsProperties::GuildId => settings.guild_id.to_string(),
+		SettingsProperties::PinBoardChannel => format!("{:#?}", settings.pinboard_channel),
+		SettingsProperties::PinBoardWatch => format!("{:#?}", settings.pinboard_watch),
+		SettingsProperties::PinBoardEnabled => settings.pinboard_enabled.to_string(),
+		SettingsProperties::ReactBoardChannel => format!("{:#?}", settings.reactboard_channel),
+		SettingsProperties::ReactBoardRequirement => {
+			format!("{:?}", settings.reactboard_requirement)
+		}
+		SettingsProperties::ReactBoardReactions => format!("{:?}", settings.reactboard_reactions),
+		SettingsProperties::ReactBoardEnabled => settings.reactboard_enabled.to_string(),
+		SettingsProperties::OptionalCommandsEnabled => {
+			settings.optional_commands_enabled.to_string()
+		}
+	}
+}
+
 #[poise::command(
 	slash_command,
 	subcommands("set", "get"),
@@ -23,6 +42,7 @@ pub async fn config(_ctx: Context<'_>) -> Result<()> {
 	Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 #[poise::command(slash_command, ephemeral, guild_only)]
 pub async fn set(
 	ctx: Context<'_>,
@@ -31,6 +51,7 @@ pub async fn set(
 	pinboard_channel: Option<GuildChannel>,
 	#[description = "Comma separated list of channels PinBoard redirects. If empty, this will be all channels"]
 	pinboard_watch: Option<String>,
+	#[description = "Toggle PinBoard"] pinboard_enabled: Option<bool>,
 	#[channel_types("Text")]
 	#[description = "Where to post messages that made it to the ReactBoard. If left empty, ReactBoard is disabled."]
 	reactboard_channel: Option<GuildChannel>,
@@ -38,6 +59,7 @@ pub async fn set(
 	reactboard_reaction: Option<String>,
 	#[description = "Minimum number of reactions a message needs to make it to the ReactBoard (defaults to 5)"]
 	reactboard_requirement: Option<u64>,
+	#[description = "Toggle ReactBoard"] reactboard_enabled: Option<bool>,
 	#[description = "Enables 'extra' commands like teawiespam and copypasta. Defaults to false."]
 	optional_commands_enabled: Option<bool>,
 ) -> Result<()> {
@@ -58,6 +80,11 @@ pub async fn set(
 		settings.pinboard_watch = Some(channels);
 	}
 
+	if let Some(enabled) = pinboard_enabled {
+		debug!("Setting pinboard_enabled to {enabled} for {gid}");
+		settings.pinboard_enabled = enabled;
+	}
+
 	if let Some(channel) = reactboard_channel {
 		debug!("Setting reactboard_channel to {channel} for {gid}");
 		settings.reactboard_channel = Some(channel.id);
@@ -74,6 +101,11 @@ pub async fn set(
 		debug!("Setting reactboard_reactions to {emojis:#?} for {gid}");
 
 		settings.reactboard_reactions = Some(emojis);
+	}
+
+	if let Some(enabled) = reactboard_enabled {
+		debug!("Setting reactboard_enabled to {enabled} for {gid}");
+		settings.reactboard_enabled = enabled;
 	}
 
 	if let Some(enabled) = optional_commands_enabled {
@@ -104,20 +136,7 @@ pub async fn get(
 		.ok_or_else(|| eyre!("Failed to get GuildId from context!"))?;
 
 	let settings = ctx.data().storage.get_guild_settings(gid).await?;
-
-	let value = match setting {
-		SettingsProperties::GuildId => settings.guild_id.to_string(),
-		SettingsProperties::PinBoardChannel => format!("{:#?}", settings.pinboard_channel),
-		SettingsProperties::PinBoardWatch => format!("{:#?}", settings.pinboard_watch),
-		SettingsProperties::ReactBoardChannel => format!("{:#?}", settings.reactboard_channel),
-		SettingsProperties::ReactBoardRequirement => {
-			format!("{:?}", settings.reactboard_requirement)
-		}
-		SettingsProperties::ReactBoardReactions => format!("{:?}", settings.reactboard_reactions),
-		SettingsProperties::OptionalCommandsEnabled => {
-			settings.optional_commands_enabled.to_string()
-		}
-	};
+	let value = prop_to_val(&setting, &settings);
 
 	ctx.send(|m| m.embed(|e| e.field(setting, value, false)))
 		.await?;

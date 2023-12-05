@@ -9,9 +9,11 @@ pub enum SettingsProperties {
 	GuildId,
 	PinBoardChannel,
 	PinBoardWatch,
+	PinBoardEnabled,
 	ReactBoardChannel,
 	ReactBoardRequirement,
 	ReactBoardReactions,
+	ReactBoardEnabled,
 	OptionalCommandsEnabled,
 }
 
@@ -20,9 +22,11 @@ pub struct Settings {
 	pub guild_id: GuildId,
 	pub pinboard_channel: Option<ChannelId>,
 	pub pinboard_watch: Option<Vec<ChannelId>>,
+	pub pinboard_enabled: bool,
 	pub reactboard_channel: Option<ChannelId>,
 	pub reactboard_requirement: Option<u64>,
 	pub reactboard_reactions: Option<Vec<ReactionType>>,
+	pub reactboard_enabled: bool,
 	pub optional_commands_enabled: bool,
 }
 

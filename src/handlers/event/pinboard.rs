@@ -9,6 +9,11 @@ pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) ->
 	let gid = pin.guild_id.unwrap_or_default();
 	let settings = data.storage.get_guild_settings(&gid).await?;
 
+	if !settings.pinboard_enabled {
+		debug!("PinBoard is disabled in {gid}, ignoring");
+		return Ok(());
+	}
+
 	let target = if let Some(target) = settings.pinboard_channel {
 		target
 	} else {

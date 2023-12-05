@@ -47,10 +47,15 @@ async fn send_to_reactboard(
 	let settings = storage.get_guild_settings(guild_id).await?;
 
 	// make sure everything is in order...
+	if !settings.reactboard_enabled {
+		debug!("ReactBoard is disabled in {guild_id}, ignoring");
+		return Ok(());
+	}
+
 	let target = if let Some(target) = settings.reactboard_channel {
 		target
 	} else {
-		debug!("Reactboard is disabled in {guild_id}, ignoring");
+		debug!("ReactBoard is disabled in {guild_id}, ignoring");
 		return Ok(());
 	};
 
@@ -61,7 +66,7 @@ async fn send_to_reactboard(
 
 	if reaction.count < settings.reactboard_requirement.unwrap_or(5) {
 		debug!(
-			"Ignoring message {} on reactboard, not enough reactions",
+			"Ignoring message {} on ReactBoard, not enough reactions",
 			msg.id
 		);
 		return Ok(());
