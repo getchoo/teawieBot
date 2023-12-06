@@ -3,14 +3,12 @@ use log::*;
 use poise::serenity_prelude::{Guild, UnavailableGuild};
 
 use crate::{storage, Data};
-use storage::settings::Settings;
-use storage::Storage;
+use storage::Settings;
 
 pub async fn handle_create(guild: &Guild, _is_new: &bool, data: &Data) -> Result<()> {
 	let storage = &data.storage;
-	let key = Storage::format_settings_key(guild.id);
 
-	if storage.key_exists(&key).await? {
+	if storage.guild_settings_exist(&guild.id).await? {
 		debug!("Not recreating settings key for {}", guild.id);
 		return Ok(());
 	}
@@ -21,14 +19,14 @@ pub async fn handle_create(guild: &Guild, _is_new: &bool, data: &Data) -> Result
 		..Default::default()
 	};
 
-	warn!("Creating new settings key {key}:\n{settings:#?}");
-	storage.create_settings_key(settings).await?;
+	warn!("Creating new settings key for {}:\n{settings:#?}", guild.id);
+	storage.create_guild_settings(settings).await?;
 
 	Ok(())
 }
 
 pub async fn handle_delete(guild: &UnavailableGuild, data: &Data) -> Result<()> {
-	let key = Storage::format_settings_key(guild.id);
-	data.storage.delete_key(&key).await?;
+	data.storage.delete_guild_settings(&guild.id).await?;
+
 	Ok(())
 }

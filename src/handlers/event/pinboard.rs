@@ -1,6 +1,6 @@
 use crate::{utils, Data};
 
-use color_eyre::eyre::{eyre, Context as _, Result};
+use color_eyre::eyre::{Context as _, Result};
 use log::*;
 use poise::serenity_prelude::model::prelude::*;
 use poise::serenity_prelude::Context;
@@ -37,7 +37,7 @@ pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) ->
 		.channel_id
 		.pins(&ctx.http)
 		.await
-		.expect("Couldn't get a list of pins!?");
+		.wrap_err_with(|| "Couldn't get a list of pins!?")?;
 
 	for pin in pins {
 		// We call `take` because it's supposed to be just for the latest message.
@@ -64,7 +64,7 @@ async fn redirect(
 				.set_embed(embed)
 		})
 		.await
-		.wrap_err_with(|| eyre!("couldn't redirect message"))?;
+		.wrap_err_with(|| "Couldn't redirect message")?;
 
 	Ok(())
 }

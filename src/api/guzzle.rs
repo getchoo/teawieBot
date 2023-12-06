@@ -18,7 +18,7 @@ pub async fn get_random_teawie() -> Result<String> {
 		.get(format!("{GUZZLE}{RANDOM_TEAWIE}"))
 		.build()?;
 
-	info!("making request to {}", req.url());
+	debug!("making request to {}", req.url());
 	let resp = REQWEST_CLIENT.execute(req).await?;
 	let status = resp.status();
 
@@ -26,12 +26,6 @@ pub async fn get_random_teawie() -> Result<String> {
 		let data = resp.json::<GuzzleResponse>().await?;
 		Ok(data.url)
 	} else {
-		error!(
-			"couldn't fetch random teawie from {}! {}",
-			resp.url(),
-			status
-		);
-
-		Err(eyre!("failed to get random teawie with {status}"))
+		Err(eyre!("Failed to get random Teawie with {status}"))
 	}
 }

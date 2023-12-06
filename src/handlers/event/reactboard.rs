@@ -1,5 +1,5 @@
 use crate::{storage, utils, Data};
-use storage::{ReactBoardEntry, REACT_BOARD_KEY};
+use storage::ReactBoardEntry;
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::*;
@@ -72,19 +72,11 @@ async fn send_to_reactboard(
 		return Ok(());
 	}
 
-	let mut reactboard = storage.get_reactboard_info().await?;
-
-	// try to find previous reactboard entry by the id of the original message
-	let old_index = reactboard
-		.reactions
-		.iter()
-		.position(|r| r.original_id == msg.id);
-
 	let content = format!("{} **#{}**", reaction.reaction_type, reaction.count);
 
 	// bump reaction count if previous entry exists
-	if let Some(old_index) = old_index {
-		let old_entry = reactboard.reactions[old_index].clone();
+	if storage.reactboard_entry_exists(guild_id, &msg.id).await? {
+		let old_entry = storage.get_reactboard_entry(guild_id, &msg.id).await?;
 
 		// bail if we don't need to edit anything
 		if old_entry.reaction_count >= reaction.count {
@@ -99,14 +91,14 @@ async fn send_to_reactboard(
 
 		ctx.http
 			.get_message(
-				*old_entry.channel_id.as_u64(),
-				*old_entry.message_id.as_u64(),
+				*old_entry.posted_channel_id.as_u64(),
+				*old_entry.posted_message_id.as_u64(),
 			)
 			.await
 			.wrap_err_with(|| {
 				format!(
 					"Couldn't get previous message from ReactBoardEntry {} in Redis DB!",
-					old_entry.original_id
+					old_entry.original_message_id
 				)
 			})?
 			.edit(ctx, |m| m.content(content))
@@ -116,14 +108,8 @@ async fn send_to_reactboard(
 		let mut new_entry = old_entry.clone();
 		new_entry.reaction_count = reaction.count;
 
-		reactboard.reactions.remove(old_index);
-		reactboard.reactions.push(new_entry.clone());
-
-		debug!(
-			"Updating ReactBoard entry {}\nOld entry:\n{old_entry:#?}\n\nNew:\n{new_entry:#?}\n",
-			msg.id
-		);
-		storage.create_reactboard_info_key(reactboard).await?;
+		debug!("Updating ReactBoard entry\nOld entry:\n{old_entry:#?}\n\nNew:\n{new_entry:#?}\n",);
+		storage.create_reactboard_entry(guild_id, new_entry).await?;
 	// make new message and add entry to redis otherwise
 	} else {
 		let embed = utils::resolve_message_to_embed(ctx, msg).await;
@@ -137,19 +123,14 @@ async fn send_to_reactboard(
 			.await?;
 
 		let entry = ReactBoardEntry {
-			original_id: msg.id,
+			original_message_id: msg.id,
 			reaction_count: reaction.count,
-			channel_id: resp.channel_id,
-			message_id: resp.id,
+			posted_channel_id: resp.channel_id,
+			posted_message_id: resp.id,
 		};
 
-		reactboard.reactions.push(entry.clone());
-
-		debug!(
-			"Creating new ReactBoard entry {} in {REACT_BOARD_KEY}:\n{:#?}",
-			msg.id, entry
-		);
-		storage.create_reactboard_info_key(reactboard).await?;
+		debug!("Creating new ReactBoard entry:\n{entry:#?}");
+		storage.create_reactboard_entry(guild_id, entry).await?;
 	}
 
 	Ok(())

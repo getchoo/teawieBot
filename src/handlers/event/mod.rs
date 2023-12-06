@@ -1,4 +1,3 @@
-use crate::storage::{ReactBoardInfo, REACT_BOARD_KEY};
 use crate::Data;
 
 use color_eyre::eyre::{Report, Result};
@@ -20,16 +19,6 @@ pub async fn handle(
 	match event {
 		Event::Ready { data_about_bot } => {
 			info!("Logged in as {}!", data_about_bot.user.name);
-
-			// make sure react board is setup
-			let storage = &data.storage;
-			if !storage.key_exists(REACT_BOARD_KEY).await? {
-				warn!("Creating new ReactBoardInfo key {REACT_BOARD_KEY}");
-
-				storage
-					.create_reactboard_info_key(ReactBoardInfo::default())
-					.await?;
-			}
 		}
 
 		Event::Message { new_message } => {
