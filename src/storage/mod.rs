@@ -32,7 +32,7 @@ impl Storage {
 	  strings for keys
 	*/
 
-	pub async fn get_key<T>(&self, key: &str) -> Result<T>
+	async fn get_key<T>(&self, key: &str) -> Result<T>
 	where
 		T: FromRedisValue,
 	{
@@ -44,7 +44,7 @@ impl Storage {
 		Ok(res)
 	}
 
-	pub async fn set_key<'a>(
+	async fn set_key<'a>(
 		&self,
 		key: &str,
 		value: impl ToRedisArgs + Debug + Send + Sync + 'a,
@@ -57,7 +57,7 @@ impl Storage {
 		Ok(())
 	}
 
-	pub async fn key_exists(&self, key: &str) -> Result<bool> {
+	async fn key_exists(&self, key: &str) -> Result<bool> {
 		debug!("Checking if key {key} exists");
 
 		let mut con = self.client.get_async_connection().await?;
@@ -66,7 +66,7 @@ impl Storage {
 		Ok(exists > 0)
 	}
 
-	pub async fn delete_key(&self, key: &str) -> Result<()> {
+	async fn delete_key(&self, key: &str) -> Result<()> {
 		debug!("Deleting key {key}");
 
 		let mut con = self.client.get_async_connection().await?;
@@ -75,7 +75,7 @@ impl Storage {
 		Ok(())
 	}
 
-	pub async fn expire_key(&self, key: &str, expire_seconds: usize) -> Result<()> {
+	async fn expire_key(&self, key: &str, expire_seconds: usize) -> Result<()> {
 		debug!("Expiring key {key} in {expire_seconds}");
 
 		let mut con = self.client.get_async_connection().await?;
@@ -84,7 +84,7 @@ impl Storage {
 		Ok(())
 	}
 
-	pub async fn add_to_index<'a>(
+	async fn add_to_index<'a>(
 		&self,
 		key: &str,
 		member: impl ToRedisArgs + Send + Sync + 'a,
@@ -98,7 +98,7 @@ impl Storage {
 		Ok(())
 	}
 
-	pub async fn get_from_index<T>(&self, key: &str) -> Result<Vec<T>>
+	async fn get_from_index<T>(&self, key: &str) -> Result<Vec<T>>
 	where
 		T: FromRedisValue,
 	{
