@@ -1,8 +1,7 @@
 use std::str::FromStr;
 
 use crate::{storage, Context};
-use settings::{Settings, SettingsProperties};
-use storage::settings;
+use storage::{Settings, SettingsProperties};
 
 use color_eyre::eyre::{eyre, Result};
 use log::*;
@@ -125,7 +124,7 @@ pub async fn set(
 
 	if previous_settings != settings {
 		debug!("Updating settings key for {gid}");
-		storage.create_settings_key(settings).await?;
+		storage.create_guild_settings(settings).await?;
 		ctx.reply("Configuration updated!").await?;
 	} else {
 		debug!("Not updating settings key for {gid} since no changes were made");

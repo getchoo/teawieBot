@@ -18,7 +18,7 @@ pub async fn get_random_shiggy() -> Result<String> {
 		.get(format!("{SHIGGY}{RANDOM_SHIGGY}"))
 		.build()?;
 
-	info!("making request to {}", req.url());
+	debug!("Making request to {}", req.url());
 	let resp = REQWEST_CLIENT.execute(req).await?;
 	let status = resp.status();
 
@@ -26,12 +26,6 @@ pub async fn get_random_shiggy() -> Result<String> {
 		let data = resp.json::<SafebooruResponse>().await?;
 		Ok(data.file_url)
 	} else {
-		error!(
-			"couldn't fetch random teawie from {}! {}",
-			resp.url(),
-			status
-		);
-
-		Err(eyre!("failed to get random teawie with {status}"))
+		Err(eyre!("Failed to get random shiggy with {status}"))
 	}
 }

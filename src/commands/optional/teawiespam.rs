@@ -6,8 +6,6 @@ use log::*;
 /// teawie will spam you.
 #[poise::command(slash_command, prefix_command)]
 pub async fn teawiespam(ctx: Context<'_>) -> Result<()> {
-	debug!("Running teawiespam command");
-
 	let gid = ctx.guild_id().unwrap_or_default();
 	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
 

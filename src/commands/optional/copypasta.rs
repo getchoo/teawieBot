@@ -41,13 +41,13 @@ fn get_copypasta(name: Copypastas) -> Result<String> {
 		let name = file
 			.path()
 			.file_stem()
-			.ok_or_else(|| eyre!("couldn't get file stem from {file:#?}"))?
+			.ok_or_else(|| eyre!("Couldn't get file stem from {file:#?}"))?
 			.to_str()
-			.ok_or_else(|| eyre!("couldn't convert file stem to str!"))?;
+			.ok_or_else(|| eyre!("Couldn't convert file stem to str!"))?;
 
 		let contents = file
 			.contents_utf8()
-			.ok_or_else(|| eyre!("couldnt get contents from copypasta!"))?;
+			.ok_or_else(|| eyre!("Couldnt get contents from copypasta!"))?;
 
 		// refer to files by their name w/o extension
 		files.insert(name, contents);
@@ -56,7 +56,7 @@ fn get_copypasta(name: Copypastas) -> Result<String> {
 	if files.contains_key(name.as_str()) {
 		Ok(files[name.as_str()].to_string())
 	} else {
-		Err(eyre!("couldnt find copypasta {name}!"))
+		Err(eyre!("Couldnt find copypasta {name}!"))
 	}
 }
 
