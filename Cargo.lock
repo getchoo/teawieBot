@@ -1162,6 +1162,21 @@ version = "0.23.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f49cdc0bb3f412bf8e7d1bd90fe1d9eb10bc5c399ba90973c14662a27b3f8ba"
 dependencies = [
+ "combine",
+ "itoa",
+ "percent-encoding",
+ "ryu",
+ "sha1_smol",
+ "socket2 0.4.10",
+ "url",
+]
+
+[[package]]
+name = "redis"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c580d9cbbe1d1b479e8d67cf9daf6a62c957e6846048408b80b43ac3f6af84cd"
+dependencies = [
  "async-trait",
  "bytes",
  "combine",
@@ -1171,6 +1186,8 @@ dependencies = [
  "pin-project-lite",
  "rustls 0.21.8",
  "rustls-native-certs",
+ "rustls-pemfile",
+ "rustls-webpki",
  "ryu",
  "sha1_smol",
  "socket2 0.4.10",
@@ -1186,7 +1203,7 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60eb39e2b44d4c0f9c84e7c5fc4fc3adc8dd26ec48f1ac3a160033f7c03b18fd"
 dependencies = [
- "redis",
+ "redis 0.23.3",
  "redis-macros-derive",
  "serde",
  "serde_json",
@@ -1688,7 +1705,7 @@ dependencies = [
  "once_cell",
  "poise",
  "rand 0.8.5",
- "redis",
+ "redis 0.24.0",
  "redis-macros",
  "reqwest",
  "serde",
