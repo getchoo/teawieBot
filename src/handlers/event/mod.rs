@@ -23,9 +23,8 @@ pub async fn handle(
 
 		Event::Message { new_message } => {
 			message::handle(ctx, framework, new_message, data).await?;
+			pinboard::handle(ctx, new_message, data).await?;
 		}
-
-		Event::ChannelPinsUpdate { pin } => pinboard::handle(ctx, pin, data).await?,
 
 		Event::ReactionAdd { add_reaction } => reactboard::handle(ctx, add_reaction, data).await?,
 
