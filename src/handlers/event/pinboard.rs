@@ -1,12 +1,15 @@
 use crate::{utils, Data};
 
-use color_eyre::eyre::{Context as _, Result};
-use log::{debug, warn};
-use poise::serenity_prelude::model::prelude::*;
-use poise::serenity_prelude::Context;
+use color_eyre::eyre::{eyre, Context as _, Result};
+use log::debug;
+use poise::serenity_prelude::{ChannelId, Context, Message, MessageType, User};
 
-pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) -> Result<()> {
-	let gid = pin.guild_id.unwrap_or_default();
+pub async fn handle(ctx: &Context, message: &Message, data: &Data) -> Result<()> {
+	if message.kind != MessageType::PinsAdd {
+		return Ok(());
+	}
+
+	let gid = message.guild_id.unwrap_or_default();
 	let settings = data.storage.get_guild_settings(&gid).await?;
 
 	if !settings.pinboard_enabled {
@@ -20,39 +23,41 @@ pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) ->
 	};
 
 	if let Some(sources) = settings.pinboard_watch {
-		if !sources.contains(&pin.channel_id) {
+		if !sources.contains(&message.channel_id) {
 			debug!(
 				"{} not listed in PinBoard settings for {gid}, ignoring",
-				&pin.channel_id
+				message.channel_id
 			);
 
 			return Ok(());
 		}
 	}
 
-	let mut pinner = guess_pinner(ctx, pin).await;
-	let pins = pin
+	let reference_id = message
+		.clone()
+		.message_reference
+		.ok_or_else(|| eyre!("Couldn't get referenced message of pin!"))?
+		.message_id
+		.ok_or_else(|| eyre!("Couldn't get id of referenced message of pin!"))?;
+
+	let pins = message
 		.channel_id
-		.pins(&ctx.http)
+		.pins(ctx)
 		.await
 		.wrap_err_with(|| "Couldn't get a list of pins!?")?;
 
-	for pin in pins {
-		// We call `take` because it's supposed to be just for the latest message.
-		redirect(ctx, &pin, pinner.take(), target).await?;
-		pin.unpin(&ctx).await?;
-	}
+	let pin = pins
+		.iter()
+		.find(|pin| pin.id == reference_id)
+		.ok_or_else(|| eyre!("Couldn't find a pin for message {reference_id}!"))?;
+
+	redirect(ctx, pin, &message.author, target).await?;
+	pin.unpin(ctx).await?;
 
 	Ok(())
 }
 
-async fn redirect(
-	ctx: &Context,
-	pin: &Message,
-	pinner: Option<UserId>,
-	target: ChannelId,
-) -> Result<()> {
-	let pinner = pinner.map_or("*someone*".to_owned(), |u| format!("<@{u}>"));
+async fn redirect(ctx: &Context, pin: &Message, pinner: &User, target: ChannelId) -> Result<()> {
 	let embed = utils::resolve_message_to_embed(ctx, pin).await;
 
 	target
@@ -65,39 +70,4 @@ async fn redirect(
 		.wrap_err_with(|| "Couldn't redirect message")?;
 
 	Ok(())
-}
-
-/// (Desperate, best-effort) attempt to get the user that pinned the last message
-///
-/// Now, since Discord is SUPER annoying, it doesn't actually tell you which bloody user
-/// that triggered the pins update event. So, you have to dig into the audit log.
-/// Unfortunately, while you do get a timestamp, the REST API does not return the time at
-/// which each action is logged, which, to me, means that it is not a freaking log *at all*.
-///
-/// I love Discord.
-///
-/// So, the plan is that only the first pinned message gets clear pinner information,
-/// since we can just get the latest pin, which should happen on the exact second.
-/// We can't reliably say the same for any existing pins, so we can only /shrug and say
-/// *somebody* did it. Ugh.
-async fn guess_pinner(ctx: &Context, pin: &ChannelPinsUpdateEvent) -> Option<UserId> {
-	if let Some(g) = pin.guild_id {
-		g.audit_logs(
-			&ctx.http,
-			// This `num` call shouldn't be necessary.
-			// See https://github.com/serenity-rs/serenity/issues/2488
-			Some(Action::Message(MessageAction::Pin).num()),
-			None,    // user id
-			None,    // before
-			Some(1), // limit
-		)
-		.await
-		.ok()
-		.and_then(|mut logs| logs.entries.pop())
-		.map(|first| first.user_id)
-	} else {
-		// TODO: mayyyyybe we can guess who pinned something in a DM...?
-		warn!("Couldn't figure out who pinned in {}!", pin.channel_id);
-		None
-	}
 }
