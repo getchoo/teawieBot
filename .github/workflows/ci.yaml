@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  eval:
+    name: Evaluate flake
+    runs-on: ubuntu-latest
+
+    outputs:
+      matrix: ${{ steps.evaluate.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+
+      - name: Evaluate matrix
+        id: evaluate
+        run: |
+          set -eu
+          echo "matrix=$(nix eval --show-trace --json .#githubWorkflow.matrix)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: eval
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.eval.outputs.matrix) }}
+
+    name: Build (${{ matrix.attr }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+
+      - name: Setup local Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Setup Attic cache
+        uses: ryanccn/attic-action@v0
+        with:
+          endpoint: https://cache.mydadleft.me
+          cache: teawiebot
+          token: ${{ secrets.ATTIC_TOKEN }}
+          skip-push: ${{ github.event_name == 'pull_request' }}
+
+      - name: Run build
+        run: |
+          nix build -L --accept-flake-config .#${{ matrix.attr }}
+
+  check:
+    name: Check flake
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+
+      - name: Setup local Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Setup Attic cache
+        uses: ryanccn/attic-action@v0
+        with:
+          endpoint: https://cache.mydadleft.me
+          cache: teawiebot
+          token: ${{ secrets.ATTIC_TOKEN }}
+          skip-push: ${{ github.event_name == 'pull_request' }}
+
+      - name: Run check
+        run: nix flake check --show-trace --accept-flake-config
+
+  # https://github.com/orgs/community/discussions/26822#discussioncomment-3305794
+  gate:
+    needs: [build, check]
+
+    name: CI Gate
+    runs-on: ubuntu-latest
+
+    if: always()
+
+    steps:
+      - name: Exit with result
+        run: |
+          build_result="${{ needs.build.result }}"
+          check_result="${{ needs.check.result }}"
+
+          results=("$build_result" "$check_result")
+
+          for result in "${results[@]}"; do [ "$result" != "success" ] && exit 1; done
+
+          exit 0
+
+  docker:
+    needs: gate
+
+    permissions:
+      packages: write
+
+    name: Push to image registry
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/docker.yaml
