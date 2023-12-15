@@ -15,7 +15,8 @@ Cargo.lock
 
 # nix stuff
 .direnv/
-result
+result*
+repl-result-out*
 .pre-commit-config.yaml
 
 # Used to supply a token together with direnv
