@@ -111,6 +111,20 @@ impl Storage {
 		Ok(mems)
 	}
 
+	async fn remove_from_index<'a>(
+		&self,
+		key: &str,
+		member: impl ToRedisArgs + Debug + Send + Sync + 'a,
+	) -> Result<()> {
+		let index = format!("{key}:index");
+		debug!("Removing member {member:#?} from index {index}");
+
+		let mut con = self.client.get_async_connection().await?;
+		con.srem(key, member).await?;
+
+		Ok(())
+	}
+
 	// guild settings
 
 	pub async fn create_guild_settings(&self, settings: Settings) -> Result<()> {
@@ -135,7 +149,9 @@ impl Storage {
 
 	pub async fn delete_guild_settings(&self, guild_id: &GuildId) -> Result<()> {
 		let key = format!("{SETTINGS_KEY}:{guild_id}");
+
 		self.delete_key(&key).await?;
+		self.remove_from_index(&key, guild_id.as_u64()).await?;
 
 		Ok(())
 	}
