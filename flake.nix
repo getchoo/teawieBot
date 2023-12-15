@@ -29,7 +29,7 @@
 
     nix2workflow = {
       url = "github:getchoo/nix2workflow";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
     pre-commit = {
@@ -49,10 +49,10 @@
 
         inputs.nix2workflow.flakeModule
 
-        ./parts/deployment.nix
-        ./parts/dev.nix
-        ./parts/packages.nix
-        ./parts/workflow.nix
+        ./nix/deployment.nix
+        ./nix/dev.nix
+        ./nix/packages.nix
+        ./nix/workflow.nix
       ];
 
       systems = [
