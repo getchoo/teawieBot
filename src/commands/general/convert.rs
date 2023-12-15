@@ -2,6 +2,7 @@ use crate::Context;
 
 use bottomify::bottom;
 use color_eyre::eyre::Result;
+use poise::serenity_prelude::constants::MESSAGE_CODE_LIMIT;
 
 #[allow(clippy::unused_async)]
 #[poise::command(
@@ -51,7 +52,19 @@ pub async fn from_bottom(
 	ctx: Context<'_>,
 	#[description = "What teawie will translate from bottom"] message: String,
 ) -> Result<()> {
-	let decoded = bottom::decode_string(&message)?;
-	ctx.say(decoded).await?;
+	let resp: String;
+
+	if let Ok(decoded) = bottom::decode_string(&message.clone()) {
+		resp = if decoded.len() > MESSAGE_CODE_LIMIT {
+			"The translation is too long to send, sorry :(".to_string()
+		} else {
+			decoded
+		}
+	} else {
+		resp = "Couldn't translate that for you :(".to_string();
+	}
+
+	ctx.say(resp).await?;
+
 	Ok(())
 }
