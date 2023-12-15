@@ -60,7 +60,6 @@ async fn setup(
 	info!("Registered global commands!");
 
 	// register "extra" commands in guilds that allow it
-	info!("Fetching opted guilds");
 	let guilds = data.storage.get_opted_guilds().await?;
 
 	for guild in guilds {

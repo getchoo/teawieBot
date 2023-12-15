@@ -87,37 +87,37 @@ impl Storage {
 	async fn add_to_index<'a>(
 		&self,
 		key: &str,
-		member: impl ToRedisArgs + Send + Sync + 'a,
+		member: impl ToRedisArgs + Debug + Send + Sync + 'a,
 	) -> Result<()> {
-		let index = format!("{key}:index");
-		debug!("Appending index {index}");
+		let key = format!("{key}:index");
+		debug!("Adding member {member:#?} to index {key}");
 
 		let mut con = self.client.get_async_connection().await?;
-		con.sadd(index, member).await?;
+		con.sadd(key, member).await?;
 
 		Ok(())
 	}
 
-	async fn get_from_index<T>(&self, key: &str) -> Result<Vec<T>>
+	async fn get_index<T>(&self, key: &str) -> Result<Vec<T>>
 	where
 		T: FromRedisValue,
 	{
-		let index = format!("{key}:index");
-		debug!("Fetching index {index}");
+		let key = format!("{key}:index");
+		debug!("Getting index {key}");
 
 		let mut con = self.client.get_async_connection().await?;
-		let mems = con.smembers(key).await?;
+		let members = con.smembers(key).await?;
 
-		Ok(mems)
+		Ok(members)
 	}
 
-	async fn remove_from_index<'a>(
+	async fn delete_from_index<'a>(
 		&self,
 		key: &str,
 		member: impl ToRedisArgs + Debug + Send + Sync + 'a,
 	) -> Result<()> {
-		let index = format!("{key}:index");
-		debug!("Removing member {member:#?} from index {index}");
+		let key = format!("{key}:index");
+		debug!("Removing {member:#?} from index {key}");
 
 		let mut con = self.client.get_async_connection().await?;
 		con.srem(key, member).await?;
@@ -132,7 +132,7 @@ impl Storage {
 
 		self.set_key(&key, &settings).await?;
 		// adding to index since we need to look all of these up sometimes
-		self.add_to_index(SETTINGS_KEY, settings.guild_id.as_u64())
+		self.add_to_index(SETTINGS_KEY, *settings.guild_id.as_u64())
 			.await?;
 
 		Ok(())
@@ -151,7 +151,8 @@ impl Storage {
 		let key = format!("{SETTINGS_KEY}:{guild_id}");
 
 		self.delete_key(&key).await?;
-		self.remove_from_index(&key, guild_id.as_u64()).await?;
+		self.delete_from_index(SETTINGS_KEY, *guild_id.as_u64())
+			.await?;
 
 		Ok(())
 	}
@@ -164,10 +165,11 @@ impl Storage {
 	pub async fn get_all_guild_settings(&self) -> Result<Vec<Settings>> {
 		debug!("Fetching all guild settings");
 
-		let guild_ids: Vec<u64> = self.get_from_index(SETTINGS_KEY).await?;
+		let found: Vec<u64> = self.get_index(SETTINGS_KEY).await?;
+
 		let mut guilds = vec![];
-		for id in guild_ids {
-			let settings = self.get_guild_settings(&GuildId::from(id)).await?;
+		for key in found {
+			let settings = self.get_guild_settings(&key.into()).await?;
 			guilds.push(settings);
 		}
 
