@@ -1,7 +1,7 @@
 use crate::api::REQWEST_CLIENT;
 
 use color_eyre::eyre::{eyre, Result};
-use log::*;
+use log::debug;
 use reqwest::StatusCode;
 use serde::Deserialize;
 
@@ -13,6 +13,7 @@ struct SafebooruResponse {
 	file_url: String,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub async fn get_random_shiggy() -> Result<String> {
 	let req = REQWEST_CLIENT
 		.get(format!("{SHIGGY}{RANDOM_SHIGGY}"))

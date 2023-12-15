@@ -1,13 +1,13 @@
 use std::str::FromStr;
 
 use crate::{storage, Context};
-use storage::{Settings, SettingsProperties};
+use storage::{Properties, Settings};
 
 use color_eyre::eyre::{eyre, Result};
-use log::*;
+use log::debug;
 use poise::serenity_prelude::{GuildChannel, ReactionType};
 
-fn split_argument<T>(list: String) -> Vec<T>
+fn split_argument<T>(list: &str) -> Vec<T>
 where
 	T: FromStr,
 {
@@ -16,24 +16,23 @@ where
 		.collect()
 }
 
-fn prop_to_val(setting: &SettingsProperties, settings: &Settings) -> String {
+fn prop_to_val(setting: &Properties, settings: &Settings) -> String {
 	match setting {
-		SettingsProperties::GuildId => settings.guild_id.to_string(),
-		SettingsProperties::PinBoardChannel => format!("{:#?}", settings.pinboard_channel),
-		SettingsProperties::PinBoardWatch => format!("{:#?}", settings.pinboard_watch),
-		SettingsProperties::PinBoardEnabled => settings.pinboard_enabled.to_string(),
-		SettingsProperties::ReactBoardChannel => format!("{:#?}", settings.reactboard_channel),
-		SettingsProperties::ReactBoardRequirement => {
+		Properties::GuildId => settings.guild_id.to_string(),
+		Properties::PinBoardChannel => format!("{:#?}", settings.pinboard_channel),
+		Properties::PinBoardWatch => format!("{:#?}", settings.pinboard_watch),
+		Properties::PinBoardEnabled => settings.pinboard_enabled.to_string(),
+		Properties::ReactBoardChannel => format!("{:#?}", settings.reactboard_channel),
+		Properties::ReactBoardRequirement => {
 			format!("{:?}", settings.reactboard_requirement)
 		}
-		SettingsProperties::ReactBoardReactions => format!("{:?}", settings.reactboard_reactions),
-		SettingsProperties::ReactBoardEnabled => settings.reactboard_enabled.to_string(),
-		SettingsProperties::OptionalCommandsEnabled => {
-			settings.optional_commands_enabled.to_string()
-		}
+		Properties::ReactBoardReactions => format!("{:?}", settings.reactboard_reactions),
+		Properties::ReactBoardEnabled => settings.reactboard_enabled.to_string(),
+		Properties::OptionalCommandsEnabled => settings.optional_commands_enabled.to_string(),
 	}
 }
 
+#[allow(clippy::unused_async)]
 #[poise::command(
 	slash_command,
 	prefix_command,
@@ -84,7 +83,7 @@ pub async fn set(
 	}
 
 	if let Some(watch) = pinboard_watch {
-		let channels = split_argument(watch);
+		let channels = split_argument(&watch);
 		debug!("Setting pinboard_watch to {channels:#?} for {gid}");
 
 		settings.pinboard_watch = Some(channels);
@@ -123,14 +122,14 @@ pub async fn set(
 		settings.optional_commands_enabled = enabled;
 	}
 
-	if previous_settings != settings {
-		debug!("Updating settings key for {gid}");
-		storage.create_guild_settings(settings).await?;
-		ctx.reply("Configuration updated!").await?;
-	} else {
+	if previous_settings == settings {
 		debug!("Not updating settings key for {gid} since no changes were made");
 		ctx.reply("No changes made, so i'm not updating anything")
 			.await?;
+	} else {
+		debug!("Updating settings key for {gid}");
+		storage.create_guild_settings(settings).await?;
+		ctx.reply("Configuration updated!").await?;
 	}
 
 	Ok(())
@@ -146,7 +145,7 @@ pub async fn set(
 )]
 pub async fn get(
 	ctx: Context<'_>,
-	#[description = "The setting you want to get"] setting: SettingsProperties,
+	#[description = "The setting you want to get"] setting: Properties,
 ) -> Result<()> {
 	let gid = &ctx
 		.guild_id()

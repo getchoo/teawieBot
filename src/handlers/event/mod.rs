@@ -1,7 +1,7 @@
 use crate::Data;
 
 use color_eyre::eyre::{Report, Result};
-use log::*;
+use log::info;
 use poise::serenity_prelude as serenity;
 use poise::{Event, FrameworkContext};
 
@@ -22,7 +22,7 @@ pub async fn handle(
 		}
 
 		Event::Message { new_message } => {
-			message::handle(ctx, framework, new_message, data).await?
+			message::handle(ctx, framework, new_message, data).await?;
 		}
 
 		Event::ChannelPinsUpdate { pin } => pinboard::handle(ctx, pin, data).await?,

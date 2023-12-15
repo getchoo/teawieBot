@@ -2,7 +2,7 @@ use crate::{storage, utils, Data};
 use storage::ReactBoardEntry;
 
 use color_eyre::eyre::{eyre, Context as _, Result};
-use log::*;
+use log::debug;
 use poise::serenity_prelude::{Context, GuildId, Message, MessageReaction, Reaction};
 
 pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<()> {
@@ -52,9 +52,7 @@ async fn send_to_reactboard(
 		return Ok(());
 	}
 
-	let target = if let Some(target) = settings.reactboard_channel {
-		target
-	} else {
+	let Some(target) = settings.reactboard_channel else {
 		debug!("ReactBoard is disabled in {guild_id}, ignoring");
 		return Ok(());
 	};

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub const SETTINGS_KEY: &str = "settings-v1";
 
 #[derive(poise::ChoiceParameter)]
-pub enum SettingsProperties {
+pub enum Properties {
 	GuildId,
 	PinBoardChannel,
 	PinBoardWatch,

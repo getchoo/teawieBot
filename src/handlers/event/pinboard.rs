@@ -1,7 +1,7 @@
 use crate::{utils, Data};
 
 use color_eyre::eyre::{Context as _, Result};
-use log::*;
+use log::{debug, warn};
 use poise::serenity_prelude::model::prelude::*;
 use poise::serenity_prelude::Context;
 
@@ -14,9 +14,7 @@ pub async fn handle(ctx: &Context, pin: &ChannelPinsUpdateEvent, data: &Data) ->
 		return Ok(());
 	}
 
-	let target = if let Some(target) = settings.pinboard_channel {
-		target
-	} else {
+	let Some(target) = settings.pinboard_channel else {
 		debug!("PinBoard is disabled in {gid}, ignoring");
 		return Ok(());
 	};

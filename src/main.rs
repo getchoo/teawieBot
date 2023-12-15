@@ -1,9 +1,13 @@
+#![warn(clippy::all, clippy::pedantic, clippy::perf)]
+#![allow(clippy::missing_errors_doc, clippy::used_underscore_binding)]
+#![forbid(unsafe_code)]
+
 use std::sync::Arc;
 use std::time::Duration;
 
 use color_eyre::eyre::{eyre, Context as _, Report, Result};
 use color_eyre::owo_colors::OwoColorize;
-use log::*;
+use log::{info, warn};
 use poise::serenity_prelude::{self as serenity, ShardManager};
 use poise::{EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions};
 use redis::ConnectionLike;
@@ -60,7 +64,7 @@ async fn setup(
 	let guilds = data.storage.get_opted_guilds().await?;
 
 	for guild in guilds {
-		poise::builtins::register_in_guild(ctx, &commands::to_optional_commands(), guild).await?;
+		poise::builtins::register_in_guild(ctx, &commands::optional(), guild).await?;
 
 		info!("Registered guild commands to {}", guild);
 	}
@@ -87,8 +91,8 @@ async fn main() -> Result<()> {
 
 	let options = FrameworkOptions {
 		commands: {
-			let mut commands = commands::to_global_commands();
-			commands.append(&mut commands::to_optional_commands());
+			let mut commands = commands::global();
+			commands.append(&mut commands::optional());
 			commands
 		},
 		on_error: |error| Box::pin(handlers::handle_error(error)),
