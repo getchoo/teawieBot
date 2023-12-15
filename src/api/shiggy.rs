@@ -23,7 +23,7 @@ pub async fn get_random_shiggy() -> Result<String> {
 	let status = resp.status();
 
 	if let StatusCode::OK = status {
-		let data = resp.json::<SafebooruResponse>().await?;
+		let data: SafebooruResponse = resp.json().await?;
 		Ok(data.file_url)
 	} else {
 		Err(eyre!("Failed to get random shiggy with {status}"))

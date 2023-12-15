@@ -23,7 +23,7 @@ pub async fn get_random_teawie() -> Result<String> {
 	let status = resp.status();
 
 	if let StatusCode::OK = status {
-		let data = resp.json::<GuzzleResponse>().await?;
+		let data: GuzzleResponse = resp.json().await?;
 		Ok(data.url)
 	} else {
 		Err(eyre!("Failed to get random Teawie with {status}"))
