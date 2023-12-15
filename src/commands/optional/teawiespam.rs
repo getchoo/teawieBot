@@ -11,6 +11,7 @@ pub async fn teawiespam(ctx: Context<'_>) -> Result<()> {
 
 	if !settings.optional_commands_enabled {
 		debug!("Not running teawiespam in {gid} since it's disabled");
+		ctx.say("I'm not allowed to do that here").await?;
 		return Ok(());
 	}
 

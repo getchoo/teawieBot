@@ -71,6 +71,7 @@ pub async fn copypasta(
 
 	if !settings.optional_commands_enabled {
 		debug!("Exited copypasta command in {gid} since it's disabled");
+		ctx.say("I'm not allowed to do that here").await?;
 		return Ok(());
 	}
 
