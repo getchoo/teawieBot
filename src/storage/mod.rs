@@ -118,7 +118,8 @@ impl Storage {
 
 		self.set_key(&key, &settings).await?;
 		// adding to index since we need to look all of these up sometimes
-		self.add_to_index(SETTINGS_KEY, settings).await?;
+		self.add_to_index(SETTINGS_KEY, settings.guild_id.as_u64())
+			.await?;
 
 		Ok(())
 	}
@@ -147,7 +148,12 @@ impl Storage {
 	pub async fn get_all_guild_settings(&self) -> Result<Vec<Settings>> {
 		debug!("Fetching all guild settings");
 
-		let guilds: Vec<Settings> = self.get_from_index(SETTINGS_KEY).await?;
+		let guild_ids: Vec<u64> = self.get_from_index(SETTINGS_KEY).await?;
+		let mut guilds = vec![];
+		for id in guild_ids {
+			let settings = self.get_guild_settings(&GuildId::from(id)).await?;
+			guilds.push(settings);
+		}
 
 		Ok(guilds)
 	}
@@ -159,13 +165,7 @@ impl Storage {
 		let guilds = self.get_all_guild_settings().await?;
 		let opted: Vec<GuildId> = guilds
 			.iter()
-			.filter_map(|g| {
-				if g.optional_commands_enabled {
-					Some(g.guild_id)
-				} else {
-					None
-				}
-			})
+			.filter_map(|g| g.optional_commands_enabled.then_some(g.guild_id))
 			.collect();
 
 		Ok(opted)
