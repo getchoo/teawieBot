@@ -2,12 +2,8 @@
   description = "teawie moment";
 
   nixConfig = {
-    extra-substituters = [
-      "https://cache.garnix.io"
-    ];
-    extra-trusted-public-keys = [
-      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
-    ];
+    extra-substituters = ["https://cache.mydadleft.me/teawiebot"];
+    extra-trusted-public-keys = ["teawiebot:vp7AaQ042O/3326DMMtLF4MOUa5/kCBAq+YApy5GWXA="];
   };
 
   inputs = {
@@ -31,6 +27,11 @@
     proc-flake.url = "github:srid/proc-flake";
     flake-root.url = "github:srid/flake-root";
 
+    nix2workflow = {
+      url = "github:getchoo/nix2workflow";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     pre-commit = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -42,12 +43,16 @@
     parts.lib.mkFlake {inherit inputs;} {
       imports = [
         inputs.pre-commit.flakeModule
+
         inputs.proc-flake.flakeModule
         inputs.flake-root.flakeModule
+
+        inputs.nix2workflow.flakeModule
 
         ./parts/deployment.nix
         ./parts/dev.nix
         ./parts/packages.nix
+        ./parts/workflow.nix
       ];
 
       systems = [

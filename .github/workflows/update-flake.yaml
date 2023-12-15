@@ -10,27 +10,23 @@ jobs:
   update:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: nixbuild/nix-quick-install-action@v26
+        uses: DeterminateSystems/nix-installer-action@v9
 
-      - name: Update and create PR
+      - name: Update lockfile & make PR
         uses: DeterminateSystems/update-flake-lock@v20
         id: update
         with:
           commit-msg: "flake: update inputs"
           pr-title: "flake: update inputs"
-          token: ${{ github.token }}
+          token: ${{ secrets.MERGE_TOKEN }}
 
       - name: Enable auto-merge
         shell: bash
         run: gh pr merge --auto --rebase "$PR_ID"
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
           PR_ID: ${{ steps.update.outputs.pull-request-number }}
