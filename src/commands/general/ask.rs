@@ -2,12 +2,12 @@ use crate::{consts, utils, Context};
 
 use color_eyre::eyre::{Context as _, Result};
 
-/// ask teawie a question!
+/// Ask teawie a question!
 #[poise::command(prefix_command, slash_command)]
 pub async fn ask(
 	ctx: Context<'_>,
-	#[description = "the question you want to ask teawie"]
-	#[rename = "question"]
+	#[description = "The question you want to ask teawie"]
+	#[rename = "Question"]
 	_question: String,
 ) -> Result<()> {
 	let resp = utils::random_choice(consts::RESPONSES)

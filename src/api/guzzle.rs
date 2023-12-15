@@ -18,7 +18,7 @@ pub async fn get_random_teawie() -> Result<String> {
 		.get(format!("{GUZZLE}{RANDOM_TEAWIE}"))
 		.build()?;
 
-	debug!("making request to {}", req.url());
+	debug!("Making request to {}", req.url());
 	let resp = REQWEST_CLIENT.execute(req).await?;
 	let status = resp.status();
 

@@ -19,6 +19,7 @@ pub async fn handle(error: poise::FrameworkError<'_, Data, Report>) {
 
 		FrameworkError::Command { error, ctx } => {
 			error!("Error in command {}:\n{error}", ctx.command().name);
+
 			ctx.send(|c| {
 				c.embed(|e| {
 					e.title("Something went wrong!")
