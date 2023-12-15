@@ -84,9 +84,7 @@ pub async fn set(
 
 	if let Some(watch) = pinboard_watch {
 		let channels = split_argument(&watch);
-		debug!("Setting pinboard_watch to {channels:#?} for {gid}");
-
-		settings.pinboard_watch = Some(channels);
+		settings.pinboard_watch = (!channels.is_empty()).then_some(channels);
 	}
 
 	if let Some(enabled) = pinboard_enabled {
