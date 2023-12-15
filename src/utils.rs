@@ -19,6 +19,7 @@ pub fn random_choice<const N: usize>(arr: [&str; N]) -> Result<String> {
 }
 
 // waiting for `round_char_boundary` to stabilize
+#[allow(clippy::cast_possible_wrap)]
 pub fn floor_char_boundary(s: &str, index: usize) -> usize {
 	if index >= s.len() {
 		s.len()
@@ -105,7 +106,7 @@ pub async fn resolve_message_to_embed(ctx: &serenity::Context, msg: &Message) ->
 	if attachments_len > 1 {
 		embed.footer(|footer| {
 			// yes it will say '1 attachments' no i do not care
-			footer.text(format!("{} attachments", attachments_len))
+			footer.text(format!("{attachments_len} attachments"))
 		});
 	}
 

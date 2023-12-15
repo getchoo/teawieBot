@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use color_eyre::eyre::Result;
-use log::*;
+use log::debug;
 use poise::serenity_prelude::{GuildId, MessageId};
 use redis::{AsyncCommands, Client, FromRedisValue, ToRedisArgs};
 
@@ -12,7 +12,7 @@ use reactboard::REACTBOARD_KEY;
 use settings::SETTINGS_KEY;
 
 pub use reactboard::ReactBoardEntry;
-pub use settings::{Settings, SettingsProperties};
+pub use settings::{Properties, Settings};
 
 #[derive(Clone, Debug)]
 pub struct Storage {

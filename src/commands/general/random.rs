@@ -2,6 +2,7 @@ use crate::{api, consts, utils, Context};
 
 use color_eyre::eyre::Result;
 
+#[allow(clippy::unused_async)]
 #[poise::command(slash_command, subcommands("lore", "teawie", "shiggy"))]
 pub async fn random(_ctx: Context<'_>) -> Result<()> {
 	Ok(())

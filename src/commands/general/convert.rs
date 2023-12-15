@@ -3,6 +3,7 @@ use crate::Context;
 use bottomify::bottom;
 use color_eyre::eyre::Result;
 
+#[allow(clippy::unused_async)]
 #[poise::command(
 	slash_command,
 	subcommands("to_fahrenheit", "to_celsius", "to_bottom", "from_bottom")

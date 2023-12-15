@@ -1,7 +1,7 @@
 use crate::Context;
 
 use color_eyre::eyre::Result;
-use log::*;
+use log::debug;
 
 /// teawie will spam you.
 #[poise::command(slash_command, prefix_command)]

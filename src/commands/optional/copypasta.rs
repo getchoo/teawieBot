@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use color_eyre::eyre::{eyre, Result};
 use include_dir::{include_dir, Dir};
-use log::*;
+use log::debug;
 
 const FILES: Dir = include_dir!("src/copypastas");
 
@@ -34,7 +34,7 @@ impl Copypastas {
 	}
 }
 
-fn get_copypasta(name: Copypastas) -> Result<String> {
+fn get_copypasta(name: &Copypastas) -> Result<String> {
 	let mut files: HashMap<&str, &str> = HashMap::new();
 
 	for file in FILES.files() {
@@ -66,8 +66,6 @@ pub async fn copypasta(
 	ctx: Context<'_>,
 	#[description = "the copypasta you want to send"] copypasta: Copypastas,
 ) -> Result<()> {
-	debug!("Running copypasta command with copypasta {copypasta}");
-
 	let gid = ctx.guild_id().unwrap_or_default();
 	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
 
@@ -76,7 +74,7 @@ pub async fn copypasta(
 		return Ok(());
 	}
 
-	ctx.say(get_copypasta(copypasta)?).await?;
+	ctx.say(get_copypasta(&copypasta)?).await?;
 
 	Ok(())
 }

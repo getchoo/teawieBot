@@ -1,5 +1,5 @@
 use color_eyre::eyre::Result;
-use log::*;
+use log::{debug, warn};
 use poise::serenity_prelude::{Guild, UnavailableGuild};
 
 use crate::{storage, Data};
