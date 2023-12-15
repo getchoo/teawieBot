@@ -1,11 +1,13 @@
 use crate::colors::Colors;
 use crate::Context;
+
 use color_eyre::eyre::Result;
 
 /// Get version info
 #[poise::command(slash_command)]
 pub async fn version(ctx: Context<'_>) -> Result<()> {
 	let sha = option_env!("GIT_SHA").unwrap_or("main");
+	let target = option_env!("TARGET").unwrap_or("Unknown");
 
 	let revision_url = format!(
 		"[{}]({}/tree/{})",
@@ -20,6 +22,7 @@ pub async fn version(ctx: Context<'_>) -> Result<()> {
 			option_env!("CARGO_PKG_VERSION").unwrap_or("not found"),
 			false,
 		),
+		("Target:", target, false),
 		("Revision:", &revision_url, false),
 		("User Agent:", &crate::api::USER_AGENT, false),
 	];
