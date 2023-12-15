@@ -2,7 +2,7 @@ use crate::colors::Colors;
 use crate::Context;
 use color_eyre::eyre::Result;
 
-/// get version info
+/// Get version info
 #[poise::command(slash_command)]
 pub async fn version(ctx: Context<'_>) -> Result<()> {
 	let sha = option_env!("GIT_SHA").unwrap_or("main");

@@ -45,6 +45,7 @@ pub async fn config(_ctx: Context<'_>) -> Result<()> {
 	Ok(())
 }
 
+// Set a configuration option
 #[allow(clippy::too_many_arguments)]
 #[poise::command(
 	slash_command,
@@ -135,6 +136,7 @@ pub async fn set(
 	Ok(())
 }
 
+// Get a configuration option
 #[poise::command(
 	slash_command,
 	prefix_command,
