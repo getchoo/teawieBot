@@ -10,6 +10,10 @@ jobs:
   update:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,11 +26,11 @@ jobs:
         with:
           commit-msg: "flake: update inputs"
           pr-title: "flake: update inputs"
-          token: ${{ secrets.MERGE_TOKEN }}
+          token: ${{ github.token }}
 
       - name: Enable auto-merge
         shell: bash
         run: gh pr merge --auto --rebase "$PR_ID"
         env:
-          GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           PR_ID: ${{ steps.update.outputs.pull-request-number }}

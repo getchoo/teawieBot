@@ -13,8 +13,6 @@
     inputs',
     ...
   }: let
-    name = "getchoo/teawiebot";
-
     crossPkgsFor = lib.fix (finalAttrs: {
       "x86_64-linux" = {
         "x86_64" = pkgs.pkgsStatic;
@@ -70,7 +68,7 @@
 
     containerFor = arch:
       pkgs.dockerTools.buildLayeredImage {
-        inherit name;
+        name = "teawiebot";
         tag = "latest-${arch}";
         contents = [pkgs.dockerTools.caCertificates];
         config.Cmd = [(wieFor arch)];

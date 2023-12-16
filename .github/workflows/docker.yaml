@@ -1,12 +1,53 @@
 name: Push to image registry
 
 on:
-  workflow_call:
+  check_suite:
+    types: [completed]
   workflow_dispatch:
 
 jobs:
+  build:
+    name: Build image
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+
+    # https://github.com/sellout/bash-strict-mode/commit/9bf1d65c2f786a9887facfcb81e06d8b8b5f4667
+    if: github.event.check_suite.app.name == 'Garnix CI'
+      && github.event.check_suite.conclusion == 'success'
+      && github.event.check_suite.latest_check_runs_count >= 8
+      && github.event.check_suite.head_branch == 'main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Build Docker image
+        id: build
+        run: |
+          nix build -L --accept-flake-config .#container-${{ matrix.arch }}
+          [ ! -L result ] && exit 1
+          echo "path=$(realpath result)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload image
+        uses: actions/upload-artifact@v3
+        with:
+          name: container-${{ matrix.arch }}
+          path: ${{ steps.build.outputs.path }}
+          if-no-files-found: error
+          retention-days: 1
+
   push:
     name: Push image
+
+    needs: build
     runs-on: ubuntu-latest
 
     permissions:
@@ -23,15 +64,10 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v9
-
-      - name: Setup Attic cache
-        uses: ryanccn/attic-action@v0
+      - name: Download images
+        uses: actions/download-artifact@v3
         with:
-          endpoint: https://cache.mydadleft.me
-          cache: teawiebot
-          token: ${{ secrets.ATTIC_TOKEN }}
+          path: images
 
       - name: Login to registry
         uses: docker/login-action@v3
@@ -48,11 +84,9 @@ jobs:
 
           architectures=("x86_64" "aarch64")
           for arch in "${architectures[@]}"; do
-            nix build -L --accept-flake-config .#container-"$arch"
-            docker load < result
-            docker tag ${{ env.IMAGE_NAME }}:latest-"$arch" ${{ env.TAG }}-"$arch"
+            docker load < images/container-"$arch"/*.tar.gz
+            docker tag teawiebot:latest-"$arch" ${{ env.TAG }}-"$arch"
             docker push ${{ env.TAG }}-"$arch"
-            rm result
           done
 
           docker manifest create ${{ env.TAG }} \
