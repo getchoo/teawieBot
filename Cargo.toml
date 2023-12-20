@@ -33,3 +33,4 @@ tokio = { version = "1.35.1", features = [
 	"signal",
 ] }
 url = { version = "2.5.0", features = ["serde"] }
+uwurandom-rs = "1.1.0"
