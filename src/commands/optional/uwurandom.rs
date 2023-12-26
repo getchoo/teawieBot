@@ -3,11 +3,11 @@ use crate::Context;
 use color_eyre::eyre::Result;
 use log::debug;
 
-/// generate some amount of uwurandom
+/// Generate some amount of uwurandom
 #[poise::command(slash_command)]
 pub async fn uwurandom(
 	ctx: Context<'_>,
-	#[description = "the amount of uwurandom to generate"]
+	#[description = "The amount of uwurandom to generate"]
 	#[min = 1]
 	#[max = 2000]
 	length: u16,
