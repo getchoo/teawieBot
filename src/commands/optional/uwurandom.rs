@@ -2,6 +2,7 @@ use crate::Context;
 
 use color_eyre::eyre::Result;
 use log::debug;
+use rand::Rng;
 
 /// Generate some amount of uwurandom
 #[poise::command(slash_command)]
@@ -10,7 +11,7 @@ pub async fn uwurandom(
 	#[description = "The amount of uwurandom to generate"]
 	#[min = 1]
 	#[max = 2000]
-	length: u16,
+	length: Option<u16>,
 ) -> Result<()> {
 	let gid = ctx.guild_id().unwrap_or_default();
 	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
@@ -20,6 +21,8 @@ pub async fn uwurandom(
 		ctx.say("I'm not allowed to do that here").await?;
 		return Ok(());
 	}
+
+	let length = length.unwrap_or(rand::thread_rng().gen_range(1..50));
 
 	let mut result = String::with_capacity(length as usize);
 	// ThreadRng is not Send(obviously), and rustc is slightly too paranoid about rng spilling to await point
