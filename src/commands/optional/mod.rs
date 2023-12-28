@@ -5,7 +5,12 @@ use poise::Command;
 
 mod copypasta;
 mod teawiespam;
+mod uwurandom;
 
 pub fn to_commands() -> Vec<Command<Data, Report>> {
-	vec![copypasta::copypasta(), teawiespam::teawiespam()]
+	vec![
+		copypasta::copypasta(),
+		teawiespam::teawiespam(),
+		uwurandom::uwurandom(),
+	]
 }
