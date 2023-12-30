@@ -13,24 +13,26 @@
     inputs',
     ...
   }: let
-    crossPkgsFor = lib.fix (finalAttrs: {
-      "x86_64-linux" = {
-        "x86_64" = pkgs.pkgsStatic;
-        "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
-      };
+    crossPkgsFor =
+      (lib.fix (finalAttrs: {
+        "x86_64-linux" = {
+          "x86_64" = pkgs.pkgsStatic;
+          "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
+        };
 
-      "aarch64-linux" = {
-        "x86_64" = pkgs.pkgsCross.musl64;
-        "aarch64" = pkgs.pkgsStatic;
-      };
+        "aarch64-linux" = {
+          "x86_64" = pkgs.pkgsCross.musl64;
+          "aarch64" = pkgs.pkgsStatic;
+        };
 
-      "x86_64-darwin" = {
-        "x86_64" = pkgs.pkgsCross.musl64;
-        "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
-      };
+        "x86_64-darwin" = {
+          "x86_64" = pkgs.pkgsCross.musl64;
+          "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
+        };
 
-      "aarch64-darwin" = finalAttrs."x86_64-darwin";
-    });
+        "aarch64-darwin" = finalAttrs."x86_64-darwin";
+      }))
+      .${system};
 
     wieFor = arch: let
       target = "${arch}-unknown-linux-musl";
@@ -54,7 +56,7 @@
         optimizeSize = true;
       };
 
-      inherit (crossPkgsFor.${system}.${arch}.stdenv) cc;
+      inherit (crossPkgsFor.${arch}.stdenv) cc;
     in
       lib.getExe (
         teawiebot.overrideAttrs (_:
@@ -73,7 +75,7 @@
         contents = [pkgs.dockerTools.caCertificates];
         config.Cmd = [(wieFor arch)];
 
-        architecture = crossPkgsFor.${system}.${arch}.go.GOARCH;
+        architecture = crossPkgsFor.${arch}.go.GOARCH;
       };
   in {
     packages = {
