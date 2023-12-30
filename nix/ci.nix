@@ -2,7 +2,7 @@
   perSystem = {
     pkgs,
     lib,
-    config,
+    self',
     ...
   }: {
     /*
@@ -12,14 +12,12 @@
     https://determinate.systems/posts/hydra-deployment-source-of-truth
     */
 
-    packages.ciGate = pkgs.writeText "ci-gate" ''
-      ${
-        lib.concatMapStringsSep "\n" (s: toString (builtins.attrValues s)) [
-          config.checks
-          config.devShells
-          (builtins.removeAttrs config.packages ["default" "ciGate"])
-        ]
-      }
-    '';
+    packages.ciGate = pkgs.writeText "ci-gate" (
+      lib.concatMapStringsSep "\n" (s: toString (lib.attrValues s)) [
+        self'.checks
+        self'.devShells
+        (builtins.removeAttrs self'.packages ["default" "ciGate"])
+      ]
+    );
   };
 }
