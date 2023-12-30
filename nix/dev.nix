@@ -3,12 +3,13 @@
     lib,
     pkgs,
     config,
+    self',
     ...
   }: {
     pre-commit.settings = {
       hooks = {
         actionlint.enable = true;
-        ${config.formatter.pname}.enable = true;
+        ${self'.formatter.pname}.enable = true;
         deadnix.enable = true;
         nil.enable = true;
         prettier.enable = true;
@@ -37,7 +38,7 @@
           rust-analyzer
 
           # nix
-          config.formatter
+          self'.formatter
           deadnix
           nil
           statix

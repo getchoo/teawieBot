@@ -6,7 +6,7 @@
   perSystem = {
     pkgs,
     system,
-    config,
+    self',
     ...
   }: {
     packages = {
@@ -22,7 +22,7 @@
         naersk = inputs.naersk.lib.${system};
       };
 
-      default = config.packages.teawiebot;
+      default = self'.packages.teawiebot;
     };
   };
 }
