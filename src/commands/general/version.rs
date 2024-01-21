@@ -31,7 +31,7 @@ pub async fn version(ctx: Context<'_>) -> Result<()> {
 
 	let embed = CreateEmbed::new()
 		.title("Version Information")
-		.description("powered by poise!")
+		.description("now with over 9000 more builders!")
 		.fields(fields)
 		.color(Colors::Blue);
 	let message = CreateReply::default().embed(embed);
