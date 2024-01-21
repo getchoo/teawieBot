@@ -132,7 +132,7 @@ impl Storage {
 
 		self.set_key(&key, &settings).await?;
 		// adding to index since we need to look all of these up sometimes
-		self.add_to_index(SETTINGS_KEY, *settings.guild_id.as_u64())
+		self.add_to_index(SETTINGS_KEY, u64::from(settings.guild_id))
 			.await?;
 
 		Ok(())
@@ -151,7 +151,7 @@ impl Storage {
 		let key = format!("{SETTINGS_KEY}:{guild_id}");
 
 		self.delete_key(&key).await?;
-		self.delete_from_index(SETTINGS_KEY, *guild_id.as_u64())
+		self.delete_from_index(SETTINGS_KEY, u64::from(*guild_id))
 			.await?;
 
 		Ok(())

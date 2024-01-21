@@ -3,7 +3,9 @@ use storage::ReactBoardEntry;
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::debug;
-use poise::serenity_prelude::{Context, GuildId, Message, MessageReaction, Reaction};
+use poise::serenity_prelude::{
+	Context, CreateMessage, EditMessage, GuildId, Message, MessageReaction, Reaction,
+};
 
 pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<()> {
 	let msg = reaction
@@ -87,11 +89,10 @@ async fn send_to_reactboard(
 			msg.id, old_entry.reaction_count, reaction.count
 		);
 
+		let edited = EditMessage::new().content(content);
+
 		ctx.http
-			.get_message(
-				*old_entry.posted_channel_id.as_u64(),
-				*old_entry.posted_message_id.as_u64(),
-			)
+			.get_message(old_entry.posted_channel_id, old_entry.posted_message_id)
 			.await
 			.wrap_err_with(|| {
 				format!(
@@ -99,7 +100,7 @@ async fn send_to_reactboard(
 					old_entry.original_message_id
 				)
 			})?
-			.edit(ctx, |m| m.content(content))
+			.edit(ctx, edited)
 			.await?;
 
 		// update reaction count in redis
@@ -111,14 +112,9 @@ async fn send_to_reactboard(
 	// make new message and add entry to redis otherwise
 	} else {
 		let embed = utils::resolve_message_to_embed(ctx, msg).await;
+		let message = CreateMessage::default().content(content).embed(embed);
 
-		let resp = target
-			.send_message(ctx, |m| {
-				m.allowed_mentions(|am| am.empty_parse())
-					.content(content)
-					.set_embed(embed)
-			})
-			.await?;
+		let resp = target.send_message(ctx, message).await?;
 
 		let entry = ReactBoardEntry {
 			original_message_id: msg.id,

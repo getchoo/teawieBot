@@ -2099,7 +2099,7 @@ checksum = "36924509726e38224322c8c90ddfbf4317324338327b7c11b7cf8672cb786da1"
 dependencies = [
  "chrono",
  "dashmap",
- "hashbrown 0.14.2",
+ "hashbrown",
  "mini-moka",
  "parking_lot",
  "secrecy",
