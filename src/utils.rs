@@ -87,14 +87,14 @@ pub async fn resolve_message_to_embed(ctx: &serenity::Context, msg: &Message) ->
 
 	let attachments_len = msg.attachments.len();
 
-	let embed = msg
+	let mut embed = msg
 		.embeds
 		.first()
 		.map(|embed| CreateEmbed::from(embed.clone()))
 		.unwrap_or_default();
 
 	let author = CreateEmbedAuthor::new(&msg.author.name).icon_url(msg.author.face());
-	let mut embed = embed.clone().author(author);
+	embed = embed.author(author);
 
 	if let Some(color) = color {
 		embed = embed.color(color);
