@@ -1,7 +1,8 @@
 use crate::{colors, Context};
 
 use color_eyre::eyre::{eyre, Result};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, CreateEmbedAuthor, CreateEmbedFooter};
+use poise::CreateReply;
 use rand::seq::SliceRandom;
 use serenity::{CreateEmbed, Message};
 use url::Url;
@@ -44,15 +45,14 @@ pub async fn send_url_as_embed(ctx: Context<'_>, url: String) -> Result<()> {
 		.unwrap_or("image")
 		.replace("%20", " ");
 
-	ctx.send(|c| {
-		c.embed(|e| {
-			e.title(title)
-				.image(&url)
-				.url(url)
-				.color(colors::Colors::Blue)
-		})
-	})
-	.await?;
+	let embed = CreateEmbed::new()
+		.title(title)
+		.image(&url)
+		.url(url)
+		.color(colors::Colors::Blue);
+	let reply = CreateReply::default().embed(embed);
+
+	ctx.send(reply).await?;
 
 	Ok(())
 }
@@ -87,29 +87,29 @@ pub async fn resolve_message_to_embed(ctx: &serenity::Context, msg: &Message) ->
 
 	let attachments_len = msg.attachments.len();
 
-	let mut embed = msg
+	let embed = msg
 		.embeds
 		.first()
 		.map(|embed| CreateEmbed::from(embed.clone()))
 		.unwrap_or_default();
 
-	embed.author(|author| author.name(&msg.author.name).icon_url(&msg.author.face()));
+	let author = CreateEmbedAuthor::new(&msg.author.name).icon_url(msg.author.face());
+	let mut embed = embed.clone().author(author);
 
 	if let Some(color) = color {
-		embed.color(color);
+		embed = embed.color(color);
 	}
 
 	if let Some(attachment) = attached_image {
-		embed.image(attachment);
+		embed = embed.image(attachment);
 	}
 
 	if attachments_len > 1 {
-		embed.footer(|footer| {
-			// yes it will say '1 attachments' no i do not care
-			footer.text(format!("{attachments_len} attachments"))
-		});
+		embed = embed.footer(CreateEmbedFooter::new(format!(
+			"{attachments_len} attachments"
+		)));
 	}
 
-	embed.description(truncated_content);
+	embed = embed.description(truncated_content);
 	embed
 }

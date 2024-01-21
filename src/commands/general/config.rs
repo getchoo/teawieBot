@@ -5,7 +5,8 @@ use storage::{Properties, Settings};
 
 use color_eyre::eyre::{eyre, Result};
 use log::debug;
-use poise::serenity_prelude::{GuildChannel, ReactionType};
+use poise::serenity_prelude::{CreateEmbed, GuildChannel, ReactionType};
+use poise::{ChoiceParameter, CreateReply};
 
 fn split_argument<T>(list: &str) -> Vec<T>
 where
@@ -152,8 +153,10 @@ pub async fn get(
 	let settings = ctx.data().storage.get_guild_settings(gid).await?;
 	let value = prop_to_val(&setting, &settings);
 
-	ctx.send(|m| m.embed(|e| e.field(setting, value, false)))
-		.await?;
+	let embed = CreateEmbed::new().field(setting.name(), value, false);
+	let message = CreateReply::default().embed(embed);
+
+	ctx.send(message).await?;
 
 	Ok(())
 }

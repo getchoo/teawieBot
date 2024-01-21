@@ -2,6 +2,8 @@ use crate::colors::Colors;
 use crate::Context;
 
 use color_eyre::eyre::Result;
+use poise::serenity_prelude::CreateEmbed;
+use poise::CreateReply;
 
 /// Get version info
 #[poise::command(slash_command)]
@@ -27,15 +29,14 @@ pub async fn version(ctx: Context<'_>) -> Result<()> {
 		("User Agent:", &crate::api::USER_AGENT, false),
 	];
 
-	ctx.send(|c| {
-		c.embed(|e| {
-			e.title("Version Information")
-				.description("powered by poise!")
-				.fields(fields)
-				.color(Colors::Blue)
-		})
-	})
-	.await?;
+	let embed = CreateEmbed::new()
+		.title("Version Information")
+		.description("powered by poise!")
+		.fields(fields)
+		.color(Colors::Blue);
+	let message = CreateReply::default().embed(embed);
+
+	ctx.send(message).await?;
 
 	Ok(())
 }

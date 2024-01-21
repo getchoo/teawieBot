@@ -2,7 +2,9 @@ use crate::{utils, Data};
 
 use color_eyre::eyre::{eyre, Context as _, Result};
 use log::debug;
-use poise::serenity_prelude::{ChannelId, Context, Message, MessageType, User};
+use poise::serenity_prelude::{
+	ChannelId, Context, CreateAllowedMentions, CreateMessage, Message, MessageType, User,
+};
 
 pub async fn handle(ctx: &Context, message: &Message, data: &Data) -> Result<()> {
 	if message.kind != MessageType::PinsAdd {
@@ -59,13 +61,14 @@ pub async fn handle(ctx: &Context, message: &Message, data: &Data) -> Result<()>
 
 async fn redirect(ctx: &Context, pin: &Message, pinner: &User, target: ChannelId) -> Result<()> {
 	let embed = utils::resolve_message_to_embed(ctx, pin).await;
+	let mentions = CreateAllowedMentions::new().empty_roles().empty_users();
+	let message = CreateMessage::default()
+		.allowed_mentions(mentions)
+		.content(format!("📌'd by {pinner} in {}", pin.link()))
+		.embed(embed);
 
 	target
-		.send_message(&ctx.http, |m| {
-			m.allowed_mentions(|am| am.empty_parse())
-				.content(format!("📌'd by {pinner} in {}", pin.link()))
-				.set_embed(embed)
-		})
+		.send_message(&ctx.http, message)
 		.await
 		.wrap_err_with(|| "Couldn't redirect message")?;
 

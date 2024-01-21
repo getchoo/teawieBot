@@ -56,7 +56,7 @@ fn get_copypasta(name: &Copypastas) -> Result<String> {
 	if files.contains_key(name.as_str()) {
 		Ok(files[name.as_str()].to_string())
 	} else {
-		Err(eyre!("Couldnt find copypasta {name}!"))
+		Err(eyre!("Couldnt find copypasta {}!", name.as_str()))
 	}
 }
 

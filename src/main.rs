@@ -8,13 +8,12 @@ use std::time::Duration;
 use color_eyre::eyre::{eyre, Context as _, Report, Result};
 use color_eyre::owo_colors::OwoColorize;
 use log::{info, warn};
-use poise::serenity_prelude::{self as serenity, ShardManager};
+use poise::serenity_prelude as serenity;
 use poise::{EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions};
 use redis::ConnectionLike;
 use storage::Storage;
 use tokio::signal::ctrl_c;
 use tokio::signal::unix::{signal, SignalKind};
-use tokio::sync::Mutex;
 
 mod api;
 mod colors;
@@ -71,9 +70,9 @@ async fn setup(
 	Ok(data)
 }
 
-async fn handle_shutdown(shard_manager: Arc<Mutex<ShardManager>>, reason: &str) {
+async fn handle_shutdown(shard_manager: Arc<serenity::ShardManager>, reason: &str) {
 	warn!("{reason}! Shutting down bot...");
-	shard_manager.lock().await.shutdown_all().await;
+	shard_manager.shutdown_all().await;
 	println!("{}", "Everything is shutdown. Goodbye!".green());
 }
 
@@ -106,7 +105,9 @@ async fn main() -> Result<()> {
 
 		prefix_options: PrefixFrameworkOptions {
 			prefix: Some("!".into()),
-			edit_tracker: Some(EditTracker::for_timespan(Duration::from_secs(3600))),
+			edit_tracker: Some(Arc::new(EditTracker::for_timespan(Duration::from_secs(
+				3600,
+			)))),
 			..Default::default()
 		},
 
@@ -114,19 +115,19 @@ async fn main() -> Result<()> {
 	};
 
 	let framework = Framework::builder()
-		.token(token)
-		.intents(intents)
 		.options(options)
 		.setup(|ctx, ready, framework| Box::pin(setup(ctx, ready, framework)))
-		.build()
-		.await
-		.wrap_err_with(|| "Failed to build framework!")?;
+		.build();
 
-	let shard_manager = framework.shard_manager().clone();
+	let mut client = serenity::ClientBuilder::new(token, intents)
+		.framework(framework)
+		.await?;
+
+	let shard_manager = client.shard_manager.clone();
 	let mut sigterm = signal(SignalKind::terminate())?;
 
 	tokio::select! {
-		result = framework.start() => result.map_err(Report::from),
+		result = client.start() => result.map_err(Report::from),
 		_ = sigterm.recv() => {
 			handle_shutdown(shard_manager, "Recieved SIGTERM").await;
 			std::process::exit(0);

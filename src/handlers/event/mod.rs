@@ -3,7 +3,8 @@ use crate::Data;
 use color_eyre::eyre::{Report, Result};
 use log::info;
 use poise::serenity_prelude as serenity;
-use poise::{Event, FrameworkContext};
+use poise::FrameworkContext;
+use serenity::FullEvent;
 
 mod guild;
 mod message;
@@ -12,24 +13,29 @@ mod reactboard;
 
 pub async fn handle(
 	ctx: &serenity::Context,
-	event: &Event<'_>,
+	event: &FullEvent,
 	framework: FrameworkContext<'_, Data, Report>,
 	data: &Data,
 ) -> Result<()> {
 	match event {
-		Event::Ready { data_about_bot } => {
+		FullEvent::Ready { data_about_bot } => {
 			info!("Logged in as {}!", data_about_bot.user.name);
 		}
 
-		Event::Message { new_message } => {
+		FullEvent::Message { new_message } => {
 			message::handle(ctx, framework, new_message, data).await?;
 			pinboard::handle(ctx, new_message, data).await?;
 		}
 
-		Event::ReactionAdd { add_reaction } => reactboard::handle(ctx, add_reaction, data).await?,
+		FullEvent::ReactionAdd { add_reaction } => {
+			reactboard::handle(ctx, add_reaction, data).await?;
+		}
 
-		Event::GuildCreate { guild, is_new } => guild::handle_create(guild, is_new, data).await?,
-		Event::GuildDelete {
+		FullEvent::GuildCreate { guild, is_new } => {
+			guild::handle_create(guild, &is_new.unwrap_or_default(), data).await?;
+		}
+
+		FullEvent::GuildDelete {
 			incomplete,
 			full: _,
 		} => guild::handle_delete(incomplete, data).await?,
