@@ -5,17 +5,37 @@
     config,
     self',
     ...
-  }: {
-    pre-commit.settings = {
-      hooks = {
-        actionlint.enable = true;
-        ${self'.formatter.pname}.enable = true;
-        deadnix.enable = true;
-        nil.enable = true;
-        prettier.enable = true;
-        rustfmt.enable = true;
-        statix.enable = true;
+  }: let
+    enableAll = lib.flip lib.genAttrs (lib.const {enable = true;});
+  in {
+    treefmt = {
+      projectRootFile = "flake.nix";
+
+      programs = enableAll [
+        "alejandra"
+        "deadnix"
+        "prettier"
+        "rustfmt"
+      ];
+
+      settings.global = {
+        excludes = [
+          "./target"
+          "./flake.lock"
+          "./Cargo.lock"
+        ];
       };
+    };
+
+    pre-commit.settings = {
+      settings.treefmt.package = config.treefmt.build.wrapper;
+
+      hooks = enableAll [
+        "actionlint"
+        "nil"
+        "statix"
+        "treefmt"
+      ];
     };
 
     procfiles.daemons.processes = {
@@ -47,7 +67,5 @@
         RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
       };
     };
-
-    formatter = pkgs.alejandra;
   };
 }
