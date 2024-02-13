@@ -1,9 +1,12 @@
 {
   inputs,
-  self,
+  flake-parts-lib,
+  withSystem,
   ...
 }: {
-  flake.nixosModules.default = import ./module.nix self;
+  flake.nixosModules.default = flake-parts-lib.importApply ./module.nix {
+    inherit withSystem;
+  };
 
   perSystem = {
     lib,
@@ -13,8 +16,8 @@
     inputs',
     ...
   }: let
-    crossPkgsFor =
-      (lib.fix (finalAttrs: {
+    containerFor = arch: let
+      crossPkgs = {
         "x86_64-linux" = {
           "x86_64" = pkgs.pkgsStatic;
           "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
@@ -30,11 +33,10 @@
           "aarch64" = pkgs.pkgsCross.aarch64-multiplatform.pkgsStatic;
         };
 
-        "aarch64-darwin" = finalAttrs."x86_64-darwin";
-      }))
-      .${system};
+        "aarch64-darwin" = crossPkgs."x86_64-darwin";
+      };
+      inherit (crossPkgs.${system}.${arch}.stdenv) cc;
 
-    wieFor = arch: let
       target = "${arch}-unknown-linux-musl";
       target' = builtins.replaceStrings ["-"] ["_"] target;
       targetUpper = lib.toUpper target';
@@ -46,36 +48,29 @@
           targets.${target}.latest.rust-std
         ];
 
-      naersk' = inputs.naersk.lib.${system}.override {
+      naersk = inputs.naersk.lib.${system}.override {
         cargo = toolchain;
         rustc = toolchain;
       };
 
-      teawiebot = config.packages.teawiebot.override {
-        naersk = naersk';
-        optimizeSize = true;
-      };
-
-      inherit (crossPkgsFor.${arch}.stdenv) cc;
-    in
-      lib.getExe (
-        teawiebot.overrideAttrs (_:
-          lib.fix (finalAttrs: {
+      teawiebot =
+        (config.packages.teawiebot.override {
+          inherit naersk;
+          optimizeSize = true;
+        })
+        .overrideAttrs (new:
+          lib.const {
             CARGO_BUILD_TARGET = target;
             "CC_${target'}" = "${cc}/bin/${cc.targetPrefix}cc";
             "CARGO_TARGET_${targetUpper}_RUSTFLAGS" = "-C target-feature=+crt-static";
-            "CARGO_TARGET_${targetUpper}_LINKER" = finalAttrs."CC_${target'}";
-          }))
-      );
-
-    containerFor = arch:
+            "CARGO_TARGET_${targetUpper}_LINKER" = new."CC_${target'}";
+          });
+    in
       pkgs.dockerTools.buildLayeredImage {
         name = "teawiebot";
         tag = "latest-${arch}";
         contents = [pkgs.dockerTools.caCertificates];
-        config.Cmd = [(wieFor arch)];
-
-        architecture = crossPkgsFor.${arch}.go.GOARCH;
+        config.Cmd = [(lib.getExe teawiebot)];
       };
   in {
     packages = {

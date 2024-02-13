@@ -1,4 +1,4 @@
-self: {
+{withSystem, ...}: {
   config,
   lib,
   pkgs,
@@ -22,7 +22,9 @@ self: {
 in {
   options.services.teawiebot = {
     enable = mkEnableOption "teawiebot";
-    package = mkPackageOption self.packages.${pkgs.stdenv.hostPlatform.system} "teawiebot" {};
+    package = mkPackageOption (
+      withSystem pkgs.stdenv.hostPlatform.system ({self', ...}: self'.packages)
+    ) "teawiebot" {};
 
     user = mkOption {
       description = mdDoc ''
