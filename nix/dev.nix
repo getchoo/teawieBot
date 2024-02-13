@@ -18,8 +18,8 @@
       };
     };
 
-    proc.groups.daemons.processes = {
-      redis.command = lib.getExe' pkgs.redis "redis-server";
+    procfiles.daemons.processes = {
+      redis = lib.getExe' pkgs.redis "redis-server";
     };
 
     devShells = {
@@ -28,7 +28,7 @@
           # general
           actionlint
           nodePackages_latest.prettier
-          config.proc.groups.daemons.package
+          config.procfiles.daemons.package
 
           # rust
           cargo

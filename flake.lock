@@ -37,21 +37,6 @@
         "type": "github"
       }
     },
-    "flake-root": {
-      "locked": {
-        "lastModified": 1692742795,
-        "narHash": "sha256-f+Y0YhVCIJ06LemO+3Xx00lIcqQxSKJHXT/yk1RTKxw=",
-        "owner": "srid",
-        "repo": "flake-root",
-        "rev": "d9a70d9c7a5fd7f3258ccf48da9335e9b47c3937",
-        "type": "github"
-      },
-      "original": {
-        "owner": "srid",
-        "repo": "flake-root",
-        "type": "github"
-      }
-    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -173,30 +158,34 @@
         "type": "github"
       }
     },
-    "proc-flake": {
+    "procfile-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
       "locked": {
-        "lastModified": 1692742849,
-        "narHash": "sha256-Nv8SOX+O6twFfPnA9BfubbPLZpqc+UeK6JvIWnWkdb0=",
-        "owner": "srid",
-        "repo": "proc-flake",
-        "rev": "25291b6e3074ad5dd573c1cb7d96110a9591e10f",
+        "lastModified": 1707592188,
+        "narHash": "sha256-SU40ufpFq8EfdiODe0s3jRJrfkOONPMtemzY9dY2R2k=",
+        "owner": "getchoo",
+        "repo": "procfile-nix",
+        "rev": "b7813d224e7630de289d587c90e444c76f3330a0",
         "type": "github"
       },
       "original": {
-        "owner": "srid",
-        "repo": "proc-flake",
+        "owner": "getchoo",
+        "repo": "procfile-nix",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
         "fenix": "fenix",
-        "flake-root": "flake-root",
         "naersk": "naersk",
         "nixpkgs": "nixpkgs",
         "parts": "parts",
         "pre-commit": "pre-commit",
-        "proc-flake": "proc-flake"
+        "procfile-nix": "procfile-nix"
       }
     },
     "rust-analyzer-src": {
