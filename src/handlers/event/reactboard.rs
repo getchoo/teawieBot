@@ -1,7 +1,7 @@
 use crate::{storage, utils, Data};
 use storage::ReactBoardEntry;
 
-use color_eyre::eyre::{eyre, Context as _, Result};
+use eyre::{eyre, Context as _, Result};
 use log::debug;
 use poise::serenity_prelude::{
 	Context, CreateMessage, EditMessage, GuildId, Message, MessageReaction, Reaction,
@@ -11,7 +11,7 @@ pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<(
 	let msg = reaction
 		.message(&ctx.http)
 		.await
-		.wrap_err_with(|| "Couldn't get reaction from message!")?;
+		.wrap_err("Couldn't get reaction from message!")?;
 
 	let matched = msg
 		.clone()

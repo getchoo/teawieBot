@@ -1,6 +1,6 @@
 use crate::Context;
 
-use color_eyre::eyre::Result;
+use eyre::Result;
 use log::debug;
 use rand::Rng;
 

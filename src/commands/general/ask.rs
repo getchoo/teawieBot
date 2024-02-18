@@ -1,6 +1,6 @@
 use crate::{consts, utils, Context};
 
-use color_eyre::eyre::{Context as _, Result};
+use eyre::{Context as _, Result};
 
 /// Ask teawie a question!
 #[poise::command(prefix_command, slash_command)]

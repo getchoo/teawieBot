@@ -1,6 +1,6 @@
 use crate::{consts, Data};
 
-use color_eyre::eyre::{eyre, Report, Result};
+use eyre::{eyre, Report, Result};
 use log::debug;
 use poise::serenity_prelude::{Context, Message};
 use poise::FrameworkContext;

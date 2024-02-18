@@ -1,7 +1,7 @@
 use crate::Context;
 
 use bottomify::bottom;
-use color_eyre::eyre::Result;
+use eyre::Result;
 use poise::serenity_prelude::constants::MESSAGE_CODE_LIMIT;
 
 #[allow(clippy::unused_async)]
