@@ -4,7 +4,7 @@ use color_eyre::eyre::Result;
 use log::debug;
 
 /// teawie will spam you.
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command)]
 pub async fn teawiespam(ctx: Context<'_>) -> Result<()> {
 	let gid = ctx.guild_id().unwrap_or_default();
 	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
