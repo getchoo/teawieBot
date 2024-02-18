@@ -91,6 +91,7 @@ async fn main() -> Result<()> {
 		commands: {
 			let mut commands = commands::global();
 			commands.append(&mut commands::optional());
+			commands.append(&mut commands::moderation());
 			commands
 		},
 		on_error: |error| Box::pin(handlers::handle_error(error)),
