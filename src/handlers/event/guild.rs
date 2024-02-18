@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use eyre::Result;
 use log::{debug, warn};
 use poise::serenity_prelude::{Guild, UnavailableGuild};
 

@@ -5,9 +5,9 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use color_eyre::eyre::{eyre, Context as _, Report, Result};
-use color_eyre::owo_colors::OwoColorize;
+use eyre::{eyre, Context as _, Report, Result};
 use log::{info, warn};
+use owo_colors::OwoColorize;
 use poise::serenity_prelude as serenity;
 use poise::{EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions};
 use redis::ConnectionLike;
@@ -32,8 +32,8 @@ pub struct Data {
 
 impl Data {
 	pub fn new() -> Result<Self> {
-		let redis_url = std::env::var("REDIS_URL")
-			.wrap_err_with(|| "Couldn't find Redis URL in environment!")?;
+		let redis_url =
+			std::env::var("REDIS_URL").wrap_err("Couldn't find Redis URL in environment!")?;
 
 		let storage = Storage::new(&redis_url)?;
 
@@ -78,8 +78,8 @@ async fn handle_shutdown(shard_manager: Arc<serenity::ShardManager>, reason: &st
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	dotenvy::dotenv().ok();
 	color_eyre::install()?;
+	dotenvy::dotenv().ok();
 	env_logger::init();
 
 	let token = std::env::var("TOKEN").wrap_err_with(|| "Couldn't find token in environment!")?;

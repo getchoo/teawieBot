@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use color_eyre::eyre::Result;
+use eyre::Result;
 use log::debug;
 use poise::serenity_prelude::{GuildId, MessageId};
 use redis::{AsyncCommands, Client, FromRedisValue, ToRedisArgs};

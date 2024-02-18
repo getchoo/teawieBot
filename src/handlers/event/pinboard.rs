@@ -1,6 +1,6 @@
 use crate::{utils, Data};
 
-use color_eyre::eyre::{eyre, Context as _, Result};
+use eyre::{eyre, Context as _, OptionExt as _, Result};
 use log::debug;
 use poise::serenity_prelude::{
 	ChannelId, Context, CreateAllowedMentions, CreateMessage, Message, MessageType, User,
@@ -38,15 +38,15 @@ pub async fn handle(ctx: &Context, message: &Message, data: &Data) -> Result<()>
 	let reference_id = message
 		.clone()
 		.message_reference
-		.ok_or_else(|| eyre!("Couldn't get referenced message of pin!"))?
+		.ok_or_eyre("Couldn't get referenced message of pin!")?
 		.message_id
-		.ok_or_else(|| eyre!("Couldn't get id of referenced message of pin!"))?;
+		.ok_or_eyre("Couldn't get id of referenced message of pin!")?;
 
 	let pins = message
 		.channel_id
 		.pins(ctx)
 		.await
-		.wrap_err_with(|| "Couldn't get a list of pins!?")?;
+		.wrap_err("Couldn't get a list of pins!?")?;
 
 	let pin = pins
 		.iter()
@@ -70,7 +70,7 @@ async fn redirect(ctx: &Context, pin: &Message, pinner: &User, target: ChannelId
 	target
 		.send_message(&ctx.http, message)
 		.await
-		.wrap_err_with(|| "Couldn't redirect message")?;
+		.wrap_err("Couldn't redirect message")?;
 
 	Ok(())
 }

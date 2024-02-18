@@ -2,7 +2,7 @@ use crate::Context;
 
 use std::collections::HashMap;
 
-use color_eyre::eyre::{eyre, Result};
+use eyre::{eyre, OptionExt, Result};
 use include_dir::{include_dir, Dir};
 use log::debug;
 
@@ -43,11 +43,11 @@ fn get_copypasta(name: &Copypastas) -> Result<String> {
 			.file_stem()
 			.ok_or_else(|| eyre!("Couldn't get file stem from {file:#?}"))?
 			.to_str()
-			.ok_or_else(|| eyre!("Couldn't convert file stem to str!"))?;
+			.ok_or_eyre("Couldn't convert file stem to str!")?;
 
 		let contents = file
 			.contents_utf8()
-			.ok_or_else(|| eyre!("Couldnt get contents from copypasta!"))?;
+			.ok_or_eyre("Couldnt get contents from copypasta!")?;
 
 		// refer to files by their name w/o extension
 		files.insert(name, contents);

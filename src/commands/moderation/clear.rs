@@ -1,6 +1,6 @@
 use crate::Context;
 
-use color_eyre::eyre::{Context as _, Result};
+use eyre::{Context as _, Result};
 use log::debug;
 use poise::serenity_prelude::futures::{StreamExt, TryStreamExt};
 

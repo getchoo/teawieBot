@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::{storage, Context};
 use storage::{Properties, Settings};
 
-use color_eyre::eyre::{eyre, Result};
+use eyre::{OptionExt as _, Result};
 use log::debug;
 use poise::serenity_prelude::{CreateEmbed, GuildChannel, ReactionType};
 use poise::{ChoiceParameter, CreateReply};
@@ -148,7 +148,7 @@ pub async fn get(
 ) -> Result<()> {
 	let gid = &ctx
 		.guild_id()
-		.ok_or_else(|| eyre!("Failed to get GuildId from context!"))?;
+		.ok_or_eyre("Failed to get GuildId from context!")?;
 
 	let settings = ctx.data().storage.get_guild_settings(gid).await?;
 	let value = prop_to_val(&setting, &settings);
