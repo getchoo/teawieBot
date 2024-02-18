@@ -90,7 +90,6 @@ async fn main() -> Result<()> {
 	let options = FrameworkOptions {
 		commands: {
 			let mut commands = commands::global();
-			commands.append(&mut commands::optional());
 			commands.append(&mut commands::moderation());
 			commands
 		},
