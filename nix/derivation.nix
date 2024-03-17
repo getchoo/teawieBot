@@ -44,8 +44,8 @@ in
     GIT_SHA = builtins.substring 0 7 self.rev or "dirty";
 
     RUSTFLAGS =
-      lib.optionalString lto " -C lto=thin -C embed-bitcode=yes"
-      + lib.optionalString optimizeSize " -C codegen-units=1 -C strip=symbols -C opt-level=z";
+      lib.optionalString lto " -C lto=thin -C embed-bitcode=yes -Zdylib-lto"
+      + lib.optionalString optimizeSize " -C codegen-units=1 -C panic=abort -C strip=symbols -C opt-level=z";
 
     meta = with lib; {
       mainProgram = "teawiebot";
