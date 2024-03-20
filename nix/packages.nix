@@ -1,8 +1,4 @@
-{
-  self,
-  inputs,
-  ...
-}: {
+{self, ...}: {
   perSystem = {
     pkgs,
     system,
@@ -10,11 +6,7 @@
     ...
   }: {
     packages = {
-      teawiebot = pkgs.callPackage ./derivation.nix {
-        inherit self;
-        naersk = inputs.naersk.lib.${system};
-      };
-
+      teawiebot = pkgs.callPackage ./derivation.nix {inherit self;};
       default = self'.packages.teawiebot;
     };
   };

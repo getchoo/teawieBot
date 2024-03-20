@@ -1,17 +1,19 @@
 {
   lib,
   stdenv,
-  naersk,
+  rustPlatform,
   darwin,
   self,
   lto ? false,
   optimizeSize ? false,
 }:
-naersk.buildPackage {
+rustPlatform.buildRustPackage {
   pname = "teawiebot";
   version =
-    toString (lib.importTOML ../Cargo.toml).package.version
-    + "-${self.shortRev or self.dirtyShortRev or "dirty"}";
+    (lib.importTOML ../Cargo.toml).package.version
+    + "-${self.shortRev or self.dirtyShortRev or "unknown-dirty"}";
+
+  __structuredAttrs = true;
 
   src = lib.fileset.toSource {
     root = ../.;
@@ -21,6 +23,10 @@ naersk.buildPackage {
       ../Cargo.lock
       ../build.rs
     ];
+  };
+
+  cargoLock = {
+    lockFile = ../Cargo.lock;
   };
 
   buildInputs = lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [

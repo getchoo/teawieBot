@@ -19,11 +19,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    naersk = {
-      url = "github:nix-community/naersk";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     pre-commit-hooks-nix = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs = {
@@ -52,7 +47,7 @@
         inputs.treefmt-nix.flakeModule
 
         ./nix/ci.nix
-        ./nix/deployment.nix
+        ./nix/deployment
         ./nix/dev.nix
         ./nix/packages.nix
       ];
