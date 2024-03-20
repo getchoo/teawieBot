@@ -2,57 +2,61 @@
   lib,
   stdenv,
   naersk,
-  CoreFoundation,
-  Security,
-  SystemConfiguration,
+  darwin,
   self,
   lto ? false,
   optimizeSize ? false,
-}: let
-  filter = path: type: let
-    path' = toString path;
-    base = baseNameOf path';
-    parent = baseNameOf (dirOf path');
+}:
+naersk.buildPackage {
+  pname = "teawiebot";
+  version =
+    toString (lib.importTOML ../Cargo.toml).package.version
+    + "-${self.shortRev or self.dirtyShortRev or "dirty"}";
 
-    dirBlocklist = ["parts"];
-
-    matches = lib.any (suffix: lib.hasSuffix suffix base) [".rs"];
-    isCargo = base == "Cargo.lock" || base == "Cargo.toml";
-    isCopypasta = parent == "copypastas";
-    isAllowedDir = !(builtins.elem base dirBlocklist);
-  in
-    (type == "directory" && isAllowedDir) || matches || isCargo || isCopypasta;
-
-  filterSource = src:
-    lib.cleanSourceWith {
-      src = lib.cleanSource src;
-      inherit filter;
-    };
-in
-  naersk.buildPackage {
-    pname = "teawiebot";
-    version = builtins.substring 0 8 self.lastModifiedDate or "dirty";
-
-    src = filterSource ../.;
-
-    buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
-      CoreFoundation
-      Security
-      SystemConfiguration
+  src = lib.fileset.toSource {
+    root = ../.;
+    fileset = lib.fileset.unions [
+      ../src
+      ../Cargo.toml
+      ../Cargo.lock
+      ../build.rs
     ];
+  };
 
-    GIT_SHA = builtins.substring 0 7 self.rev or "dirty";
+  buildInputs = lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+    CoreFoundation
+    Security
+    SystemConfiguration
+  ]);
 
-    RUSTFLAGS =
-      lib.optionalString lto " -C lto=thin -C embed-bitcode=yes -Zdylib-lto"
-      + lib.optionalString optimizeSize " -C codegen-units=1 -C panic=abort -C strip=symbols -C opt-level=z";
+  env = {
+    GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown-dirty";
+    CARGO_BUILD_RUSTFLAGS = lib.concatStringsSep " " (
+      lib.optionals lto [
+        "-C"
+        "lto=thin"
+        "-C"
+        "embed-bitcode=yes"
+        "-Zdylib-lto"
+      ]
+      ++ lib.optionals optimizeSize [
+        "-C"
+        "codegen-units=1"
+        "-C"
+        "panic=abort"
+        "-C"
+        "strip=symbols"
+        "-C"
+        "opt-level=z"
+      ]
+    );
+  };
 
-    meta = with lib; {
-      mainProgram = "teawiebot";
-      description = "funni bot";
-      homepage = "https://github.com/getchoo/teawiebot";
-      license = licenses.mit;
-      platforms = with platforms; linux ++ darwin;
-      maintainers = with maintainers; [getchoo];
-    };
-  }
+  meta = with lib; {
+    mainProgram = "teawiebot";
+    description = "funni bot";
+    homepage = "https://github.com/getchoo/teawiebot";
+    license = licenses.mit;
+    maintainers = with maintainers; [getchoo];
+  };
+}
