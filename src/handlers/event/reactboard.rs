@@ -1,8 +1,8 @@
 use crate::{storage, utils, Data};
-use storage::ReactBoardEntry;
+use storage::reactboard::ReactBoardEntry;
 
 use eyre::{eyre, Context as _, Result};
-use log::debug;
+use log::{debug, warn};
 use poise::serenity_prelude::{
 	Context, CreateMessage, EditMessage, GuildId, Message, MessageReaction, Reaction,
 };
@@ -45,7 +45,11 @@ async fn send_to_reactboard(
 	guild_id: &GuildId,
 	data: &Data,
 ) -> Result<()> {
-	let storage = &data.storage;
+	let Some(storage) = &data.storage else {
+		warn!("Can't make ReactBoard entry; no storage backend found!");
+		return Ok(());
+	};
+
 	let settings = storage.get_guild_settings(guild_id).await?;
 
 	// make sure everything is in order...

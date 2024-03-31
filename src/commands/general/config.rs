@@ -1,7 +1,7 @@
-use std::str::FromStr;
+use crate::storage::settings::{Properties, Settings};
+use crate::{Context, Error};
 
-use crate::{storage, Context};
-use storage::{Properties, Settings};
+use std::str::FromStr;
 
 use eyre::{OptionExt as _, Result};
 use log::debug;
@@ -41,7 +41,7 @@ fn prop_to_val(setting: &Properties, settings: &Settings) -> String {
 	required_permissions = "MANAGE_GUILD",
 	default_member_permissions = "MANAGE_GUILD"
 )]
-pub async fn config(_ctx: Context<'_>) -> Result<()> {
+pub async fn config(_: Context<'_>) -> Result<(), Error> {
 	Ok(())
 }
 
@@ -72,63 +72,67 @@ pub async fn set(
 	#[description = "Toggle ReactBoard"] reactboard_enabled: Option<bool>,
 	#[description = "Enables 'extra' commands like teawiespam and copypasta. Defaults to false."]
 	optional_commands_enabled: Option<bool>,
-) -> Result<()> {
-	let storage = &ctx.data().storage;
-	let gid = ctx.guild_id().unwrap_or_default();
-	let mut settings = storage.get_guild_settings(&gid).await?;
-	let previous_settings = settings.clone();
+) -> Result<(), Error> {
+	if let Some(storage) = &ctx.data().storage {
+		let gid = ctx.guild_id().unwrap_or_default();
+		let mut settings = storage.get_guild_settings(&gid).await?;
+		let previous_settings = settings.clone();
 
-	if let Some(channel) = pinboard_channel {
-		debug!("Setting pinboard_channel to {channel} for {gid}");
-		settings.pinboard_channel = Some(channel.id);
-	}
+		if let Some(channel) = pinboard_channel {
+			debug!("Setting pinboard_channel to {channel} for {gid}");
+			settings.pinboard_channel = Some(channel.id);
+		}
 
-	if let Some(watch) = pinboard_watch {
-		let channels = split_argument(&watch);
-		settings.pinboard_watch = (!channels.is_empty()).then_some(channels);
-	}
+		if let Some(watch) = pinboard_watch {
+			let channels = split_argument(&watch);
+			settings.pinboard_watch = (!channels.is_empty()).then_some(channels);
+		}
 
-	if let Some(enabled) = pinboard_enabled {
-		debug!("Setting pinboard_enabled to {enabled} for {gid}");
-		settings.pinboard_enabled = enabled;
-	}
+		if let Some(enabled) = pinboard_enabled {
+			debug!("Setting pinboard_enabled to {enabled} for {gid}");
+			settings.pinboard_enabled = enabled;
+		}
 
-	if let Some(channel) = reactboard_channel {
-		debug!("Setting reactboard_channel to {channel} for {gid}");
-		settings.reactboard_channel = Some(channel.id);
-	}
+		if let Some(channel) = reactboard_channel {
+			debug!("Setting reactboard_channel to {channel} for {gid}");
+			settings.reactboard_channel = Some(channel.id);
+		}
 
-	if let Some(requirement) = reactboard_requirement {
-		debug!("Setting reactboard_requirement to {requirement} for {gid}");
-		settings.reactboard_requirement = Some(requirement);
-	}
+		if let Some(requirement) = reactboard_requirement {
+			debug!("Setting reactboard_requirement to {requirement} for {gid}");
+			settings.reactboard_requirement = Some(requirement);
+		}
 
-	if let Some(reaction) = reactboard_reaction {
-		let emojis: Vec<ReactionType> =
-			reaction.split(',').filter_map(|r| r.parse().ok()).collect();
-		debug!("Setting reactboard_reactions to {emojis:#?} for {gid}");
+		if let Some(reaction) = reactboard_reaction {
+			let emojis: Vec<ReactionType> =
+				reaction.split(',').filter_map(|r| r.parse().ok()).collect();
+			debug!("Setting reactboard_reactions to {emojis:#?} for {gid}");
 
-		settings.reactboard_reactions = Some(emojis);
-	}
+			settings.reactboard_reactions = Some(emojis);
+		}
 
-	if let Some(enabled) = reactboard_enabled {
-		debug!("Setting reactboard_enabled to {enabled} for {gid}");
-		settings.reactboard_enabled = enabled;
-	}
+		if let Some(enabled) = reactboard_enabled {
+			debug!("Setting reactboard_enabled to {enabled} for {gid}");
+			settings.reactboard_enabled = enabled;
+		}
 
-	if let Some(enabled) = optional_commands_enabled {
-		debug!("Setting optional_commands_enabled to {enabled} for {}", gid);
-		settings.optional_commands_enabled = enabled;
-	}
+		if let Some(enabled) = optional_commands_enabled {
+			debug!("Setting optional_commands_enabled to {enabled} for {}", gid);
+			settings.optional_commands_enabled = enabled;
+		}
 
-	if previous_settings == settings {
-		debug!("Not updating settings key for {gid} since no changes were made");
-		ctx.reply("No changes made, so i'm not updating anything")
-			.await?;
+		if previous_settings == settings {
+			debug!("Not updating settings key for {gid} since no changes were made");
+			ctx.reply("No changes made, so i'm not updating anything")
+				.await?;
+		} else {
+			debug!("Updating settings key for {gid}");
+			storage.create_guild_settings(settings).await?;
+			ctx.reply("Configuration updated!").await?;
+		}
 	} else {
-		debug!("Updating settings key for {gid}");
-		storage.create_guild_settings(settings).await?;
-		ctx.reply("Configuration updated!").await?;
+		ctx.reply("I have no storage backend right now, so I can't set settings :(")
+			.await?;
 	}
 
 	Ok(())
@@ -145,18 +149,22 @@ pub async fn set(
 pub async fn get(
 	ctx: Context<'_>,
 	#[description = "The setting you want to get"] setting: Properties,
-) -> Result<()> {
+) -> Result<(), Error> {
 	let gid = &ctx
 		.guild_id()
 		.ok_or_eyre("Failed to get GuildId from context!")?;
 
-	let settings = ctx.data().storage.get_guild_settings(gid).await?;
-	let value = prop_to_val(&setting, &settings);
+	if let Some(storage) = &ctx.data().storage {
+		let settings = storage.get_guild_settings(gid).await?;
+		let value = prop_to_val(&setting, &settings);
 
-	let embed = CreateEmbed::new().field(setting.name(), value, false);
-	let message = CreateReply::default().embed(embed);
-
-	ctx.send(message).await?;
+		let embed = CreateEmbed::new().field(setting.name(), value, false);
+		let message = CreateReply::default().embed(embed);
+		ctx.send(message).await?;
+	} else {
+		ctx.reply("I have no storage backend right now, so I can't fetch settings :(")
+			.await?;
+	}
 
 	Ok(())
 }

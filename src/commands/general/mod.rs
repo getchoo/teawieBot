@@ -1,22 +1,6 @@
-use crate::Data;
-
-use eyre::Report;
-use poise::Command;
-
-mod ask;
-mod bing;
-mod config;
-mod convert;
-mod random;
-mod version;
-
-pub fn to_comands() -> Vec<Command<Data, Report>> {
-	vec![
-		ask::ask(),
-		bing::bing(),
-		config::config(),
-		convert::convert(),
-		random::random(),
-		version::version(),
-	]
-}
+pub mod ask;
+pub mod bing;
+pub mod config;
+pub mod convert;
+pub mod random;
+pub mod version;

@@ -1,16 +1,10 @@
 use crate::{consts, Data};
 
-use eyre::{eyre, Report, Result};
-use log::debug;
+use eyre::{eyre, Result};
+use log::{debug, warn};
 use poise::serenity_prelude::{Context, Message};
-use poise::FrameworkContext;
 
-pub async fn handle(
-	ctx: &Context,
-	_framework: FrameworkContext<'_, Data, Report>,
-	msg: &Message,
-	data: &Data,
-) -> Result<()> {
+pub async fn handle(ctx: &Context, msg: &Message, data: &Data) -> Result<()> {
 	if should_echo(ctx, msg, data).await? {
 		msg.reply(ctx, &msg.content).await?;
 	}
@@ -27,11 +21,16 @@ async fn should_echo(ctx: &Context, msg: &Message, data: &Data) -> Result<bool> 
 	let gid = msg
 		.guild_id
 		.ok_or_else(|| eyre!("Couldn't get GuildId from {}!", msg.id))?;
-	let settings = data.storage.get_guild_settings(&gid).await?;
 
-	if !settings.optional_commands_enabled {
-		debug!("Not echoing in guild {gid}");
-		return Ok(false);
+	if let Some(storage) = &data.storage {
+		let settings = storage.get_guild_settings(&gid).await?;
+
+		if !settings.optional_commands_enabled {
+			debug!("Not echoing in guild {gid}");
+			return Ok(false);
+		}
+	} else {
+		warn!("Ignoring restrictions on echoing messages; no storage backend is attached!");
 	}
 
 	let content = &msg.content;

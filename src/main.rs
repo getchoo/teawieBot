@@ -1,71 +1,64 @@
-#![warn(clippy::all, clippy::pedantic, clippy::perf)]
-#![allow(clippy::missing_errors_doc, clippy::used_underscore_binding)]
-#![forbid(unsafe_code)]
+use std::{sync::Arc, time::Duration};
 
-use std::sync::Arc;
-use std::time::Duration;
-
-use eyre::{eyre, Context as _, Report, Result};
-use log::{info, warn};
+use eyre::{Context as _, Report, Result};
+use log::{info, trace, warn};
 use owo_colors::OwoColorize;
-use poise::serenity_prelude as serenity;
-use poise::{EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions};
-use redis::ConnectionLike;
-use storage::Storage;
+use poise::{
+	serenity_prelude::{self as serenity},
+	EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
+};
 use tokio::signal::ctrl_c;
+#[cfg(target_family = "unix")]
 use tokio::signal::unix::{signal, SignalKind};
+#[cfg(target_family = "windows")]
+use tokio::signal::windows::ctrl_close;
 
 mod api;
-mod colors;
 mod commands;
 mod consts;
 mod handlers;
 mod storage;
 mod utils;
 
-type Context<'a> = poise::Context<'a, Data, Report>;
+use storage::Storage;
 
-#[derive(Clone)]
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Context<'a> = poise::Context<'a, Data, Error>;
+
+#[derive(Clone, Debug, Default)]
 pub struct Data {
-	storage: Storage,
+	storage: Option<Storage>,
 }
 
-impl Data {
-	pub fn new() -> Result<Self> {
-		let redis_url =
-			std::env::var("REDIS_URL").wrap_err("Couldn't find Redis URL in environment!")?;
+async fn setup(ctx: &serenity::Context) -> Result<Data, Error> {
+	let storage = Storage::from_env().ok();
 
-		let storage = Storage::new(&redis_url)?;
+	if let Some(storage) = storage.as_ref() {
+		if !storage.clone().is_connected() {
+			return Err(
+				"You specified a storage backend but there's no connection! Is it running?".into(),
+			);
+		}
+		trace!("Storage backend connected!");
 
-		Ok(Self { storage })
+		poise::builtins::register_globally(ctx, &commands::to_vec_global()).await?;
+		info!("Registered global commands!");
+
+		// register "extra" commands in guilds that allow it
+		let guilds = storage.get_opted_guilds().await?;
+
+		for guild in guilds {
+			poise::builtins::register_in_guild(ctx, &commands::to_vec_optional(), guild).await?;
+
+			info!("Registered guild commands to {}", guild);
+		}
+	} else {
+		warn!("No storage backend was specified. Features requiring storage will be disabled");
+		warn!("Registering optional commands globally since there's no storage backend");
+		poise::builtins::register_globally(ctx, &commands::to_vec()).await?;
 	}
-}
 
-async fn setup(
-	ctx: &serenity::Context,
-	_ready: &serenity::Ready,
-	framework: &Framework<Data, Report>,
-) -> Result<Data> {
-	let data = Data::new()?;
-	let mut client = data.storage.client.clone();
-
-	if !client.check_connection() {
-		return Err(eyre!(
-			"Couldn't connect to storage! Is your daemon running?"
-		));
-	}
-
-	poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-	info!("Registered global commands!");
-
-	// register "extra" commands in guilds that allow it
-	let guilds = data.storage.get_opted_guilds().await?;
-
-	for guild in guilds {
-		poise::builtins::register_in_guild(ctx, &commands::optional(), guild).await?;
-
-		info!("Registered guild commands to {}", guild);
-	}
+	let data = Data { storage };
 
 	Ok(data)
 }
@@ -78,29 +71,25 @@ async fn handle_shutdown(shard_manager: Arc<serenity::ShardManager>, reason: &st
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	color_eyre::install()?;
 	dotenvy::dotenv().ok();
+	color_eyre::install()?;
 	env_logger::init();
 
-	let token = std::env::var("TOKEN").wrap_err_with(|| "Couldn't find token in environment!")?;
+	let token = std::env::var("TOKEN").wrap_err("Couldn't find bot token in environment!")?;
 
 	let intents =
 		serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
 	let options = FrameworkOptions {
-		commands: {
-			let mut commands = commands::global();
-			commands.append(&mut commands::moderation());
-			commands
-		},
-		on_error: |error| Box::pin(handlers::handle_error(error)),
+		commands: commands::to_vec(),
+		on_error: |error| Box::pin(handlers::error::handle(error)),
 
 		command_check: Some(|ctx| {
 			Box::pin(async move { Ok(ctx.author().id != ctx.framework().bot_id) })
 		}),
 
-		event_handler: |ctx, event, framework, data| {
-			Box::pin(handlers::handle_event(ctx, event, framework, data))
+		event_handler: |ctx, event, _framework, data| {
+			Box::pin(handlers::event::handle(ctx, event, data))
 		},
 
 		prefix_options: PrefixFrameworkOptions {
@@ -116,7 +105,7 @@ async fn main() -> Result<()> {
 
 	let framework = Framework::builder()
 		.options(options)
-		.setup(|ctx, ready, framework| Box::pin(setup(ctx, ready, framework)))
+		.setup(|ctx, _ready, _framework| Box::pin(setup(ctx)))
 		.build();
 
 	let mut client = serenity::ClientBuilder::new(token, intents)
@@ -124,7 +113,10 @@ async fn main() -> Result<()> {
 		.await?;
 
 	let shard_manager = client.shard_manager.clone();
+	#[cfg(target_family = "unix")]
 	let mut sigterm = signal(SignalKind::terminate())?;
+	#[cfg(target_family = "windows")]
+	let mut sigterm = ctrl_close()?;
 
 	tokio::select! {
 		result = client.start() => result.map_err(Report::from),

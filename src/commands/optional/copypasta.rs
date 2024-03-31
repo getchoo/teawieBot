@@ -1,18 +1,17 @@
-use crate::Context;
+use crate::{Context, Error};
 
 use std::collections::HashMap;
 
 use eyre::{eyre, OptionExt, Result};
 use include_dir::{include_dir, Dir};
-use log::debug;
+use log::{debug, warn};
 
 const FILES: Dir = include_dir!("src/copypastas");
 
-#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, poise::ChoiceParameter)]
 pub enum Copypastas {
 	Astral,
-	DVD,
+	Dvd,
 	Egrill,
 	HappyMeal,
 	Sus,
@@ -24,7 +23,7 @@ impl Copypastas {
 	fn as_str(&self) -> &str {
 		match self {
 			Copypastas::Astral => "astral",
-			Copypastas::DVD => "dvd",
+			Copypastas::Dvd => "dvd",
 			Copypastas::Egrill => "egrill",
 			Copypastas::HappyMeal => "happymeal",
 			Copypastas::Sus => "sus",
@@ -65,14 +64,19 @@ fn get_copypasta(name: &Copypastas) -> Result<String> {
 pub async fn copypasta(
 	ctx: Context<'_>,
 	#[description = "the copypasta you want to send"] copypasta: Copypastas,
-) -> Result<()> {
+) -> Result<(), Error> {
 	let gid = ctx.guild_id().unwrap_or_default();
-	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
 
-	if !settings.optional_commands_enabled {
-		debug!("Exited copypasta command in {gid} since it's disabled");
-		ctx.say("I'm not allowed to do that here").await?;
-		return Ok(());
+	if let Some(storage) = &ctx.data().storage {
+		let settings = storage.get_guild_settings(&gid).await?;
+
+		if !settings.optional_commands_enabled {
+			debug!("Exited copypasta command in {gid} since it's disabled");
+			ctx.say("I'm not allowed to do that here").await?;
+			return Ok(());
+		}
+	} else {
+		warn!("Ignoring restrictions on copypasta command; no storage backend is attached!");
 	}
 
 	ctx.say(get_copypasta(&copypasta)?).await?;

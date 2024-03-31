@@ -1,13 +1,10 @@
-use crate::colors::Colors;
-use crate::Context;
+use crate::{consts::Colors, Context, Error};
 
-use eyre::Result;
-use poise::serenity_prelude::CreateEmbed;
-use poise::CreateReply;
+use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Get version info
 #[poise::command(slash_command)]
-pub async fn version(ctx: Context<'_>) -> Result<()> {
+pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
 	let sha = option_env!("GIT_SHA").unwrap_or("main");
 	let target = option_env!("TARGET").unwrap_or("Unknown");
 

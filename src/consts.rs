@@ -1,3 +1,30 @@
+#![allow(clippy::unreadable_literal)]
+use once_cell::sync::Lazy;
+use poise::serenity_prelude::{Colour, Permissions, Scope};
+
+pub static BOT_PERMISSIONS: Lazy<Permissions> = Lazy::new(|| {
+	Permissions::MANAGE_ROLES
+		| Permissions::MANAGE_CHANNELS
+		| Permissions::KICK_MEMBERS
+		| Permissions::BAN_MEMBERS
+		| Permissions::MANAGE_NICKNAMES
+		| Permissions::VIEW_CHANNEL
+		| Permissions::MODERATE_MEMBERS
+		| Permissions::SEND_MESSAGES
+		| Permissions::CREATE_PUBLIC_THREADS
+		| Permissions::CREATE_PRIVATE_THREADS
+		| Permissions::SEND_MESSAGES_IN_THREADS
+		| Permissions::MANAGE_MESSAGES
+		| Permissions::MANAGE_THREADS
+		| Permissions::EMBED_LINKS
+		| Permissions::ATTACH_FILES
+		| Permissions::READ_MESSAGE_HISTORY
+		| Permissions::ADD_REACTIONS
+});
+
+pub static BOT_SCOPES: Lazy<Vec<Scope>> =
+	Lazy::new(|| vec![Scope::Bot, Scope::ApplicationsCommands]);
+
 pub const TEAMOJIS: [&str; 15] = [
 	"<:teawiecry:1056438041872433303>",
 	"<:teawiederp:1056438043109757018>",
@@ -64,3 +91,19 @@ pub const LORE: [&str; 22] = [
 	"Teawie is friends with Blåhaj.",
 	"Consuming Teawie, and other Teawie variants is not recommended, since it will allow Teawie to take over the consumer in the same way as being shot with a Teawie \"bullet\".",
 ];
+
+pub enum Colors {
+	Blue,
+	Orange,
+	Red,
+}
+
+impl From<Colors> for Colour {
+	fn from(val: Colors) -> Self {
+		match val {
+			Colors::Blue => Colour::from(0x88C7FD),
+			Colors::Orange => Colour::from(0xFFB34A),
+			Colors::Red => Colour::from(0xFF5E4A),
+		}
+	}
+}

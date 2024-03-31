@@ -1,9 +1,8 @@
-use crate::Data;
+use crate::{consts, Data, Error};
 
-use eyre::{Report, Result};
-use log::info;
-use poise::serenity_prelude as serenity;
-use poise::FrameworkContext;
+use eyre::Result;
+use log::{debug, info};
+use poise::serenity_prelude::{self as serenity, CreateBotAuthParameters};
 use serenity::FullEvent;
 
 mod guild;
@@ -11,19 +10,24 @@ mod message;
 mod pinboard;
 mod reactboard;
 
-pub async fn handle(
-	ctx: &serenity::Context,
-	event: &FullEvent,
-	framework: FrameworkContext<'_, Data, Report>,
-	data: &Data,
-) -> Result<()> {
+pub async fn handle(ctx: &serenity::Context, event: &FullEvent, data: &Data) -> Result<(), Error> {
 	match event {
 		FullEvent::Ready { data_about_bot } => {
 			info!("Logged in as {}!", data_about_bot.user.name);
+
+			if let Ok(invite_link) = CreateBotAuthParameters::new().auto_client_id(ctx).await {
+				let link = invite_link
+					.scopes(&consts::BOT_SCOPES)
+					.permissions(*consts::BOT_PERMISSIONS)
+					.build();
+				info!("Invite me to your server at {link}");
+			} else {
+				debug!("Not displaying invite_link since we couldn't find our client ID");
+			}
 		}
 
 		FullEvent::Message { new_message } => {
-			message::handle(ctx, framework, new_message, data).await?;
+			message::handle(ctx, new_message, data).await?;
 			pinboard::handle(ctx, new_message, data).await?;
 		}
 
@@ -31,8 +35,8 @@ pub async fn handle(
 			reactboard::handle(ctx, add_reaction, data).await?;
 		}
 
-		FullEvent::GuildCreate { guild, is_new } => {
-			guild::handle_create(guild, &is_new.unwrap_or_default(), data).await?;
+		FullEvent::GuildCreate { guild, is_new: _ } => {
+			guild::handle_create(guild, data).await?;
 		}
 
 		FullEvent::GuildDelete {

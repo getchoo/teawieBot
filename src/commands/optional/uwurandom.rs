@@ -1,7 +1,7 @@
-use crate::Context;
+use crate::{Context, Error};
 
 use eyre::Result;
-use log::debug;
+use log::{debug, warn};
 use rand::Rng;
 
 /// Generate some amount of uwurandom
@@ -12,14 +12,19 @@ pub async fn uwurandom(
 	#[min = 1]
 	#[max = 2000]
 	length: Option<u16>,
-) -> Result<()> {
+) -> Result<(), Error> {
 	let gid = ctx.guild_id().unwrap_or_default();
-	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
 
-	if !settings.optional_commands_enabled {
-		debug!("Not running uwurandom in {gid} since it's disabled");
-		ctx.say("I'm not allowed to do that here").await?;
-		return Ok(());
+	if let Some(storage) = &ctx.data().storage {
+		let settings = storage.get_guild_settings(&gid).await?;
+
+		if !settings.optional_commands_enabled {
+			debug!("Not running uwurandom in {gid} since it's disabled");
+			ctx.say("I'm not allowed to do that here").await?;
+			return Ok(());
+		}
+	} else {
+		warn!("Ignoring restrictions on copypasta command; no storage backend is attached!");
 	}
 
 	let length = length.unwrap_or(rand::thread_rng().gen_range(1..50));

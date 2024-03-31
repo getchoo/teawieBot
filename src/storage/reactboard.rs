@@ -2,8 +2,6 @@ use poise::serenity_prelude::{ChannelId, MessageId};
 use redis_macros::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
-pub const REACTBOARD_KEY: &str = "reactboard-v2";
-
 #[derive(Clone, Debug, Serialize, Deserialize, FromRedisValue, ToRedisArgs)]
 pub struct ReactBoardEntry {
 	pub original_message_id: MessageId,

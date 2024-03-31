@@ -14,7 +14,10 @@ bottomify = "1.2.0"
 color-eyre = "0.6.3"
 dotenvy = "0.15.7"
 env_logger = "0.11.3"
-eyre = "0.6.12"
+eyre = { version = "0.6.12", default-features = false, features = [
+	"auto-install",
+	"track-caller",
+] }
 include_dir = "0.7.3"
 log = "0.4.21"
 poise = "0.6.1"
@@ -36,3 +39,14 @@ tokio = { version = "1.37.0", features = [
 ] }
 url = { version = "2.5.0", features = ["serde"] }
 uwurandom-rs = "1.1.0"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+complexity = "warn"
+correctness = "deny"
+pedantic = "warn"
+perf = "warn"
+style = "warn"
+suspicious = "deny"
