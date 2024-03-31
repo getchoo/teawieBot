@@ -17,8 +17,8 @@ pub async fn handle(ctx: &serenity::Context, event: &FullEvent, data: &Data) -> 
 
 			if let Ok(invite_link) = CreateBotAuthParameters::new().auto_client_id(ctx).await {
 				let link = invite_link
-					.scopes(&consts::BOT_SCOPES)
-					.permissions(*consts::BOT_PERMISSIONS)
+					.scopes(consts::bot_scopes())
+					.permissions(*consts::bot_permissions())
 					.build();
 				info!("Invite me to your server at {link}");
 			} else {

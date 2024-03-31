@@ -1,25 +1,27 @@
+use std::sync::OnceLock;
+
 use eyre::Result;
-use once_cell::sync::Lazy;
+use reqwest::Client;
 use serde::de::DeserializeOwned;
 
 pub mod guzzle;
 pub mod shiggy;
 
-pub static USER_AGENT: Lazy<String> = Lazy::new(|| {
-	let version = option_env!("CARGO_PKG_VERSION").unwrap_or("development");
+pub fn client() -> &'static Client {
+	static USER_AGENT: OnceLock<String> = OnceLock::new();
+	static CLIENT: OnceLock<Client> = OnceLock::new();
 
-	format!("teawieBot/{version}")
-});
+	let user_agent = USER_AGENT.get_or_init(|| {
+		let version = option_env!("CARGO_PKG_VERSION").unwrap_or("development");
 
-pub static REQWEST_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
-	reqwest::Client::builder()
-		.user_agent(USER_AGENT.to_string())
-		.build()
-		.unwrap_or_default()
-});
+		format!("teawieBot/{version}")
+	});
+
+	CLIENT.get_or_init(|| Client::builder().user_agent(user_agent).build().unwrap())
+}
 
 async fn get_json<T: DeserializeOwned>(url: &str) -> Result<T> {
-	let resp = REQWEST_CLIENT.get(url).send().await?;
+	let resp = client().get(url).send().await?;
 	resp.error_for_status_ref()?;
 	let json = resp.json().await?;
 

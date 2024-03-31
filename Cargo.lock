@@ -2067,7 +2067,6 @@ dependencies = [
  "eyre",
  "include_dir",
  "log",
- "once_cell",
  "owo-colors 4.0.0",
  "poise",
  "rand 0.8.5",

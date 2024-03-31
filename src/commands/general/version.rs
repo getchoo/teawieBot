@@ -23,7 +23,6 @@ pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
 		),
 		("Target:", target, false),
 		("Revision:", &revision_url, false),
-		("User Agent:", &crate::api::USER_AGENT, false),
 	];
 
 	let embed = CreateEmbed::new()
