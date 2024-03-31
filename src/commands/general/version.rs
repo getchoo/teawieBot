@@ -1,13 +1,13 @@
 use crate::{consts::Colors, Context, Error};
 
+use std::env::consts::{ARCH, OS};
+
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Get version info
 #[poise::command(slash_command)]
 pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
 	let sha = option_env!("GIT_SHA").unwrap_or("main");
-	let target = option_env!("TARGET").unwrap_or("Unknown");
-
 	let revision_url = format!(
 		"[{}]({}/tree/{})",
 		sha,
@@ -15,13 +15,15 @@ pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
 		sha,
 	);
 
+	let os_info = format!("{ARCH}-{OS}");
+
 	let fields = [
 		(
 			"Version:",
 			option_env!("CARGO_PKG_VERSION").unwrap_or("not found"),
 			false,
 		),
-		("Target:", target, false),
+		("OS:", &os_info, false),
 		("Revision:", &revision_url, false),
 	];
 
