@@ -2,7 +2,6 @@ use std::{sync::Arc, time::Duration};
 
 use eyre::{Context as _, Report, Result};
 use log::{info, trace, warn};
-use owo_colors::OwoColorize;
 use poise::{
 	serenity_prelude::{self as serenity},
 	EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
@@ -66,7 +65,7 @@ async fn setup(ctx: &serenity::Context) -> Result<Data, Error> {
 async fn handle_shutdown(shard_manager: Arc<serenity::ShardManager>, reason: &str) {
 	warn!("{reason}! Shutting down bot...");
 	shard_manager.shutdown_all().await;
-	println!("{}", "Everything is shutdown. Goodbye!".green());
+	println!("Everything is shutdown. Goodbye!");
 }
 
 #[tokio::main]

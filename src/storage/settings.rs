@@ -2,8 +2,6 @@ use poise::serenity_prelude::{ChannelId, GuildId, ReactionType};
 use redis_macros::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 
-
-
 #[derive(poise::ChoiceParameter)]
 pub enum Properties {
 	GuildId,
