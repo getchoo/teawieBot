@@ -4,7 +4,7 @@
   rustPlatform,
   darwin,
   self,
-  lto ? false,
+  lto ? true,
   optimizeSize ? false,
 }:
 rustPlatform.buildRustPackage {
@@ -34,28 +34,25 @@ rustPlatform.buildRustPackage {
     SystemConfiguration
   ]);
 
-  env = {
-    GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown-dirty";
-    CARGO_BUILD_RUSTFLAGS = lib.concatStringsSep " " (
-      lib.optionals lto [
-        "-C"
-        "lto=thin"
-        "-C"
-        "embed-bitcode=yes"
-        "-Zdylib-lto"
-      ]
-      ++ lib.optionals optimizeSize [
-        "-C"
-        "codegen-units=1"
-        "-C"
-        "panic=abort"
-        "-C"
-        "strip=symbols"
-        "-C"
-        "opt-level=z"
-      ]
+  env = let
+    toRustFlags = lib.mapAttrs' (
+      name:
+        lib.nameValuePair
+        "CARGO_BUILD_RELEASE_${lib.toUpper (builtins.replaceStrings ["-"] ["_"] name)}"
     );
-  };
+  in
+    {
+      GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown-dirty";
+    }
+    // lib.optionalAttrs lto (toRustFlags {
+      lto = "thin";
+    })
+    // lib.optionalAttrs optimizeSize (toRustFlags {
+      codegen-units = 1;
+      opt-level = "s";
+      panic = "abort";
+      strip = "symbols";
+    });
 
   meta = with lib; {
     mainProgram = "teawiebot";
