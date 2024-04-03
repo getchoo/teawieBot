@@ -14,10 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        package: 
-          - teawiebot
-          - teawiebot-static-x86_64
-          - teawiebot-static-aarch64
 
     runs-on: ${{ matrix.os }}
 
@@ -32,13 +28,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v4
 
       - name: Run build
-        env:
-          ATTR: ${{ matrix.package }}
-        run: |
-          nix build \
-            --fallback \
-            --print-build-logs \
-            .#"$ATTR"
+        run: nix build --fallback --print-build-logs
 
   check:
     name: Check flake
