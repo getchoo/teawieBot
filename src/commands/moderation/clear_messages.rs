@@ -5,6 +5,7 @@ use poise::serenity_prelude::GetMessages;
 
 #[poise::command(
 	slash_command,
+	guild_only,
 	ephemeral,
 	required_permissions = "MANAGE_MESSAGES",
 	default_member_permissions = "MANAGE_MESSAGES"

@@ -1,9 +1,9 @@
 use crate::{Context, Error};
 
 use include_dir::{include_dir, Dir};
-use log::{debug, warn};
+use log::debug;
 
-const FILES: Dir = include_dir!("src/copypastas");
+const COPYPASTAS: Dir = include_dir!("src/copypastas");
 
 #[derive(Debug, poise::ChoiceParameter)]
 pub enum Copypasta {
@@ -16,9 +16,9 @@ pub enum Copypasta {
 	Twitter,
 }
 
-impl Copypasta {
-	fn as_str(&self) -> &str {
-		match self {
+impl ToString for Copypasta {
+	fn to_string(&self) -> String {
+		let str = match self {
 			Self::Astral => "astral",
 			Self::Dvd => "dvd",
 			Self::Egrill => "egrill",
@@ -26,12 +26,15 @@ impl Copypasta {
 			Self::Sus => "sus",
 			Self::TickTock => "ticktock",
 			Self::Twitter => "twitter",
-		}
+		};
+		str.to_string()
 	}
+}
 
+impl Copypasta {
 	fn contents(&self) -> Option<&str> {
-		let file_name = format!("{}.txt", self.as_str());
-		FILES
+		let file_name = format!("{}.txt", self.to_string());
+		COPYPASTAS
 			.get_file(file_name)
 			.and_then(|file| file.contents_utf8())
 	}
@@ -43,18 +46,21 @@ pub async fn copypasta(
 	ctx: Context<'_>,
 	#[description = "the copypasta you want to send"] copypasta: Copypasta,
 ) -> Result<(), Error> {
-	let gid = ctx.guild_id().unwrap_or_default();
+	if let Some(guild_id) = ctx.guild_id() {
+		if let Some(storage) = &ctx.data().storage {
+			let settings = storage.get_guild_settings(&guild_id).await?;
 
-	if let Some(storage) = &ctx.data().storage {
-		let settings = storage.get_guild_settings(&gid).await?;
+			if !settings.optional_commands_enabled {
+				debug!("Not running command in {guild_id} since it's disabled");
+				ctx.reply("I'm not allowed to do that here").await?;
 
-		if !settings.optional_commands_enabled {
-			debug!("Exited copypasta command in {gid} since it's disabled");
-			ctx.say("I'm not allowed to do that here").await?;
-			return Ok(());
+				return Ok(());
+			}
+		} else {
+			debug!("Ignoring restrictions on command; no storage backend is attached!");
 		}
 	} else {
-		warn!("Ignoring restrictions on copypasta command; no storage backend is attached!");
+		debug!("Ignoring restrictions on command; we're not in a guild");
 	}
 
 	if let Some(contents) = copypasta.contents() {

@@ -8,6 +8,7 @@ use poise::serenity_prelude::{
 };
 
 pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<()> {
+	// TODO @getchoo: don't do anything if this message is old
 	let msg = reaction
 		.message(&ctx.http)
 		.await
