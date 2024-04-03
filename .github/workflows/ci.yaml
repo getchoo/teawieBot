@@ -60,12 +60,15 @@ jobs:
             github:getchoo/nix-exprs#{clippy-sarif,sarif-fmt}
 
       - name: Fetch Cargo deps
-        run: cargo fetch --locked
+        run: |
+          nix develop .#ci --command \
+            cargo fetch --locked
 
       - name: Run Clippy
         continue-on-error: true
         run: |
-          cargo clippy \
+          nix develop .#ci --command \
+            cargo clippy \
             --all-features \
             --all-targets \
             --message-format=json \
@@ -93,4 +96,4 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v4
 
       - name: Run treefmt
-        run: nix develop --command bash -c 'treefmt'
+        run: nix develop .#ci --command treefmt
