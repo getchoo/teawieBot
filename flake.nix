@@ -51,7 +51,7 @@
       '';
 
       nil = pkgs.runCommand "check-nil" {nativeBuildInputs = [pkgs.findutils pkgs.nil];} ''
-        find ${./.} -type f -name '*.nix' | while read -r file;
+        find ${./.} -type f -name '*.nix' | while read -r file
           nil diagnostics "$file"
         done
         touch $out
