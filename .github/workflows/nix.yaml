@@ -64,7 +64,7 @@ jobs:
             --show-trace
 
   release-gate:
-    name: Release gate
+    name: Nix Release Gate
     needs: [build, check]
 
     runs-on: ubuntu-latest

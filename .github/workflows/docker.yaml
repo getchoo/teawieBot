@@ -50,7 +50,7 @@ jobs:
           retention-days: 1
 
   release-gate:
-    name: Release gate
+    name: Docker Release Gate
     needs: build
 
     runs-on: ubuntu-latest

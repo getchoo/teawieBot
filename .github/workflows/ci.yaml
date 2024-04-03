@@ -102,7 +102,7 @@ jobs:
           git diff --color=always --exit-code
 
   release-gate:
-    name: Release gate
+    name: CI Release Gate
     needs: [build, format]
 
     runs-on: ubuntu-latest
