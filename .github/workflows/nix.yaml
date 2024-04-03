@@ -1,0 +1,63 @@
+name: Nix
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        package: 
+          - teawiebot
+          - teawiebot-static-x86_64
+          - teawiebot-static-aarch64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v10
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v4
+
+      - name: Run build
+        env:
+          ATTR: ${{ matrix.package }}
+        run: |
+          nix build \
+            --fallback \
+            --print-build-logs \
+            .#"$ATTR"
+
+  check:
+    name: Check flake
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v10
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v4
+
+      - name: Run nix flake check
+        run: |
+          nix flake check \
+            --all-systems \
+            --fallback \
+            --print-build-logs \
+            --show-trace

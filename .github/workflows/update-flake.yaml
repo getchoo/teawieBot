@@ -8,6 +8,8 @@ on:
 
 jobs:
   update:
+    name: Run update
+
     runs-on: ubuntu-latest
 
     permissions:
@@ -15,7 +17,8 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v10
@@ -24,13 +27,13 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@v21
         id: update
         with:
-          commit-msg: "flake: update inputs"
-          pr-title: "flake: update inputs"
-          token: ${{ github.token }}
+          commit-msg: "nix: update flake.lock"
+          pr-title: "nix: update flake.lock"
+          token: ${{ secrets.MERGE_TOKEN }}
 
       - name: Enable auto-merge
         shell: bash
-        run: gh pr merge --auto --rebase "$PR_ID"
+        run: gh pr merge --auto --squash "$PR_ID"
         env:
           GH_TOKEN: ${{ github.token }}
           PR_ID: ${{ steps.update.outputs.pull-request-number }}

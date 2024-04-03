@@ -1,4 +1,4 @@
-name: Push to image registry
+name: Docker
 
 on:
   check_suite:
@@ -9,19 +9,15 @@ jobs:
   build:
     name: Build image
 
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         arch: [x86_64, aarch64]
 
-    # https://github.com/sellout/bash-strict-mode/commit/9bf1d65c2f786a9887facfcb81e06d8b8b5f4667
-    if: github.event.check_suite.app.name == 'Garnix CI'
-      && github.event.check_suite.conclusion == 'success'
-      && github.event.check_suite.latest_check_runs_count >= 8
-      && github.event.check_suite.head_branch == 'main'
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v10
@@ -31,10 +27,17 @@ jobs:
 
       - name: Build Docker image
         id: build
+        env:
+          ARCH: ${{ matrix.arch }}
         run: |
-          nix build -L --accept-flake-config .#container-${{ matrix.arch }}
+          nix build \
+            --fallback \
+            --print-build-logs \
+            .#container-"$ARCH"
+
+          # exit if no `result` from nix build
           [ ! -L result ] && exit 1
-          echo "path=$(realpath result)" >> "$GITHUB_OUTPUT"
+          echo "path=$(readlink -f ./result)" >> "$GITHUB_OUTPUT"
 
       - name: Upload image
         uses: actions/upload-artifact@v4
@@ -46,8 +49,9 @@ jobs:
 
   push:
     name: Push image
-
+    if: github.event_name == 'push'
     needs: build
+
     runs-on: ubuntu-latest
 
     permissions:
@@ -55,14 +59,15 @@ jobs:
 
     env:
       REGISTRY: ghcr.io
-      USERNAME: getchoo
+      USERNAME: ${{ github.actor }}
 
     steps:
       - name: Set image name
         run: |
           echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Download images
         uses: actions/download-artifact@v4
@@ -80,17 +85,15 @@ jobs:
         env:
           TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         run: |
-          set -eux
-
           architectures=("x86_64" "aarch64")
           for arch in "${architectures[@]}"; do
             docker load < images/container-"$arch"/*.tar.gz
-            docker tag teawiebot:latest-"$arch" ${{ env.TAG }}-"$arch"
-            docker push ${{ env.TAG }}-"$arch"
+            docker tag teawiebot:latest-"$arch" "$TAG"-"$arch"
+            docker push "$TAG"-"$arch"
           done
 
-          docker manifest create ${{ env.TAG }} \
-            --amend ${{ env.TAG }}-x86_64 \
-            --amend ${{ env.TAG }}-aarch64
+          docker manifest create "$TAG" \
+            --amend "$TAG"-x86_64 \
+            --amend "$TAG"-aarch64
 
-          docker manifest push ${{ env.TAG }}
+          docker manifest push "$TAG"
