@@ -45,8 +45,7 @@
       ...
     }: {
       actionlint = pkgs.runCommand "check-actionlint" {} ''
-        cd ${./.}
-        ${lib.getExe pkgs.actionlint}
+        ${lib.getExe pkgs.actionlint} ${./.github/workflows}/*
         touch $out
       '';
 
@@ -58,7 +57,7 @@
       '';
 
       statix = pkgs.runCommand "check-statix" {} ''
-        statix check ${./.}
+        ${lib.getExe pkgs.statix} check ${./.}
         touch $out
       '';
 
