@@ -11,6 +11,7 @@ jobs:
     name: Build image
 
     strategy:
+      fail-fast: false
       matrix:
         arch: [x86_64, aarch64]
 
@@ -48,10 +49,20 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  release-gate:
+    name: Release gate
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Exit with result
+        run: echo "We're good to go!"
+
   push:
     name: Push image
     if: github.event_name == 'push'
-    needs: build
+    needs: release-gate 
 
     runs-on: ubuntu-latest
 

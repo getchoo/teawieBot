@@ -62,3 +62,13 @@ jobs:
             --fallback \
             --print-build-logs \
             --show-trace
+
+  release-gate:
+    name: Release gate
+    needs: [build, check]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Exit with result
+        run: echo "We're good to go!"

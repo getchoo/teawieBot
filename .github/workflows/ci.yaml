@@ -100,3 +100,13 @@ jobs:
         run: |
           nix fmt
           git diff --color=always --exit-code
+
+  release-gate:
+    name: Release gate
+    needs: [build, format]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Exit with result
+        run: echo "We're good to go!"
