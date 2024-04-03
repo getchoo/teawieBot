@@ -96,4 +96,6 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v4
 
       - name: Run treefmt
-        run: nix develop .#ci --command treefmt
+        run: |
+          nix fmt
+          git diff --color=always --exit-code
