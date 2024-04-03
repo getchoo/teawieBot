@@ -32,6 +32,7 @@ rustPlatform.buildRustPackage {
     CoreFoundation
     Security
     SystemConfiguration
+    darwin.libiconv
   ]);
 
   env = let
