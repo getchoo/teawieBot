@@ -35,7 +35,7 @@ jobs:
           nix build \
             --fallback \
             --print-build-logs \
-            .#container-"$ARCH"
+            ./nix/dev#container-"$ARCH"
 
           # exit if no `result` from nix build
           [ ! -L result ] && exit 1

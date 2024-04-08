@@ -57,18 +57,18 @@ jobs:
       - name: Install SARIF tools
         run: |
           nix profile install \
-            --inputs-from . \
+            --inputs-from ./nix/dev \
             github:getchoo/nix-exprs#{clippy-sarif,sarif-fmt}
 
       - name: Fetch Cargo deps
         run: |
-          nix develop .#ci --command \
+          nix develop ./nix/dev#ci --command \
             cargo fetch --locked
 
       - name: Run Clippy
         continue-on-error: true
         run: |
-          nix develop .#ci --command \
+          nix develop ./nix/dev#ci --command \
             cargo clippy \
             --all-features \
             --all-targets \
@@ -98,7 +98,9 @@ jobs:
 
       - name: Run treefmt
         run: |
+          pushd nix/dev
           nix fmt
+          popd
           git diff --color=always --exit-code
 
   release-gate:
