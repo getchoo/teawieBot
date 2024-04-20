@@ -62,7 +62,7 @@ jobs:
   push:
     name: Push image
     if: github.event_name == 'push'
-    needs: release-gate 
+    needs: release-gate
 
     runs-on: ubuntu-latest
 

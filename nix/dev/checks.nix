@@ -11,8 +11,11 @@
       '';
 
       editorconfig = pkgs.runCommand "check-editorconfig" {} ''
+        cd ${../../.}
         ${lib.getExe pkgs.editorconfig-checker} \
-          -exclude '.git' ${../../.}
+          -exclude '.git' .
+
+        touch $out
       '';
 
       statix = pkgs.runCommand "check-statix" {} ''
