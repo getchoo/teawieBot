@@ -8,17 +8,20 @@
   }: {
     devShells = {
       default = pkgs.mkShell {
-        packages = with pkgs; [
+        packages = [
           # rust tools
-          clippy
-          rustfmt
-          rust-analyzer
+          pkgs.clippy
+          pkgs.rustfmt
+          pkgs.rust-analyzer
+
+          # nix tools
+          pkgs.deadnix
+          pkgs.nil
+          pkgs.statix
 
           # misc formatter/linters
-          actionlint
+          pkgs.actionlint
           self'.formatter
-          nil
-          statix
 
           config.procfiles.daemons.package
         ];
@@ -28,10 +31,11 @@
       };
 
       ci = pkgs.mkShell {
-        packages = with pkgs; [
-          clippy
-          rustfmt
-          self.formatter.${system}
+        packages = [
+          pkgs.clippy
+          pkgs.rustfmt
+
+          self'.formatter
         ];
 
         inputsFrom = [teawiebot'.packages.teawiebot];

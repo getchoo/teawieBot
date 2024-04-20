@@ -6,19 +6,17 @@
   }: {
     checks = {
       actionlint = pkgs.runCommand "check-actionlint" {} ''
-        ${lib.getExe pkgs.actionlint} ${./.github/workflows}/*
+        ${lib.getExe pkgs.actionlint} ${../../.github/workflows}/*
         touch $out
       '';
 
-      nil = pkgs.runCommand "check-nil" {nativeBuildInputs = [pkgs.findutils pkgs.nil];} ''
-        find ${./.} -type f -name '*.nix' | while read -r file; do
-          nil diagnostics "$file"
-        done
-        touch $out
+      editorconfig = pkgs.runCommand "check-editorconfig" {} ''
+        ${lib.getExe pkgs.editorconfig-checker} \
+          -exclude '.git' ${../../.}
       '';
 
       statix = pkgs.runCommand "check-statix" {} ''
-        ${lib.getExe pkgs.statix} check ${./.}
+        ${lib.getExe pkgs.statix} check ${../../.}
         touch $out
       '';
     };
