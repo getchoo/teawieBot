@@ -894,7 +894,7 @@ dependencies = [
  "futures-util",
  "http 0.2.10",
  "hyper 0.14.27",
- "rustls 0.21.8",
+ "rustls 0.21.11",
  "tokio",
  "tokio-rustls 0.24.1",
 ]
@@ -1529,7 +1529,7 @@ dependencies = [
  "once_cell",
  "percent-encoding",
  "pin-project-lite",
- "rustls 0.21.8",
+ "rustls 0.21.11",
  "rustls-pemfile 1.0.4",
  "serde",
  "serde_json",
@@ -1625,9 +1625,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.21.8"
+version = "0.21.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "446e14c5cda4f3f30fe71863c34ec70f5ac79d6087097ad0bb433e1be5edf04c"
+checksum = "7fecbfb7b1444f477b345853b1fce097a2c6fb637b2bfb87e6bc5db0f043fae4"
 dependencies = [
  "log",
  "ring",
@@ -2189,7 +2189,7 @@ version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c28327cf380ac148141087fbfb9de9d7bd4e84ab5d2c28fbc911d753de8a7081"
 dependencies = [
- "rustls 0.21.8",
+ "rustls 0.21.11",
  "tokio",
 ]
 
@@ -2212,7 +2212,7 @@ checksum = "212d5dcb2a1ce06d81107c3d0ffa3121fe974b73f068c8282cb1c32328113b6c"
 dependencies = [
  "futures-util",
  "log",
- "rustls 0.21.8",
+ "rustls 0.21.11",
  "tokio",
  "tokio-rustls 0.24.1",
  "tungstenite",
@@ -2340,7 +2340,7 @@ dependencies = [
  "httparse",
  "log",
  "rand 0.8.5",
- "rustls 0.21.8",
+ "rustls 0.21.11",
  "sha1",
  "thiserror",
  "url",
