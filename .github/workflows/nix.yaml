@@ -7,29 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v10
-
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v4
-
-      - name: Run build
-        run: nix build --fallback --print-build-logs
-
   check:
     name: Check flake
 
@@ -52,13 +29,3 @@ jobs:
             --fallback \
             --print-build-logs \
             --show-trace
-
-  release-gate:
-    name: Nix Release Gate
-    needs: [build, check]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Exit with result
-        run: echo "We're good to go!"
