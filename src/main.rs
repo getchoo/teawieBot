@@ -120,7 +120,7 @@ async fn main() -> Result<()> {
 	tokio::select! {
 		result = client.start() => result.map_err(Report::from),
 		_ = sigterm.recv() => {
-			handle_shutdown(shard_manager, "Recieved SIGTERM").await;
+			handle_shutdown(shard_manager, "Received SIGTERM").await;
 			std::process::exit(0);
 		},
 		_ = ctrl_c() => {

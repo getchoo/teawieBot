@@ -44,7 +44,7 @@ pub async fn handle(error: poise::FrameworkError<'_, Data, Error>) {
 
 		error => {
 			if let Err(e) = poise::builtins::on_error(error).await {
-				error!("Unhandled error occured:\n{e:#?}");
+				error!("Unhandled error occurred:\n{e:#?}");
 			}
 		}
 	}
