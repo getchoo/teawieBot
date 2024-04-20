@@ -1,138 +1,47 @@
-use std::fmt::Debug;
+use std::{env, fmt::Debug, str::FromStr};
 
 use eyre::Result;
 use log::debug;
 use poise::serenity_prelude::{GuildId, MessageId};
-use redis::{AsyncCommands, Client, FromRedisValue, ToRedisArgs};
+use redis::{AsyncCommands, Client, ConnectionLike, RedisError};
 
-mod reactboard;
-mod settings;
-// these are purposefully private. see the comment below
-use reactboard::REACTBOARD_KEY;
-use settings::SETTINGS_KEY;
+pub mod reactboard;
+pub mod settings;
 
-pub use reactboard::ReactBoardEntry;
-pub use settings::{Properties, Settings};
+use reactboard::ReactBoardEntry;
+use settings::Settings;
+
+pub const REACTBOARD_KEY: &str = "reactboard-v2";
+pub const SETTINGS_KEY: &str = "settings-v1";
 
 #[derive(Clone, Debug)]
 pub struct Storage {
-	pub client: Client,
+	client: Client,
 }
 
 impl Storage {
-	pub fn new(redis_url: &str) -> Result<Self> {
-		let client = Client::open(redis_url)?;
-
-		Ok(Self { client })
+	pub fn new(client: Client) -> Self {
+		Self { client }
 	}
 
-	/*
-	  these are mainly light abstractions to avoid the `let mut con`
-	  boilerplate, as well as not require the caller to format the
-	  strings for keys
-	*/
+	pub fn from_env() -> Result<Self> {
+		let redis_url = env::var("REDIS_URL")?;
 
-	async fn get_key<T>(&self, key: &str) -> Result<T>
-	where
-		T: FromRedisValue,
-	{
-		debug!("Getting key {key}");
-
-		let mut con = self.client.get_async_connection().await?;
-		let res: T = con.get(key).await?;
-
-		Ok(res)
+		Ok(Self::from_str(&redis_url)?)
 	}
 
-	async fn set_key<'a>(
-		&self,
-		key: &str,
-		value: impl ToRedisArgs + Debug + Send + Sync + 'a,
-	) -> Result<()> {
-		debug!("Creating key {key}:\n{value:#?}");
-
-		let mut con = self.client.get_async_connection().await?;
-		con.set(key, value).await?;
-
-		Ok(())
+	pub fn is_connected(&mut self) -> bool {
+		self.client.check_connection()
 	}
-
-	async fn key_exists(&self, key: &str) -> Result<bool> {
-		debug!("Checking if key {key} exists");
-
-		let mut con = self.client.get_async_connection().await?;
-		let exists: u64 = con.exists(key).await?;
-
-		Ok(exists > 0)
-	}
-
-	async fn delete_key(&self, key: &str) -> Result<()> {
-		debug!("Deleting key {key}");
-
-		let mut con = self.client.get_async_connection().await?;
-		con.del(key).await?;
-
-		Ok(())
-	}
-
-	async fn expire_key(&self, key: &str, expire_seconds: i64) -> Result<()> {
-		debug!("Expiring key {key} in {expire_seconds}");
-
-		let mut con = self.client.get_async_connection().await?;
-		con.expire(key, expire_seconds).await?;
-
-		Ok(())
-	}
-
-	async fn add_to_index<'a>(
-		&self,
-		key: &str,
-		member: impl ToRedisArgs + Debug + Send + Sync + 'a,
-	) -> Result<()> {
-		let key = format!("{key}:index");
-		debug!("Adding member {member:#?} to index {key}");
-
-		let mut con = self.client.get_async_connection().await?;
-		con.sadd(key, member).await?;
-
-		Ok(())
-	}
-
-	async fn get_index<T>(&self, key: &str) -> Result<Vec<T>>
-	where
-		T: FromRedisValue,
-	{
-		let key = format!("{key}:index");
-		debug!("Getting index {key}");
-
-		let mut con = self.client.get_async_connection().await?;
-		let members = con.smembers(key).await?;
-
-		Ok(members)
-	}
-
-	async fn delete_from_index<'a>(
-		&self,
-		key: &str,
-		member: impl ToRedisArgs + Debug + Send + Sync + 'a,
-	) -> Result<()> {
-		let key = format!("{key}:index");
-		debug!("Removing {member:#?} from index {key}");
-
-		let mut con = self.client.get_async_connection().await?;
-		con.srem(key, member).await?;
-
-		Ok(())
-	}
-
-	// guild settings
 
 	pub async fn create_guild_settings(&self, settings: Settings) -> Result<()> {
-		let key = format!("{SETTINGS_KEY}:{}", settings.guild_id);
+		let guild_key = format!("{SETTINGS_KEY}:{}", settings.guild_id);
 
-		self.set_key(&key, &settings).await?;
-		// adding to index since we need to look all of these up sometimes
-		self.add_to_index(SETTINGS_KEY, u64::from(settings.guild_id))
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		redis::pipe()
+			.set(&guild_key, &settings)
+			.sadd(SETTINGS_KEY, u64::from(settings.guild_id))
+			.query_async(&mut con)
 			.await?;
 
 		Ok(())
@@ -140,32 +49,43 @@ impl Storage {
 
 	pub async fn get_guild_settings(&self, guild_id: &GuildId) -> Result<Settings> {
 		debug!("Fetching guild settings for {guild_id}");
+		let guild_key = format!("{SETTINGS_KEY}:{guild_id}");
 
-		let key = format!("{SETTINGS_KEY}:{guild_id}");
-		let settings: Settings = self.get_key(&key).await?;
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		let settings: Settings = con.get(&guild_key).await?;
 
 		Ok(settings)
 	}
 
 	pub async fn delete_guild_settings(&self, guild_id: &GuildId) -> Result<()> {
-		let key = format!("{SETTINGS_KEY}:{guild_id}");
+		debug!("Deleting guild settings for {guild_id}");
+		let guild_key = format!("{SETTINGS_KEY}:{guild_id}");
 
-		self.delete_key(&key).await?;
-		self.delete_from_index(SETTINGS_KEY, u64::from(*guild_id))
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		redis::pipe()
+			.del(&guild_key)
+			.srem(SETTINGS_KEY, u64::from(*guild_id))
+			.query_async(&mut con)
 			.await?;
 
 		Ok(())
 	}
 
 	pub async fn guild_settings_exist(&self, guild_id: &GuildId) -> Result<bool> {
-		let key = format!("{SETTINGS_KEY}:{guild_id}");
-		self.key_exists(&key).await
+		debug!("Checking if guild settings for {guild_id} exist");
+		let guild_key = format!("{SETTINGS_KEY}:{guild_id}");
+
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		let exists = con.exists(&guild_key).await?;
+
+		Ok(exists)
 	}
 
 	pub async fn get_all_guild_settings(&self) -> Result<Vec<Settings>> {
 		debug!("Fetching all guild settings");
 
-		let found: Vec<u64> = self.get_index(SETTINGS_KEY).await?;
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		let found: Vec<u64> = con.smembers(SETTINGS_KEY).await?;
 
 		let mut guilds = vec![];
 		for key in found {
@@ -196,10 +116,14 @@ impl Storage {
 		guild_id: &GuildId,
 		entry: ReactBoardEntry,
 	) -> Result<()> {
-		let key = format!("{REACTBOARD_KEY}:{guild_id}:{}", entry.original_message_id);
+		debug!(
+			"Creating reactboard entry for {} in {guild_id}",
+			&entry.original_message_id
+		);
+		let entry_key = format!("{REACTBOARD_KEY}:{guild_id}:{}", entry.original_message_id);
 
-		self.set_key(&key, &entry).await?;
-		self.expire_key(&key, 30 * 24 * 60 * 60).await?; // 30 days
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		con.set_ex(&entry_key, &entry, 30 * 24 * 60 * 60).await?; // 30 days
 
 		Ok(())
 	}
@@ -209,10 +133,11 @@ impl Storage {
 		guild_id: &GuildId,
 		message_id: &MessageId,
 	) -> Result<ReactBoardEntry> {
-		debug!("Fetching reactboard entry in {guild_id}");
+		debug!("Fetching reactboard entry {message_id} in {guild_id}");
+		let entry_key = format!("{REACTBOARD_KEY}:{guild_id}:{message_id}");
 
-		let key = format!("{REACTBOARD_KEY}:{guild_id}:{message_id}");
-		let entry: ReactBoardEntry = self.get_key(&key).await?;
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		let entry: ReactBoardEntry = con.get(&entry_key).await?;
 
 		Ok(entry)
 	}
@@ -222,7 +147,20 @@ impl Storage {
 		guild_id: &GuildId,
 		message_id: &MessageId,
 	) -> Result<bool> {
-		let key = format!("{REACTBOARD_KEY}:{guild_id}:{message_id}");
-		self.key_exists(&key).await
+		debug!("Checking if reactboard entry {message_id} exists in {guild_id}");
+		let entry_key = format!("{REACTBOARD_KEY}:{guild_id}:{message_id}");
+
+		let mut con = self.client.get_multiplexed_async_connection().await?;
+		let exists = con.exists(&entry_key).await?;
+
+		Ok(exists)
+	}
+}
+
+impl FromStr for Storage {
+	type Err = RedisError;
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		let client = Client::open(s)?;
+		Ok(Self::new(client))
 	}
 }

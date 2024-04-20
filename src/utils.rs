@@ -1,4 +1,4 @@
-use crate::{colors, Context};
+use crate::{consts::Colors, Context};
 
 use color_eyre::eyre::{eyre, Result};
 use poise::serenity_prelude::{self as serenity, CreateEmbedAuthor, CreateEmbedFooter};
@@ -49,7 +49,7 @@ pub async fn send_url_as_embed(ctx: Context<'_>, url: String) -> Result<()> {
 		.title(title)
 		.image(&url)
 		.url(url)
-		.color(colors::Colors::Blue);
+		.color(Colors::Blue);
 	let reply = CreateReply::default().embed(embed);
 
 	ctx.send(reply).await?;

@@ -1,12 +1,10 @@
-use crate::colors::Colors;
-use crate::Data;
+use crate::{consts::Colors, Data, Error};
 
-use eyre::Report;
 use log::error;
 use poise::serenity_prelude::{CreateEmbed, Timestamp};
 use poise::{CreateReply, FrameworkError};
 
-pub async fn handle(error: poise::FrameworkError<'_, Data, Report>) {
+pub async fn handle(error: poise::FrameworkError<'_, Data, Error>) {
 	match error {
 		FrameworkError::Setup {
 			error, framework, ..
@@ -46,7 +44,7 @@ pub async fn handle(error: poise::FrameworkError<'_, Data, Report>) {
 
 		error => {
 			if let Err(e) = poise::builtins::on_error(error).await {
-				error!("Unhandled error occured:\n{e:#?}");
+				error!("Unhandled error occurred:\n{e:#?}");
 			}
 		}
 	}

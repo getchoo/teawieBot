@@ -1,8 +1,5 @@
-use crate::api::REQWEST_CLIENT;
-
-use eyre::{eyre, Result};
+use eyre::Result;
 use log::debug;
-use reqwest::StatusCode;
 use serde::Deserialize;
 
 const SHIGGY: &str = "https://safebooru.donmai.us";
@@ -14,19 +11,10 @@ struct SafebooruResponse {
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub async fn get_random_shiggy() -> Result<String> {
-	let req = REQWEST_CLIENT
-		.get(format!("{SHIGGY}{RANDOM_SHIGGY}"))
-		.build()?;
+pub async fn random_shiggy() -> Result<String> {
+	let url = format!("{SHIGGY}{RANDOM_SHIGGY}");
+	debug!("Making request to {url}");
 
-	debug!("Making request to {}", req.url());
-	let resp = REQWEST_CLIENT.execute(req).await?;
-	let status = resp.status();
-
-	if let StatusCode::OK = status {
-		let data: SafebooruResponse = resp.json().await?;
-		Ok(data.file_url)
-	} else {
-		Err(eyre!("Failed to get random shiggy with {status}"))
-	}
+	let resp: SafebooruResponse = super::get_json(&url).await?;
+	Ok(resp.file_url)
 }

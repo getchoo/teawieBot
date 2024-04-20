@@ -1,13 +1,14 @@
 use crate::{storage, utils, Data};
-use storage::ReactBoardEntry;
+use storage::reactboard::ReactBoardEntry;
 
 use eyre::{eyre, Context as _, Result};
-use log::debug;
+use log::{debug, warn};
 use poise::serenity_prelude::{
 	Context, CreateMessage, EditMessage, GuildId, Message, MessageReaction, Reaction,
 };
 
 pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<()> {
+	// TODO @getchoo: don't do anything if this message is old
 	let msg = reaction
 		.message(&ctx.http)
 		.await
@@ -45,7 +46,11 @@ async fn send_to_reactboard(
 	guild_id: &GuildId,
 	data: &Data,
 ) -> Result<()> {
-	let storage = &data.storage;
+	let Some(storage) = &data.storage else {
+		warn!("Can't make ReactBoard entry; no storage backend found!");
+		return Ok(());
+	};
+
 	let settings = storage.get_guild_settings(guild_id).await?;
 
 	// make sure everything is in order...
@@ -64,7 +69,17 @@ async fn send_to_reactboard(
 		return Ok(());
 	}
 
-	if reaction.count < settings.reactboard_requirement.unwrap_or(5) {
+	let count = if msg
+		.reaction_users(ctx, reaction.reaction_type.clone(), None, None)
+		.await?
+		.contains(&msg.author)
+	{
+		reaction.count - 1
+	} else {
+		reaction.count
+	};
+
+	if count < settings.reactboard_requirement.unwrap_or(5) {
 		debug!(
 			"Ignoring message {} on ReactBoard, not enough reactions",
 			msg.id
@@ -72,60 +87,57 @@ async fn send_to_reactboard(
 		return Ok(());
 	}
 
-	let content = format!("{} **#{}**", reaction.reaction_type, reaction.count);
+	let content = format!("{} **#{}**", reaction.reaction_type, count);
 
-	// bump reaction count if previous entry exists
-	if storage.reactboard_entry_exists(guild_id, &msg.id).await? {
-		let old_entry = storage.get_reactboard_entry(guild_id, &msg.id).await?;
+	let entry = if storage.reactboard_entry_exists(guild_id, &msg.id).await? {
+		// bump reaction count if previous entry exists
+		let mut entry = storage.get_reactboard_entry(guild_id, &msg.id).await?;
 
 		// bail if we don't need to edit anything
-		if old_entry.reaction_count >= reaction.count {
+		if entry.reaction_count >= count {
 			debug!("Message {} doesn't need updating", msg.id);
 			return Ok(());
 		}
 
 		debug!(
 			"Bumping {} reaction count from {} to {}",
-			msg.id, old_entry.reaction_count, reaction.count
+			msg.id, entry.reaction_count, count
 		);
 
 		let edited = EditMessage::new().content(content);
 
 		ctx.http
-			.get_message(old_entry.posted_channel_id, old_entry.posted_message_id)
+			.get_message(entry.posted_channel_id, entry.posted_message_id)
 			.await
 			.wrap_err_with(|| {
 				format!(
 					"Couldn't get previous message from ReactBoardEntry {} in Redis DB!",
-					old_entry.original_message_id
+					entry.original_message_id
 				)
 			})?
 			.edit(ctx, edited)
 			.await?;
 
 		// update reaction count in redis
-		let mut new_entry = old_entry.clone();
-		new_entry.reaction_count = reaction.count;
-
-		debug!("Updating ReactBoard entry\nOld entry:\n{old_entry:#?}\n\nNew:\n{new_entry:#?}\n",);
-		storage.create_reactboard_entry(guild_id, new_entry).await?;
-	// make new message and add entry to redis otherwise
+		entry.reaction_count = count;
+		entry
 	} else {
+		// make new message and add entry to redis otherwise
 		let embed = utils::resolve_message_to_embed(ctx, msg).await;
 		let message = CreateMessage::default().content(content).embed(embed);
 
 		let resp = target.send_message(ctx, message).await?;
 
-		let entry = ReactBoardEntry {
+		ReactBoardEntry {
 			original_message_id: msg.id,
-			reaction_count: reaction.count,
+			reaction_count: count,
 			posted_channel_id: resp.channel_id,
 			posted_message_id: resp.id,
-		};
+		}
+	};
 
-		debug!("Creating new ReactBoard entry:\n{entry:#?}");
-		storage.create_reactboard_entry(guild_id, entry).await?;
-	}
+	debug!("Creating new ReactBoard entry:\n{entry:#?}");
+	storage.create_reactboard_entry(guild_id, entry).await?;
 
 	Ok(())
 }

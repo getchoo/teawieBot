@@ -1,6 +1,6 @@
 # teawie bot 🦀🦀🦀
 
-[![built with garnix](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fgarnix.io%2Fapi%2Fbadges%2Fgetchoo%2FteawieBot)](https://garnix.io)
+[![CI](https://github.com/getchoo/teawieBot/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/getchoo/teawieBot/actions/workflows/ci.yaml)
 
 okay so like basically, it's just a discord bot named "teawie" (so cool!!
 and now in rust!!!)🚀🚀

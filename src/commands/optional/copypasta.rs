@@ -1,18 +1,14 @@
-use crate::Context;
+use crate::{Context, Error};
 
-use std::collections::HashMap;
-
-use eyre::{eyre, OptionExt, Result};
 use include_dir::{include_dir, Dir};
 use log::debug;
 
-const FILES: Dir = include_dir!("src/copypastas");
+const COPYPASTAS: Dir = include_dir!("src/copypastas");
 
-#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, poise::ChoiceParameter)]
-pub enum Copypastas {
+pub enum Copypasta {
 	Astral,
-	DVD,
+	Dvd,
 	Egrill,
 	HappyMeal,
 	Sus,
@@ -20,43 +16,27 @@ pub enum Copypastas {
 	Twitter,
 }
 
-impl Copypastas {
-	fn as_str(&self) -> &str {
-		match self {
-			Copypastas::Astral => "astral",
-			Copypastas::DVD => "dvd",
-			Copypastas::Egrill => "egrill",
-			Copypastas::HappyMeal => "happymeal",
-			Copypastas::Sus => "sus",
-			Copypastas::TickTock => "ticktock",
-			Copypastas::Twitter => "twitter",
-		}
+impl ToString for Copypasta {
+	fn to_string(&self) -> String {
+		let str = match self {
+			Self::Astral => "astral",
+			Self::Dvd => "dvd",
+			Self::Egrill => "egrill",
+			Self::HappyMeal => "happymeal",
+			Self::Sus => "sus",
+			Self::TickTock => "ticktock",
+			Self::Twitter => "twitter",
+		};
+		str.to_string()
 	}
 }
 
-fn get_copypasta(name: &Copypastas) -> Result<String> {
-	let mut files: HashMap<&str, &str> = HashMap::new();
-
-	for file in FILES.files() {
-		let name = file
-			.path()
-			.file_stem()
-			.ok_or_else(|| eyre!("Couldn't get file stem from {file:#?}"))?
-			.to_str()
-			.ok_or_eyre("Couldn't convert file stem to str!")?;
-
-		let contents = file
-			.contents_utf8()
-			.ok_or_eyre("Couldnt get contents from copypasta!")?;
-
-		// refer to files by their name w/o extension
-		files.insert(name, contents);
-	}
-
-	if files.contains_key(name.as_str()) {
-		Ok(files[name.as_str()].to_string())
-	} else {
-		Err(eyre!("Couldnt find copypasta {}!", name.as_str()))
+impl Copypasta {
+	fn contents(&self) -> Option<&str> {
+		let file_name = format!("{}.txt", self.to_string());
+		COPYPASTAS
+			.get_file(file_name)
+			.and_then(|file| file.contents_utf8())
 	}
 }
 
@@ -64,18 +44,30 @@ fn get_copypasta(name: &Copypastas) -> Result<String> {
 #[poise::command(slash_command)]
 pub async fn copypasta(
 	ctx: Context<'_>,
-	#[description = "the copypasta you want to send"] copypasta: Copypastas,
-) -> Result<()> {
-	let gid = ctx.guild_id().unwrap_or_default();
-	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
+	#[description = "the copypasta you want to send"] copypasta: Copypasta,
+) -> Result<(), Error> {
+	if let Some(guild_id) = ctx.guild_id() {
+		if let Some(storage) = &ctx.data().storage {
+			let settings = storage.get_guild_settings(&guild_id).await?;
 
-	if !settings.optional_commands_enabled {
-		debug!("Exited copypasta command in {gid} since it's disabled");
-		ctx.say("I'm not allowed to do that here").await?;
-		return Ok(());
+			if !settings.optional_commands_enabled {
+				debug!("Not running command in {guild_id} since it's disabled");
+				ctx.reply("I'm not allowed to do that here").await?;
+
+				return Ok(());
+			}
+		} else {
+			debug!("Ignoring restrictions on command; no storage backend is attached!");
+		}
+	} else {
+		debug!("Ignoring restrictions on command; we're not in a guild");
 	}
 
-	ctx.say(get_copypasta(&copypasta)?).await?;
+	if let Some(contents) = copypasta.contents() {
+		ctx.say(contents).await?;
+	} else {
+		ctx.reply("I couldn't find that copypasta :(").await?;
+	}
 
 	Ok(())
 }

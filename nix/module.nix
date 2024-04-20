@@ -1,4 +1,4 @@
-{withSystem, ...}: {
+self: {
   config,
   lib,
   pkgs,
@@ -19,11 +19,13 @@
     optionals
     types
     ;
+
+  inherit (pkgs.stdenv.hostPlatform) system;
 in {
   options.services.teawiebot = {
     enable = mkEnableOption "teawiebot";
     package = mkPackageOption (
-      withSystem pkgs.stdenv.hostPlatform.system ({self', ...}: self'.packages)
+      self.packages.${system} or (builtins.throw "${system} is not supported!")
     ) "teawiebot" {};
 
     user = mkOption {

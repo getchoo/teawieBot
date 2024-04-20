@@ -1,7 +1,7 @@
 use crate::{utils, Data};
 
 use eyre::{eyre, Context as _, OptionExt as _, Result};
-use log::debug;
+use log::{debug, warn};
 use poise::serenity_prelude::{
 	ChannelId, Context, CreateAllowedMentions, CreateMessage, Message, MessageType, User,
 };
@@ -12,7 +12,12 @@ pub async fn handle(ctx: &Context, message: &Message, data: &Data) -> Result<()>
 	}
 
 	let gid = message.guild_id.unwrap_or_default();
-	let settings = data.storage.get_guild_settings(&gid).await?;
+	let Some(storage) = &data.storage else {
+		warn!("Can't create PinBoard entry; no storage backend found!");
+		return Ok(());
+	};
+
+	let settings = storage.get_guild_settings(&gid).await?;
 
 	if !settings.pinboard_enabled {
 		debug!("PinBoard is disabled in {gid}, ignoring");
@@ -53,13 +58,13 @@ pub async fn handle(ctx: &Context, message: &Message, data: &Data) -> Result<()>
 		.find(|pin| pin.id == reference_id)
 		.ok_or_else(|| eyre!("Couldn't find a pin for message {reference_id}!"))?;
 
-	redirect(ctx, pin, &message.author, target).await?;
+	redirect(ctx, pin, &message.author, &target).await?;
 	pin.unpin(ctx).await?;
 
 	Ok(())
 }
 
-async fn redirect(ctx: &Context, pin: &Message, pinner: &User, target: ChannelId) -> Result<()> {
+async fn redirect(ctx: &Context, pin: &Message, pinner: &User, target: &ChannelId) -> Result<()> {
 	let embed = utils::resolve_message_to_embed(ctx, pin).await;
 	let mentions = CreateAllowedMentions::new().empty_roles().empty_users();
 	let message = CreateMessage::default()

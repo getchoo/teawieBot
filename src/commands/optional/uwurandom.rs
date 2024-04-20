@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{Context, Error};
 
 use eyre::Result;
 use log::debug;
@@ -12,14 +12,22 @@ pub async fn uwurandom(
 	#[min = 1]
 	#[max = 2000]
 	length: Option<u16>,
-) -> Result<()> {
-	let gid = ctx.guild_id().unwrap_or_default();
-	let settings = ctx.data().storage.get_guild_settings(&gid).await?;
+) -> Result<(), Error> {
+	if let Some(guild_id) = ctx.guild_id() {
+		if let Some(storage) = &ctx.data().storage {
+			let settings = storage.get_guild_settings(&guild_id).await?;
 
-	if !settings.optional_commands_enabled {
-		debug!("Not running uwurandom in {gid} since it's disabled");
-		ctx.say("I'm not allowed to do that here").await?;
-		return Ok(());
+			if !settings.optional_commands_enabled {
+				debug!("Not running command in {guild_id} since it's disabled");
+				ctx.say("I'm not allowed to do that here").await?;
+
+				return Ok(());
+			}
+		} else {
+			debug!("Ignoring restrictions on command; no storage backend is attached!");
+		}
+	} else {
+		debug!("Ignoring restrictions on command; we're not in a guild");
 	}
 
 	let length = length.unwrap_or(rand::thread_rng().gen_range(1..50));
