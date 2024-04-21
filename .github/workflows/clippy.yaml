@@ -38,18 +38,18 @@ jobs:
       - name: Install SARIF tools
         run: |
           nix profile install \
-            --inputs-from ./nix/dev \
+            --inputs-from . \
             github:getchoo/nix-exprs#{clippy-sarif,sarif-fmt}
 
       - name: Fetch Cargo deps
         run: |
-          nix develop ./nix/dev#ci --command \
+          nix develop .#ci --command \
             cargo fetch --locked
 
       - name: Run Clippy
         continue-on-error: true
         run: |
-          nix develop ./nix/dev#ci --command \
+          nix develop .#ci --command \
             cargo clippy \
             --all-features \
             --all-targets \

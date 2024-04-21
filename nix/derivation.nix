@@ -3,7 +3,7 @@
   stdenv,
   rustPlatform,
   darwin,
-  self,
+  self ? {inherit ((lib.importTOML ../Cargo.toml).package) version;},
   lto ? true,
   optimizeSize ? false,
 }:
@@ -11,7 +11,8 @@ rustPlatform.buildRustPackage {
   pname = "teawiebot";
   version =
     (lib.importTOML ../Cargo.toml).package.version
-    + "-${self.shortRev or self.dirtyShortRev or "unknown-dirty"}";
+    + "-"
+    + self.shortRev or self.dirtyShortRev or self.version or "unknown";
 
   __structuredAttrs = true;
 
@@ -43,7 +44,7 @@ rustPlatform.buildRustPackage {
     );
   in
     {
-      GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown-dirty";
+      GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown";
     }
     // lib.optionalAttrs lto (toRustFlags {
       lto = "thin";
