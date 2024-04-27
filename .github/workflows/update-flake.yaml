@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v10
+        uses: cachix/install-nix-action@v26
 
       - name: Set Git user info
         run: |
@@ -37,12 +37,6 @@ jobs:
 
       - name: Update flake inputs
         run: |
-          pushd nix/dev
-          nix flake update \
-            --commit-lock-file \
-            --commit-lockfile-summary "nix: update dev flake.lock"
-          popd
-
           nix flake update \
             --commit-lock-file \
             --commit-lockfile-summary "nix: update flake.lock"
@@ -60,7 +54,7 @@ jobs:
               gh pr create \
                 --base main \
                 --head "$PR_BRANCH" \
-                --title "chore: update lockfiles" \
+                --title "nix: update flake.lock" \
                 --fill
             fi
           fi
