@@ -43,7 +43,7 @@ jobs:
 
       - name: Make PR if needed
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
         run: |
           if ! git diff --color=always --exit-code origin/main; then
             git fetch origin "$PR_BRANCH" || true
