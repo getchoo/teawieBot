@@ -7,7 +7,8 @@ struct RandomTeawieResponse {
 	url: String,
 }
 
-const GUZZLE: &str = "https://api.mydadleft.me";
+// TODO: read this from an env var
+const GUZZLE: &str = "https://api.getchoo.com";
 const RANDOM_TEAWIE: &str = "/random_teawie";
 
 pub async fn random_teawie() -> Result<String> {
