@@ -28,6 +28,7 @@ jobs:
         with:
           commit-msg: "nix: update flake.lock"
           pr-title: "nix: update flake.lock"
+          token: ${{ secrets.MERGE_TOKEN }}
 
       - name: Enable auto-merge
         if: env.PR_ID != ''
