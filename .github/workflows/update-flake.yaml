@@ -23,7 +23,7 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v12
 
       - name: Update flake.lock & make PR
-        uses: DeterminateSystems/update-flake-lock@v22
+        uses: DeterminateSystems/update-flake-lock@v23
         id: update
         with:
           commit-msg: "nix: update flake.lock"
