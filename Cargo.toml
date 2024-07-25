@@ -3,8 +3,6 @@ name = "teawiebot"
 version = "1.0.0"
 edition = "2021"
 repository = "https://github.com/getchoo/teawieBot"
-license = "MIT"
-readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -1,4 +1,4 @@
-use crate::{api, consts, utils, Context, Error};
+use crate::{consts, http, utils, Context, Error};
 
 #[poise::command(slash_command, subcommands("lore", "teawie", "shiggy"))]
 #[allow(clippy::unused_async)]
@@ -18,7 +18,7 @@ pub async fn lore(ctx: Context<'_>) -> Result<(), Error> {
 /// Get a random teawie
 #[poise::command(prefix_command, slash_command)]
 pub async fn teawie(ctx: Context<'_>) -> Result<(), Error> {
-	let url = api::guzzle::random_teawie().await?;
+	let url = http::teawie::random(&ctx.data().http_client).await?;
 	utils::send_url_as_embed(ctx, url).await?;
 
 	Ok(())
@@ -27,7 +27,7 @@ pub async fn teawie(ctx: Context<'_>) -> Result<(), Error> {
 /// Get a random shiggy
 #[poise::command(prefix_command, slash_command)]
 pub async fn shiggy(ctx: Context<'_>) -> Result<(), Error> {
-	let url = api::shiggy::random_shiggy().await?;
+	let url = http::shiggy::random(&ctx.data().http_client).await?;
 	utils::send_url_as_embed(ctx, url).await?;
 
 	Ok(())

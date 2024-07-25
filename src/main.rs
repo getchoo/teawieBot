@@ -12,10 +12,10 @@ use tokio::signal::unix::{signal, SignalKind};
 #[cfg(target_family = "windows")]
 use tokio::signal::windows::ctrl_close;
 
-mod api;
 mod commands;
 mod consts;
 mod handlers;
+mod http;
 mod storage;
 mod utils;
 
@@ -26,6 +26,7 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[derive(Clone, Debug, Default)]
 pub struct Data {
+	http_client: http::Client,
 	storage: Option<Storage>,
 }
 
@@ -57,7 +58,11 @@ async fn setup(ctx: &serenity::Context) -> Result<Data, Error> {
 		poise::builtins::register_globally(ctx, &commands::to_vec()).await?;
 	}
 
-	let data = Data { storage };
+	let http_client = <http::Client as http::Ext>::default();
+	let data = Data {
+		http_client,
+		storage,
+	};
 
 	Ok(data)
 }
