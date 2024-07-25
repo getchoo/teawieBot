@@ -5,7 +5,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "rust-analyzer-src": "rust-analyzer-src"
+        "rust-analyzer-src": []
       },
       "locked": {
         "lastModified": 1721975407,
@@ -40,23 +40,27 @@
     "root": {
       "inputs": {
         "fenix": "fenix",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "treefmt-nix": "treefmt-nix"
       }
     },
-    "rust-analyzer-src": {
-      "flake": false,
+    "treefmt-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
       "locked": {
-        "lastModified": 1721909430,
-        "narHash": "sha256-u3e38jvjbxbbYH3caQFPE7gnNFNBjbkqkHRKBx1AOJs=",
-        "owner": "rust-lang",
-        "repo": "rust-analyzer",
-        "rev": "c02a4a31eada45e591b5edb8c1a813ea7b9d408f",
+        "lastModified": 1721769617,
+        "narHash": "sha256-6Pqa0bi5nV74IZcENKYRToRNM5obo1EQ+3ihtunJ014=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "8db8970be1fb8be9c845af7ebec53b699fe7e009",
         "type": "github"
       },
       "original": {
-        "owner": "rust-lang",
-        "ref": "nightly",
-        "repo": "rust-analyzer",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
         "type": "github"
       }
     }

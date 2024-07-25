@@ -3,14 +3,31 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    ## Everything below this is optional
+    ## `inputs.<name>.follows = ""`
+
     fenix = {
       url = "github:nix-community/fenix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        rust-analyzer-src.follows = "";
+      };
+    };
+
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
   outputs =
-    { self, nixpkgs, ... }@inputs:
+    {
+      self,
+      nixpkgs,
+      treefmt-nix,
+      ...
+    }@inputs:
     let
       systems = [
         "x86_64-linux"
@@ -20,49 +37,12 @@
       ];
 
       forAllSystems = fn: nixpkgs.lib.genAttrs systems (system: fn nixpkgs.legacyPackages.${system});
+      treefmtFor = forAllSystems (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
     in
     {
-      checks = forAllSystems (
-        { lib, pkgs, ... }:
-        {
-          actionlint = pkgs.runCommand "check-actionlint" { } ''
-            ${lib.getExe pkgs.actionlint} ${./.github/workflows}/*
-            touch $out
-          '';
-
-          deadnix = pkgs.runCommand "check-deadnix" { } ''
-            ${lib.getExe pkgs.deadnix} --fail ${./.}
-            touch $out
-          '';
-
-          editorconfig = pkgs.runCommand "check-editorconfig" { } ''
-            cd ${./.}
-            ${lib.getExe pkgs.editorconfig-checker} \
-              -exclude '.git' .
-
-            touch $out
-          '';
-
-          rustfmt =
-            pkgs.runCommand "check-rustfmt"
-              {
-                nativeBuildInputs = [
-                  pkgs.cargo
-                  pkgs.rustfmt
-                ];
-              }
-              ''
-                cd ${./.}
-                cargo fmt -- --check
-                touch $out
-              '';
-
-          statix = pkgs.runCommand "check-statix" { } ''
-            ${lib.getExe pkgs.statix} check ${./.}
-            touch $out
-          '';
-        }
-      );
+      checks = forAllSystems (pkgs: {
+        treefmt = treefmtFor.${pkgs.system}.config.build.check self;
+      });
 
       devShells = forAllSystems (
         { pkgs, system, ... }:
