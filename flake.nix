@@ -29,6 +29,7 @@
       ...
     }@inputs:
     let
+      inherit (nixpkgs) lib;
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -36,16 +37,20 @@
         "aarch64-darwin"
       ];
 
-      forAllSystems = fn: nixpkgs.lib.genAttrs systems (system: fn nixpkgs.legacyPackages.${system});
-      treefmtFor = forAllSystems (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
+      forAllSystems = lib.genAttrs systems;
+      nixpkgsFor = forAllSystems (system: nixpkgs.legacyPackages.${system});
+      treefmtFor = forAllSystems (system: treefmt-nix.lib.evalModule nixpkgsFor.${system} ./treefmt.nix);
     in
     {
-      checks = forAllSystems (pkgs: {
-        treefmt = treefmtFor.${pkgs.system}.config.build.check self;
+      checks = forAllSystems (system: {
+        treefmt = treefmtFor.${system}.config.build.check self;
       });
 
       devShells = forAllSystems (
-        { pkgs, system, ... }:
+        system:
+        let
+          pkgs = nixpkgsFor.${system};
+        in
         {
           default = pkgs.mkShell {
             packages = [
@@ -83,13 +88,14 @@
         }
       );
 
-      formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
+      formatter = forAllSystems (system: nixpkgsFor.${system}.nixfmt-rfc-style);
 
       nixosModules.default = import ./nix/module.nix self;
 
       packages = forAllSystems (
-        { pkgs, system, ... }:
+        system:
         let
+          pkgs = nixpkgsFor.${system};
           crossBuildsFor = arch: import ./nix/docker.nix { inherit pkgs arch inputs; };
         in
         {
