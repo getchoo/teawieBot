@@ -3,7 +3,9 @@
   stdenv,
   rustPlatform,
   darwin,
-  self ? {inherit ((lib.importTOML ../Cargo.toml).package) version;},
+  self ? {
+    inherit ((lib.importTOML ../Cargo.toml).package) version;
+  },
   lto ? true,
   optimizeSize ? false,
 }:
@@ -29,20 +31,25 @@ rustPlatform.buildRustPackage {
     lockFile = ../Cargo.lock;
   };
 
-  buildInputs = lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
-    CoreFoundation
-    Security
-    SystemConfiguration
-    darwin.libiconv
-  ]);
+  buildInputs = lib.optionals stdenv.isDarwin (
+    with darwin.apple_sdk.frameworks;
+    [
+      CoreFoundation
+      Security
+      SystemConfiguration
+      darwin.libiconv
+    ]
+  );
 
-  env = let
-    toRustFlags = lib.mapAttrs' (
-      name:
-        lib.nameValuePair
-        "CARGO_BUILD_RELEASE_${lib.toUpper (builtins.replaceStrings ["-"] ["_"] name)}"
-    );
-  in
+  env =
+    let
+      toRustFlags = lib.mapAttrs' (
+        name:
+        lib.nameValuePair "CARGO_BUILD_RELEASE_${
+          lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] name)
+        }"
+      );
+    in
     {
       GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown";
     }
@@ -61,6 +68,6 @@ rustPlatform.buildRustPackage {
     description = "funni bot";
     homepage = "https://github.com/getchoo/teawiebot";
     license = licenses.mit;
-    maintainers = with maintainers; [getchoo];
+    maintainers = with maintainers; [ getchoo ];
   };
 }
