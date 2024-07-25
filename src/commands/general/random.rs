@@ -1,4 +1,7 @@
-use crate::{consts, http, utils, Context, Error};
+use crate::{
+	client::{Context, Error},
+	consts, http, utils,
+};
 
 #[poise::command(slash_command, subcommands("lore", "teawie", "shiggy"))]
 #[allow(clippy::unused_async)]

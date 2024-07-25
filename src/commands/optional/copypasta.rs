@@ -1,4 +1,4 @@
-use crate::{Context, Error};
+use crate::client::{Context, Error};
 
 use include_dir::{include_dir, Dir};
 use log::debug;

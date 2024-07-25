@@ -1,4 +1,4 @@
-use crate::{utils, Data};
+use crate::{client::Data, utils};
 
 use eyre::{eyre, Context as _, OptionExt as _, Result};
 use log::{debug, warn};

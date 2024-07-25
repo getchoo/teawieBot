@@ -1,4 +1,4 @@
-use crate::{Data, Error};
+use crate::client::{Data, Error};
 
 mod general;
 mod moderation;

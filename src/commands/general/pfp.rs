@@ -1,9 +1,12 @@
+use crate::{
+	client::{Context, Error},
+	consts::Colors,
+};
+
 use poise::{
 	serenity_prelude::{CreateEmbed, User},
 	CreateReply,
 };
-
-use crate::{consts::Colors, Context, Error};
 
 /// Get someone's profile pic
 #[poise::command(context_menu_command = "Get profile picture", slash_command)]

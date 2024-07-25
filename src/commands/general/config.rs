@@ -1,5 +1,5 @@
+use crate::client::{Context, Error};
 use crate::storage::settings::{Properties, Settings};
-use crate::{Context, Error};
 
 use std::str::FromStr;
 

@@ -1,4 +1,4 @@
-use crate::{Context, Error};
+use crate::client::{Context, Error};
 
 /// Make sure the wie is alive
 #[poise::command(prefix_command)]

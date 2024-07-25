@@ -1,4 +1,7 @@
-use crate::{consts::Colors, Context, Error};
+use crate::{
+	client::{Context, Error},
+	consts::Colors,
+};
 
 use poise::{
 	serenity_prelude::{CreateEmbed, Emoji},

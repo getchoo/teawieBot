@@ -1,4 +1,4 @@
-use crate::{Context, Error};
+use crate::client::{Context, Error};
 
 use log::debug;
 

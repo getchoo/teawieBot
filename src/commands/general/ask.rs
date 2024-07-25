@@ -1,4 +1,7 @@
-use crate::{consts, utils, Context, Error};
+use crate::{
+	client::{Context, Error},
+	consts, utils,
+};
 
 use eyre::Context as _;
 

@@ -1,4 +1,7 @@
-use crate::{consts, Data, Error};
+use crate::{
+	client::{Data, Error},
+	consts,
+};
 
 use eyre::Result;
 use log::{debug, info};
