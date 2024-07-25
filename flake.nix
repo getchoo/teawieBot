@@ -129,9 +129,5 @@
           default = self.packages.${system}.teawie-bot;
         }
       );
-
-      overlays.default = _: prev: {
-        teawie-bot = prev.callPackage ./nix/derivation.nix { inherit self; };
-      };
     };
 }
