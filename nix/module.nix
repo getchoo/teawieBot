@@ -25,15 +25,15 @@ let
 in
 {
   options.services.teawiebot = {
-    enable = mkEnableOption "teawiebot";
+    enable = mkEnableOption "teawieBot";
     package = mkPackageOption (self.packages.${system} or (builtins.throw "${system} is not supported!")
-    ) "teawiebot" { };
+    ) "teawie-bot" { };
 
     user = mkOption {
       description = mdDoc ''
         User under which the service should run. If this is the default value,
-            the user will be created, with the specified group as the primary
-            group.
+        the user will be created, with the specified group as the primary
+        group.
       '';
       type = types.str;
       default = defaultUser;

@@ -25,9 +25,10 @@
     {
       self,
       nixpkgs,
+      fenix,
       treefmt-nix,
       ...
-    }@inputs:
+    }:
     let
       inherit (nixpkgs) lib;
       systems = [
@@ -71,7 +72,7 @@
               pkgs.redis
             ];
 
-            inputsFrom = [ self.packages.${system}.teawiebot ];
+            inputsFrom = [ self.packages.${system}.teawie-bot ];
             RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
           };
 
@@ -83,7 +84,7 @@
               self.formatter.${system}
             ];
 
-            inputsFrom = [ self.packages.${system}.teawiebot ];
+            inputsFrom = [ self.packages.${system}.teawie-bot ];
           };
         }
       );
@@ -96,19 +97,41 @@
         system:
         let
           pkgs = nixpkgsFor.${system};
-          crossBuildsFor = arch: import ./nix/docker.nix { inherit pkgs arch inputs; };
+          packages' = self.packages.${system};
+
+          staticFor = pkgs.callPackage ./nix/static.nix {
+            inherit (packages') teawie-bot;
+            fenix = fenix.packages.${system};
+          };
+
+          containerize =
+            teawie-bot:
+            let
+              architecture = teawie-bot.stdenv.hostPlatform.ubootArch;
+            in
+            pkgs.dockerTools.buildLayeredImage {
+              name = "teawie-bot";
+              tag = "latest-${architecture}";
+              contents = [ pkgs.dockerTools.caCertificates ];
+              config.Cmd = [ (lib.getExe teawie-bot) ];
+              inherit architecture;
+            };
         in
         {
-          teawiebot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
+          container-x86_64 = containerize packages'.static-x86_64;
+          container-aarch64 = containerize packages'.static-aarch64;
 
-          default = self.packages.${system}.teawiebot;
+          static-x86_64 = staticFor "x86_64";
+          static-aarch64 = staticFor "aarch64";
+
+          teawie-bot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
+
+          default = self.packages.${system}.teawie-bot;
         }
-        // crossBuildsFor "x86_64"
-        // crossBuildsFor "aarch64"
       );
 
       overlays.default = _: prev: {
-        teawiebot = prev.callPackage ./nix/derivation.nix { inherit self; };
+        teawie-bot = prev.callPackage ./nix/derivation.nix { inherit self; };
       };
     };
 }

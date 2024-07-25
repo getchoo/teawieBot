@@ -3,28 +3,26 @@
   stdenv,
   rustPlatform,
   darwin,
-  self ? {
-    inherit ((lib.importTOML ../Cargo.toml).package) version;
-  },
+  self ? { },
   lto ? true,
   optimizeSize ? false,
 }:
+let
+  fs = lib.fileset;
+in
 rustPlatform.buildRustPackage {
-  pname = "teawiebot";
-  version =
-    (lib.importTOML ../Cargo.toml).package.version
-    + "-"
-    + self.shortRev or self.dirtyShortRev or self.version or "unknown";
+  pname = "teawie-bot";
+  version = (lib.importTOML ../Cargo.toml).package.version or "unknown";
 
-  __structuredAttrs = true;
-
-  src = lib.fileset.toSource {
+  src = fs.toSource {
     root = ../.;
-    fileset = lib.fileset.unions [
-      ../src
-      ../Cargo.toml
-      ../Cargo.lock
-    ];
+    fileset = fs.intersection (fs.gitTracked ../.) (
+      lib.fileset.unions [
+        ../src
+        ../Cargo.toml
+        ../Cargo.lock
+      ]
+    );
   };
 
   cargoLock = {
@@ -63,11 +61,11 @@ rustPlatform.buildRustPackage {
       strip = "symbols";
     });
 
-  meta = with lib; {
-    mainProgram = "teawiebot";
+  meta = {
     description = "funni bot";
     homepage = "https://github.com/getchoo/teawiebot";
-    license = licenses.mit;
-    maintainers = with maintainers; [ getchoo ];
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ getchoo ];
+    mainProgram = "teawiebot";
   };
 }

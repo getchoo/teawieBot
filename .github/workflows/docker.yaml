@@ -72,12 +72,9 @@ jobs:
     env:
       REGISTRY: ghcr.io
       USERNAME: ${{ github.actor }}
+      IMAGE_NAME: teawie-bot
 
     steps:
-      - name: Set image name
-        run: |
-          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -100,7 +97,7 @@ jobs:
           architectures=("x86_64" "aarch64")
           for arch in "${architectures[@]}"; do
             docker load < images/container-"$arch"/*.tar.gz
-            docker tag teawiebot:latest-"$arch" "$TAG"-"$arch"
+            docker tag "$IMAGE_NAME":latest-"$arch" "$TAG"-"$arch"
             docker push "$TAG"-"$arch"
           done
 
