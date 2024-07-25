@@ -1,5 +1,6 @@
-use crate::client::{Context, Error};
+use crate::client::Context;
 
+use eyre::Result;
 use include_dir::{include_dir, Dir};
 use log::debug;
 
@@ -45,7 +46,7 @@ impl Copypasta {
 pub async fn copypasta(
 	ctx: Context<'_>,
 	#[description = "the copypasta you want to send"] copypasta: Copypasta,
-) -> Result<(), Error> {
+) -> Result<()> {
 	if let Some(guild_id) = ctx.guild_id() {
 		if let Some(storage) = &ctx.data().storage {
 			let settings = storage.get_guild_settings(&guild_id).await?;

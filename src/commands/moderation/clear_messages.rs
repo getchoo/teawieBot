@@ -1,5 +1,6 @@
-use crate::client::{Context, Error};
+use crate::client::Context;
 
+use eyre::Result;
 use log::debug;
 use poise::serenity_prelude::GetMessages;
 
@@ -13,7 +14,7 @@ use poise::serenity_prelude::GetMessages;
 pub async fn clear_messages(
 	ctx: Context<'_>,
 	#[description = "How many messages to delete"] num_messages: u8,
-) -> Result<(), Error> {
+) -> Result<()> {
 	ctx.defer_ephemeral().await?;
 
 	let channel = ctx.channel_id();

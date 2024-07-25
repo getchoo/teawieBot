@@ -1,4 +1,4 @@
-use crate::client::{Context, Error};
+use crate::client::Context;
 
 use eyre::Result;
 use log::debug;
@@ -12,7 +12,7 @@ pub async fn uwurandom(
 	#[min = 1]
 	#[max = 2000]
 	length: Option<u16>,
-) -> Result<(), Error> {
+) -> Result<()> {
 	if let Some(guild_id) = ctx.guild_id() {
 		if let Some(storage) = &ctx.data().storage {
 			let settings = storage.get_guild_settings(&guild_id).await?;

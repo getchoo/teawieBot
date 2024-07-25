@@ -1,7 +1,4 @@
-use crate::{
-	client::{Data, Error},
-	consts,
-};
+use crate::{client::Data, consts};
 
 use eyre::Result;
 use log::{debug, info};
@@ -13,7 +10,7 @@ mod message;
 mod pinboard;
 mod reactboard;
 
-pub async fn handle(ctx: &serenity::Context, event: &FullEvent, data: &Data) -> Result<(), Error> {
+pub async fn handle(ctx: &serenity::Context, event: &FullEvent, data: &Data) -> Result<()> {
 	match event {
 		FullEvent::Ready { data_about_bot } => {
 			info!("Logged in as {}!", data_about_bot.user.name);

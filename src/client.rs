@@ -2,14 +2,14 @@ use crate::{commands, handlers, http, storage::Storage};
 
 use std::{sync::Arc, time::Duration};
 
-use eyre::{Context as _, Result};
+use eyre::{bail, Context as _, Result};
 use log::{info, trace, warn};
 use poise::{
 	serenity_prelude::{self as serenity},
 	EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
 };
 
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub type Error = eyre::Report;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[derive(Clone, Debug, Default)]
@@ -18,14 +18,12 @@ pub struct Data {
 	pub storage: Option<Storage>,
 }
 
-async fn setup(ctx: &serenity::Context) -> Result<Data, Error> {
+async fn setup(ctx: &serenity::Context) -> Result<Data> {
 	let storage = Storage::from_env().ok();
 
 	if let Some(storage) = storage.as_ref() {
 		if !storage.clone().is_connected() {
-			return Err(
-				"You specified a storage backend but there's no connection! Is it running?".into(),
-			);
+			bail!("You specified a storage backend but there's no connection! Is it running?");
 		}
 		trace!("Storage backend connected!");
 
