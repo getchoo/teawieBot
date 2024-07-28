@@ -1,26 +1,21 @@
 {
   lib,
-  fenix,
   pkgsCross,
+  rust-overlay,
   teawie-bot,
 }:
 let
+  rustVersion = "1_79_0";
+
   crossTargetFor = with pkgsCross; {
     x86_64 = musl64.pkgsStatic;
     aarch64 = aarch64-multiplatform.pkgsStatic;
   };
 
-  rustStdFor = lib.mapAttrs (
-    _: pkgs: fenix.targets.${pkgs.stdenv.hostPlatform.rust.rustcTarget}.stable.rust-std
-  ) crossTargetFor;
-
-  toolchain = fenix.combine (
-    [
-      fenix.stable.cargo
-      fenix.stable.rustc
-    ]
-    ++ lib.attrValues rustStdFor
-  );
+  toolchain = rust-overlay."rust_${rustVersion}".minimal.override {
+    extensions = [ "rust-src" ];
+    targets = lib.mapAttrsToList (_: pkgs: pkgs.stdenv.hostPlatform.rust.rustcTarget) crossTargetFor;
+  };
 
   crossPlatformFor = lib.mapAttrs (
     _: pkgs:

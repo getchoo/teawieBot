@@ -7,12 +7,9 @@
     ## Everything below this is optional
     ## `inputs.<name>.follows = ""`
 
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        rust-analyzer-src.follows = "";
-      };
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     treefmt-nix = {
@@ -25,7 +22,7 @@
     {
       self,
       nixpkgs,
-      fenix,
+      rust-overlay,
       treefmt-nix,
       ...
     }:
@@ -101,7 +98,7 @@
 
           staticFor = pkgs.callPackage ./nix/static.nix {
             inherit (packages') teawie-bot;
-            fenix = fenix.packages.${system};
+            rust-overlay = rust-overlay.packages.${system};
           };
 
           containerize =
