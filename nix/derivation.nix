@@ -66,6 +66,6 @@ rustPlatform.buildRustPackage {
     homepage = "https://github.com/getchoo/teawiebot";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ getchoo ];
-    mainProgram = "teawiebot";
+    mainProgram = "teawie-bot";
   };
 }

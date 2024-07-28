@@ -1,5 +1,5 @@
 [package]
-name = "teawiebot"
+name = "teawie-bot"
 version = "1.0.0"
 edition = "2021"
 repository = "https://github.com/getchoo/teawieBot"
