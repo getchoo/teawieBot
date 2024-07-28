@@ -5,6 +5,7 @@ use log::{debug, info};
 use poise::serenity_prelude::{self as serenity, CreateBotAuthParameters};
 use serenity::FullEvent;
 
+pub mod error;
 mod guild;
 mod message;
 mod pinboard;

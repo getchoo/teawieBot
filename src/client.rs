@@ -1,4 +1,4 @@
-use crate::{commands, handlers, http, storage::Storage};
+use crate::{commands, events, http, storage::Storage};
 
 use std::{sync::Arc, time::Duration};
 
@@ -67,15 +67,13 @@ pub async fn get() -> Result<serenity::Client> {
 
 	let options = FrameworkOptions {
 		commands: commands::all(),
-		on_error: |error| Box::pin(handlers::error::handle(error)),
+		on_error: |error| Box::pin(events::error::handle(error)),
 
 		command_check: Some(|ctx| {
 			Box::pin(async move { Ok(ctx.author().id != ctx.framework().bot_id) })
 		}),
 
-		event_handler: |ctx, event, _framework, data| {
-			Box::pin(handlers::event::handle(ctx, event, data))
-		},
+		event_handler: |ctx, event, _framework, data| Box::pin(events::handle(ctx, event, data)),
 
 		prefix_options: PrefixFrameworkOptions {
 			prefix: Some("!".into()),

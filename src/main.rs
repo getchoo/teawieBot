@@ -1,7 +1,7 @@
 mod client;
 mod commands;
 mod consts;
-mod handlers;
+mod events;
 mod http;
 mod storage;
 mod utils;
