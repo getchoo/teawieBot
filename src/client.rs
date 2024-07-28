@@ -27,21 +27,21 @@ async fn setup(ctx: &serenity::Context) -> Result<Data> {
 		}
 		trace!("Storage backend connected!");
 
-		poise::builtins::register_globally(ctx, &commands::to_vec_global()).await?;
+		poise::builtins::register_globally(ctx, &commands::global()).await?;
 		info!("Registered global commands!");
 
 		// register "extra" commands in guilds that allow it
 		let guilds = storage.get_opted_guilds().await?;
 
 		for guild in guilds {
-			poise::builtins::register_in_guild(ctx, &commands::to_vec_optional(), guild).await?;
+			poise::builtins::register_in_guild(ctx, &commands::optional(), guild).await?;
 
 			info!("Registered guild commands to {}", guild);
 		}
 	} else {
-		warn!("No storage backend was specified. Features requiring storage will be disabled");
+		warn!("No storage backend was specified. Features requiring storage cannot be used");
 		warn!("Registering optional commands globally since there's no storage backend");
-		poise::builtins::register_globally(ctx, &commands::to_vec()).await?;
+		poise::builtins::register_globally(ctx, &commands::all()).await?;
 	}
 
 	let http_client = <http::Client as http::Ext>::default();
@@ -66,7 +66,7 @@ pub async fn get() -> Result<serenity::Client> {
 		serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
 	let options = FrameworkOptions {
-		commands: commands::to_vec(),
+		commands: commands::all(),
 		on_error: |error| Box::pin(handlers::error::handle(error)),
 
 		command_check: Some(|ctx| {
