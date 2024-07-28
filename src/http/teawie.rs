@@ -1,10 +1,11 @@
-use eyre::Result;
+use eyre::{bail, OptionExt, Result};
 use serde::{Deserialize, Serialize};
 
 // https://github.com/getchoo/teawieAPI
 #[derive(Deserialize, Serialize)]
 struct RandomTeawieResponse {
-	url: String,
+	url: Option<String>,
+	error: Option<String>,
 }
 
 // TODO: read this from an env var
@@ -18,5 +19,10 @@ where
 	let url = format!("{TEAWIE}{RANDOM}");
 	let json: RandomTeawieResponse = http.get_json(&url).await?;
 
-	Ok(json.url)
+	if let Some(error) = json.error {
+		bail!("TeawieAPI reported error: {error}");
+	};
+
+	json.url
+		.ok_or_eyre("TeawieAPI didn't return an error or URL???")
 }
