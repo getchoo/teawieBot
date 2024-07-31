@@ -13,7 +13,7 @@ let
   };
 
   toolchain = rust-overlay."rust_${rustVersion}".minimal.override {
-    extensions = [ "rust-src" ];
+    extensions = [ "rust-std" ];
     targets = lib.mapAttrsToList (_: pkgs: pkgs.stdenv.hostPlatform.rust.rustcTarget) crossTargetFor;
   };
 
@@ -28,7 +28,12 @@ let
   ) crossTargetFor;
 in
 arch:
-teawie-bot.override {
+(teawie-bot.override {
   rustPlatform = crossPlatformFor.${arch};
   optimizeSize = true;
-}
+}).overrideAttrs
+  (old: {
+    passthru = old.passthru or { } // {
+      inherit toolchain;
+    };
+  })
