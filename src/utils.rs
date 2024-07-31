@@ -1,4 +1,4 @@
-use crate::{consts::Colors, Context};
+use crate::{client::Context, consts::Colors};
 
 use color_eyre::eyre::{eyre, Result};
 use poise::serenity_prelude::{self as serenity, CreateEmbedAuthor, CreateEmbedFooter};

@@ -1,5 +1,5 @@
+use crate::client::Context;
 use crate::storage::settings::{Properties, Settings};
-use crate::{Context, Error};
 
 use std::str::FromStr;
 
@@ -41,7 +41,7 @@ fn prop_to_val(setting: &Properties, settings: &Settings) -> String {
 	required_permissions = "MANAGE_GUILD",
 	default_member_permissions = "MANAGE_GUILD"
 )]
-pub async fn config(_: Context<'_>) -> Result<(), Error> {
+pub async fn config(_: Context<'_>) -> Result<()> {
 	Ok(())
 }
 
@@ -72,7 +72,7 @@ pub async fn set(
 	#[description = "Toggle ReactBoard"] reactboard_enabled: Option<bool>,
 	#[description = "Enables 'extra' commands like teawiespam and copypasta. Defaults to false."]
 	optional_commands_enabled: Option<bool>,
-) -> Result<(), Error> {
+) -> Result<()> {
 	if let Some(storage) = &ctx.data().storage {
 		let gid = ctx.guild_id().unwrap_or_default();
 		let mut settings = storage.get_guild_settings(&gid).await?;
@@ -149,7 +149,7 @@ pub async fn set(
 pub async fn get(
 	ctx: Context<'_>,
 	#[description = "The setting you want to get"] setting: Properties,
-) -> Result<(), Error> {
+) -> Result<()> {
 	let gid = &ctx
 		.guild_id()
 		.ok_or_eyre("Failed to get GuildId from context!")?;

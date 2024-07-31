@@ -1,9 +1,9 @@
+use crate::{client::Data, storage};
+use storage::settings::Settings;
+
 use eyre::Result;
 use log::{debug, warn};
 use poise::serenity_prelude::{Guild, UnavailableGuild};
-
-use crate::{storage, Data};
-use storage::settings::Settings;
 
 pub async fn handle_create(guild: &Guild, data: &Data) -> Result<()> {
 	if let Some(storage) = &data.storage {

@@ -1,4 +1,4 @@
-use crate::{storage, utils, Data};
+use crate::{client::Data, storage, utils};
 use storage::reactboard::ReactBoardEntry;
 
 use eyre::{eyre, Context as _, Result};

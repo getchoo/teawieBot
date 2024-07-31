@@ -1,16 +1,17 @@
-use crate::{consts, Data, Error};
+use crate::{client::Data, consts};
 
 use eyre::Result;
 use log::{debug, info};
 use poise::serenity_prelude::{self as serenity, CreateBotAuthParameters};
 use serenity::FullEvent;
 
+pub mod error;
 mod guild;
 mod message;
 mod pinboard;
 mod reactboard;
 
-pub async fn handle(ctx: &serenity::Context, event: &FullEvent, data: &Data) -> Result<(), Error> {
+pub async fn handle(ctx: &serenity::Context, event: &FullEvent, data: &Data) -> Result<()> {
 	match event {
 		FullEvent::Ready { data_about_bot } => {
 			info!("Logged in as {}!", data_about_bot.user.name);

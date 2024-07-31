@@ -1,4 +1,4 @@
-use crate::{Data, Error};
+use crate::client::{Data, Error};
 
 mod general;
 mod moderation;
@@ -17,24 +17,13 @@ macro_rules! cmd {
 	};
 }
 
-pub fn to_vec() -> Vec<Command> {
-	vec![
-		cmd!(general, ask),
-		cmd!(general, bing),
-		cmd!(general, config),
-		cmd!(general, convert),
-		cmd!(general, emoji),
-		cmd!(general, pfp),
-		cmd!(general, random),
-		cmd!(general, version),
-		cmd!(moderation, clear_messages),
-		cmd!(optional, copypasta),
-		cmd!(optional, teawiespam),
-		cmd!(optional, uwurandom),
-	]
+pub fn all() -> Vec<Command> {
+	let mut all_commands = global();
+	all_commands.append(&mut optional());
+	all_commands
 }
 
-pub fn to_vec_global() -> Vec<Command> {
+pub fn global() -> Vec<Command> {
 	vec![
 		cmd!(general, ask),
 		cmd!(general, bing),
@@ -48,10 +37,6 @@ pub fn to_vec_global() -> Vec<Command> {
 	]
 }
 
-pub fn to_vec_optional() -> Vec<Command> {
-	vec![
-		cmd!(optional, copypasta),
-		cmd!(optional, teawiespam),
-		cmd!(optional, uwurandom),
-	]
+pub fn optional() -> Vec<Command> {
+	vec![cmd!(optional, teawiespam), cmd!(optional, uwurandom)]
 }

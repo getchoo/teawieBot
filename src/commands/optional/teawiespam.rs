@@ -1,10 +1,11 @@
-use crate::{Context, Error};
+use crate::client::Context;
 
+use eyre::Result;
 use log::debug;
 
 /// teawie will spam you.
 #[poise::command(slash_command)]
-pub async fn teawiespam(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn teawiespam(ctx: Context<'_>) -> Result<()> {
 	if let Some(guild_id) = ctx.guild_id() {
 		if let Some(storage) = &ctx.data().storage {
 			let settings = storage.get_guild_settings(&guild_id).await?;
