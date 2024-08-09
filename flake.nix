@@ -7,11 +7,6 @@
     ## Everything below this is optional
     ## `inputs.<name>.follows = ""`
 
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -22,9 +17,7 @@
     {
       self,
       nixpkgs,
-      rust-overlay,
       treefmt-nix,
-      ...
     }:
     let
       inherit (nixpkgs) lib;
@@ -58,7 +51,6 @@
               pkgs.rust-analyzer
 
               # nix tools
-              pkgs.deadnix
               pkgs.nil
               pkgs.statix
 
@@ -96,30 +88,15 @@
           pkgs = nixpkgsFor.${system};
           packages' = self.packages.${system};
 
-          staticFor = pkgs.callPackage ./nix/static.nix {
-            inherit (packages') teawie-bot;
-            rust-overlay = rust-overlay.packages.${system};
-          };
-
-          containerize =
-            teawie-bot:
-            let
-              architecture = teawie-bot.stdenv.hostPlatform.ubootArch;
-            in
-            pkgs.dockerTools.buildLayeredImage {
-              name = "teawie-bot";
-              tag = "latest-${architecture}";
-              contents = [ pkgs.dockerTools.caCertificates ];
-              config.Cmd = [ (lib.getExe teawie-bot) ];
-              inherit architecture;
-            };
+          staticWith = pkgs.callPackage ./nix/static.nix { inherit (packages') teawie-bot; };
+          containerize = pkgs.callPackage ./nix/containerize.nix { };
         in
         {
           container-x86_64 = containerize packages'.static-x86_64;
           container-aarch64 = containerize packages'.static-aarch64;
 
-          static-x86_64 = staticFor "x86_64";
-          static-aarch64 = staticFor "aarch64";
+          static-x86_64 = staticWith { arch = "x86_64"; };
+          static-aarch64 = staticWith { arch = "aarch64"; };
 
           teawie-bot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
 
