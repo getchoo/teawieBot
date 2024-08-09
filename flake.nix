@@ -92,8 +92,8 @@
           containerize = pkgs.callPackage ./nix/containerize.nix { };
         in
         {
-          container-x86_64 = containerize packages'.static-x86_64;
-          container-aarch64 = containerize packages'.static-aarch64;
+          container-amd64 = containerize packages'.static-x86_64;
+          container-arm64 = containerize packages'.static-aarch64;
 
           static-x86_64 = staticWith { arch = "x86_64"; };
           static-aarch64 = staticWith { arch = "aarch64"; };
