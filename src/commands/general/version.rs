@@ -1,12 +1,13 @@
-use crate::{consts::Colors, Context, Error};
+use crate::{client::Context, consts::Colors};
 
 use std::env::consts::{ARCH, OS};
 
+use eyre::Result;
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Get version info
 #[poise::command(slash_command)]
-pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn version(ctx: Context<'_>) -> Result<()> {
 	let sha = option_env!("GIT_SHA").unwrap_or("main");
 	let revision_url = format!(
 		"[{}]({}/tree/{})",

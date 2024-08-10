@@ -1,6 +1,6 @@
-use crate::{consts, utils, Context, Error};
+use crate::{client::Context, consts, utils};
 
-use eyre::Context as _;
+use eyre::{Context as _, Result};
 
 /// Ask teawie a question!
 #[poise::command(prefix_command, slash_command)]
@@ -10,7 +10,7 @@ pub async fn ask(
 	#[rename = "question"]
 	#[description = "The question you want to ask teawie"]
 	_question: String,
-) -> Result<(), Error> {
+) -> Result<()> {
 	let resp = utils::random_choice(consts::RESPONSES)
 		.wrap_err("Couldn't choose from random responses!")?;
 

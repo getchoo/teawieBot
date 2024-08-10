@@ -3,122 +3,105 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    fenix = {
-      url = "github:nix-community/fenix";
+
+    ## Everything below this is optional
+    ## `inputs.<name>.follows = ""`
+
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    ...
-  } @ inputs: let
-    systems = [
-      "x86_64-linux"
-      "aarch64-linux"
-      "x86_64-darwin"
-      "aarch64-darwin"
-    ];
+  outputs =
+    {
+      self,
+      nixpkgs,
+      treefmt-nix,
+    }:
+    let
+      inherit (nixpkgs) lib;
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
 
-    forAllSystems = fn: nixpkgs.lib.genAttrs systems (system: fn nixpkgs.legacyPackages.${system});
-  in {
-    checks = forAllSystems ({
-      lib,
-      pkgs,
-      ...
-    }: {
-      actionlint = pkgs.runCommand "check-actionlint" {} ''
-        ${lib.getExe pkgs.actionlint} ${./.github/workflows}/*
-        touch $out
-      '';
-
-      deadnix = pkgs.runCommand "check-deadnix" {} ''
-        ${lib.getExe pkgs.deadnix} --fail ${./.}
-        touch $out
-      '';
-
-      editorconfig = pkgs.runCommand "check-editorconfig" {} ''
-        cd ${./.}
-        ${lib.getExe pkgs.editorconfig-checker} \
-          -exclude '.git' .
-
-        touch $out
-      '';
-
-      rustfmt = pkgs.runCommand "check-rustfmt" {nativeBuildInputs = [pkgs.cargo pkgs.rustfmt];} ''
-        cd ${./.}
-        cargo fmt -- --check
-        touch $out
-      '';
-
-      statix = pkgs.runCommand "check-statix" {} ''
-        ${lib.getExe pkgs.statix} check ${./.}
-        touch $out
-      '';
-    });
-
-    devShells = forAllSystems ({
-      pkgs,
-      system,
-      ...
-    }: {
-      default = pkgs.mkShell {
-        packages = [
-          # rust tools
-          pkgs.clippy
-          pkgs.rustfmt
-          pkgs.rust-analyzer
-
-          # nix tools
-          pkgs.deadnix
-          pkgs.nil
-          pkgs.statix
-
-          # misc formatter/linters
-          pkgs.actionlint
-          self.formatter.${system}
-
-          pkgs.redis
-        ];
-
-        inputsFrom = [self.packages.${system}.teawiebot];
-        RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
-      };
-
-      ci = pkgs.mkShell {
-        packages = [
-          pkgs.clippy
-          pkgs.rustfmt
-
-          self.formatter.${system}
-        ];
-
-        inputsFrom = [self.packages.${system}.teawiebot];
-      };
-    });
-
-    formatter = forAllSystems (pkgs: pkgs.alejandra);
-
-    nixosModules.default = import ./nix/module.nix self;
-
-    packages = forAllSystems ({
-      pkgs,
-      system,
-      ...
-    }: let
-      crossBuildsFor = arch: import ./nix/docker.nix {inherit pkgs arch inputs;};
+      forAllSystems = lib.genAttrs systems;
+      nixpkgsFor = forAllSystems (system: nixpkgs.legacyPackages.${system});
+      treefmtFor = forAllSystems (system: treefmt-nix.lib.evalModule nixpkgsFor.${system} ./treefmt.nix);
     in
-      {
-        teawiebot = pkgs.callPackage ./nix/derivation.nix {inherit self;};
+    {
+      checks = forAllSystems (system: {
+        treefmt = treefmtFor.${system}.config.build.check self;
+      });
 
-        default = self.packages.${system}.teawiebot;
-      }
-      // crossBuildsFor "x86_64"
-      // crossBuildsFor "aarch64");
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgsFor.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            packages = [
+              # rust tools
+              pkgs.clippy
+              pkgs.rustfmt
+              pkgs.rust-analyzer
 
-    overlays.default = _: prev: {
-      teawiebot = prev.callPackage ./nix/derivation.nix {inherit self;};
+              # nix tools
+              pkgs.nil
+              pkgs.statix
+
+              # misc formatter/linters
+              pkgs.actionlint
+              self.formatter.${system}
+
+              pkgs.redis
+            ];
+
+            inputsFrom = [ self.packages.${system}.teawie-bot ];
+            RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+          };
+
+          ci = pkgs.mkShell {
+            packages = [
+              pkgs.clippy
+              pkgs.rustfmt
+
+              self.formatter.${system}
+            ];
+
+            inputsFrom = [ self.packages.${system}.teawie-bot ];
+          };
+        }
+      );
+
+      formatter = forAllSystems (system: nixpkgsFor.${system}.nixfmt-rfc-style);
+
+      nixosModules.default = import ./nix/module.nix self;
+
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgsFor.${system};
+          packages' = self.packages.${system};
+
+          staticWith = pkgs.callPackage ./nix/static.nix { inherit (packages') teawie-bot; };
+          containerize = pkgs.callPackage ./nix/containerize.nix { };
+        in
+        {
+          container-amd64 = containerize packages'.static-x86_64;
+          container-arm64 = containerize packages'.static-aarch64;
+
+          static-x86_64 = staticWith { arch = "x86_64"; };
+          static-aarch64 = staticWith { arch = "aarch64"; };
+
+          teawie-bot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
+
+          default = self.packages.${system}.teawie-bot;
+        }
+      );
     };
-  };
 }

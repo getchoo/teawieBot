@@ -1,5 +1,6 @@
-use crate::{consts::Colors, Context, Error};
+use crate::{client::Context, consts::Colors};
 
+use eyre::Result;
 use poise::{
 	serenity_prelude::{CreateEmbed, Emoji},
 	CreateReply,
@@ -7,7 +8,7 @@ use poise::{
 
 /// Get the URL for an emoji
 #[poise::command(slash_command)]
-pub async fn emoji(ctx: Context<'_>, emoji: Emoji) -> Result<(), Error> {
+pub async fn emoji(ctx: Context<'_>, emoji: Emoji) -> Result<()> {
 	let url = emoji.url();
 	let embed = CreateEmbed::new()
 		.title(emoji.name)

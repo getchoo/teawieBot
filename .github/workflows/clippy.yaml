@@ -2,6 +2,7 @@ name: Clippy
 
 on:
   push:
+    branches: [main]
     paths:
       - 'Cargo.toml'
       - 'Cargo.lock'
@@ -26,31 +27,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v12
-
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v7
-
-      - name: Setup Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
 
       - name: Install SARIF tools
         run: |
-          nix profile install \
-            --inputs-from . \
-            github:getchoo/nix-exprs#{clippy-sarif,sarif-fmt}
+          cargo install clippy-sarif sarif-fmt
 
       - name: Fetch Cargo deps
         run: |
-          nix develop .#ci --command \
-            cargo fetch --locked
+          cargo fetch --locked
 
       - name: Run Clippy
         continue-on-error: true
         run: |
-          nix develop .#ci --command \
-            cargo clippy \
+          cargo clippy \
             --all-features \
             --all-targets \
             --message-format=json \

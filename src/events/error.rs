@@ -1,4 +1,7 @@
-use crate::{consts::Colors, Data, Error};
+use crate::{
+	client::{Data, Error},
+	consts::Colors,
+};
 
 use log::error;
 use poise::serenity_prelude::{CreateEmbed, Timestamp};

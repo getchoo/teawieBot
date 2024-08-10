@@ -1,14 +1,15 @@
-self: {
+self:
+{
   config,
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.services.teawiebot;
   defaultUser = "teawiebot";
 
-  inherit
-    (lib)
+  inherit (lib)
     getExe
     literalExpression
     mdDoc
@@ -21,18 +22,18 @@ self: {
     ;
 
   inherit (pkgs.stdenv.hostPlatform) system;
-in {
+in
+{
   options.services.teawiebot = {
-    enable = mkEnableOption "teawiebot";
-    package = mkPackageOption (
-      self.packages.${system} or (builtins.throw "${system} is not supported!")
-    ) "teawiebot" {};
+    enable = mkEnableOption "teawieBot";
+    package = mkPackageOption (self.packages.${system} or (builtins.throw "${system} is not supported!")
+    ) "teawie-bot" { };
 
     user = mkOption {
       description = mdDoc ''
         User under which the service should run. If this is the default value,
-            the user will be created, with the specified group as the primary
-            group.
+        the user will be created, with the specified group as the primary
+        group.
       '';
       type = types.str;
       default = defaultUser;
@@ -88,10 +89,8 @@ in {
 
     systemd.services."teawiebot" = {
       enable = true;
-      wantedBy = ["multi-user.target"];
-      after =
-        ["network.target"]
-        ++ optionals (cfg.redisUrl == "local") ["redis-teawiebot.service"];
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ] ++ optionals (cfg.redisUrl == "local") [ "redis-teawiebot.service" ];
 
       script = ''
         ${getExe cfg.package}
@@ -99,9 +98,10 @@ in {
 
       environment = {
         REDIS_URL =
-          if cfg.redisUrl == "local"
-          then "unix:${config.services.redis.servers.teawiebot.unixSocket}"
-          else cfg.redisUrl;
+          if cfg.redisUrl == "local" then
+            "unix:${config.services.redis.servers.teawiebot.unixSocket}"
+          else
+            cfg.redisUrl;
       };
 
       serviceConfig = {
@@ -140,9 +140,7 @@ in {
         };
       };
 
-      groups = mkIf (cfg.group == defaultUser) {
-        ${defaultUser} = {};
-      };
+      groups = mkIf (cfg.group == defaultUser) { ${defaultUser} = { }; };
     };
   };
 }
