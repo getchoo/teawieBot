@@ -10,7 +10,7 @@ repository = "https://github.com/getchoo/teawieBot"
 bottomify = "1.2.0"
 color-eyre = "0.6.3"
 dotenvy = "0.15.7"
-env_logger = "0.11.3"
+env_logger = "0.11.5"
 eyre = { version = "0.6.12", default-features = false, features = [
 	"auto-install",
 	"track-caller",
