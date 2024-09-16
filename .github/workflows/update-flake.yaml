@@ -24,7 +24,7 @@ jobs:
 
       - name: Update flake.lock & make PR
         id: update
-        uses: DeterminateSystems/update-flake-lock@v23
+        uses: DeterminateSystems/update-flake-lock@v24
         with:
           commit-msg: "nix: update flake.lock"
           pr-title: "nix: update flake.lock"
