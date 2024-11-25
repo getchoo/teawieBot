@@ -31,7 +31,7 @@ tokio = { version = "1.40.0", features = [
 	"rt-multi-thread",
 	"signal",
 ] }
-url = { version = "2.5.2", features = ["serde"] }
+url = { version = "2.5.4", features = ["serde"] }
 uwurandom-rs = "1.1.0"
 
 [lints.rust]
