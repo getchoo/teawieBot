@@ -2,8 +2,8 @@ name: "Update flake.lock"
 
 on:
   schedule:
-    # run every saturday
-    - cron: "0 0 * * 6"
+    # Run on the 1st and 15th of every month
+    - cron: "0 0 1,15 * *"
   workflow_dispatch:
 
 jobs:
