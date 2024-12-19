@@ -3,7 +3,7 @@ use std::{env, fmt::Debug, str::FromStr};
 use anyhow::Result;
 use log::debug;
 use poise::serenity_prelude::{GuildId, MessageId};
-use redis::{AsyncCommands, Client, ConnectionLike, RedisError};
+use redis::{AsyncCommands, Client, RedisError};
 
 pub mod reactboard;
 pub mod settings;
@@ -28,10 +28,6 @@ impl Storage {
 		let redis_url = env::var("REDIS_URL")?;
 
 		Ok(Self::from_str(&redis_url)?)
-	}
-
-	pub fn is_connected(&mut self) -> bool {
-		self.client.check_connection()
 	}
 
 	pub async fn create_guild_settings(&self, settings: Settings) -> Result<()> {
@@ -79,34 +75,6 @@ impl Storage {
 		let exists = con.exists(&guild_key).await?;
 
 		Ok(exists)
-	}
-
-	pub async fn get_all_guild_settings(&self) -> Result<Vec<Settings>> {
-		debug!("Fetching all guild settings");
-
-		let mut con = self.client.get_multiplexed_async_connection().await?;
-		let found: Vec<u64> = con.smembers(SETTINGS_KEY).await?;
-
-		let mut guilds = vec![];
-		for key in found {
-			let settings = self.get_guild_settings(&key.into()).await?;
-			guilds.push(settings);
-		}
-
-		Ok(guilds)
-	}
-
-	/// get guilds that have enabled optional commands
-	pub async fn get_opted_guilds(&self) -> Result<Vec<GuildId>> {
-		debug!("Fetching opted-in guilds");
-
-		let guilds = self.get_all_guild_settings().await?;
-		let opted: Vec<GuildId> = guilds
-			.iter()
-			.filter_map(|g| g.optional_commands_enabled.then_some(g.guild_id))
-			.collect();
-
-		Ok(opted)
 	}
 
 	// reactboard
