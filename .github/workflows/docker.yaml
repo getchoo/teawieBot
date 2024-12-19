@@ -1,8 +1,8 @@
-name: Docker
+name: "Docker"
 
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
     paths:
       - "**.nix"
       - "**.rs"
@@ -18,27 +18,27 @@ on:
 
 jobs:
   build:
-    name: Build image
+    name: "Build image"
 
     strategy:
       fail-fast: false
       matrix:
-        arch: [amd64, arm64]
+        arch: [ "amd64", "arm64" ]
 
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: "Checkout repository"
+        uses: "actions/checkout@v4"
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+      - name: "Install Nix"
+        uses: "cachix/install-nix-action@v30"
 
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v7
+      - name: "Setup Nix cache"
+        uses: "DeterminateSystems/magic-nix-cache-action@v8"
 
-      - name: Build Docker image
-        id: build
+      - name: "Build Docker image"
+        id: "build"
         env:
           ARCH: ${{ matrix.arch }}
         run: |
@@ -51,67 +51,69 @@ jobs:
           [ ! -L result ] && exit 1
           echo "path=$(readlink -f ./result)" >> "$GITHUB_OUTPUT"
 
-      - name: Upload image
-        uses: actions/upload-artifact@v4
+      - name: "Upload image"
+        uses: "actions/upload-artifact@v4"
         with:
-          name: container-${{ matrix.arch }}
+          name: "container-${{ matrix.arch }}"
           path: ${{ steps.build.outputs.path }}
-          if-no-files-found: error
+          if-no-files-found: "error"
           retention-days: 1
 
   release-gate:
-    name: Docker Release Gate
-    needs: build
+    name: "Docker Release Gate"
+    needs: [ "build" ]
 
-    if: always()
+    if: ${{ always() }}
 
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     steps:
-      - name: Exit with error
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        run: exit 1
+      - name: "Exit with error"
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          exit 1
 
   push:
-    name: Push image
-    needs: release-gate
+    name: "Push image"
+    needs: [ "release-gate" ]
 
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'push' }}
 
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     permissions:
-      packages: write
+      contents: "read"
+      packages: "write"
 
     env:
-      REGISTRY: ghcr.io
+      REGISTRY: "ghcr.io"
       USERNAME: ${{ github.actor }}
-      IMAGE_NAME: teawie-bot
+      IMAGE_NAME: "chill-discord-bot"
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: "Checkout repository"
+        uses: "actions/checkout@v4"
 
-      - name: Download images
-        uses: actions/download-artifact@v4
+      - name: "Download images"
+        uses: "actions/download-artifact@v4"
         with:
-          path: images
+          path: "images"
 
-      - name: Login to registry
-        uses: docker/login-action@v3
+      - name: "Login to registry"
+        uses: "docker/login-action@v3"
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.USERNAME }}
           password: ${{ github.token }}
 
-      - name: Push to registry
+      - name: "Push to registry"
         env:
           TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         run: |
           architectures=("amd64" "arm64")
           for arch in "${architectures[@]}"; do
             docker load < images/container-"$arch"/*.tar.gz
-            docker tag teawie-bot:latest-"$arch" "$TAG"-"$arch"
+            docker tag chill-discord-bot:latest-"$arch" "$TAG"-"$arch"
             docker push "$TAG"-"$arch"
           done
 

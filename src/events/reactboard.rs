@@ -1,7 +1,7 @@
 use crate::{client::Data, storage, utils};
 use storage::reactboard::ReactBoardEntry;
 
-use eyre::{eyre, Context as _, Result};
+use anyhow::{Context as _, Result};
 use log::{debug, warn};
 use poise::serenity_prelude::{
 	Context, CreateMessage, EditMessage, GuildId, Message, MessageReaction, Reaction,
@@ -12,15 +12,15 @@ pub async fn handle(ctx: &Context, reaction: &Reaction, data: &Data) -> Result<(
 	let msg = reaction
 		.message(&ctx.http)
 		.await
-		.wrap_err("Couldn't get reaction from message!")?;
+		.context("Couldn't get reaction from message!")?;
 
 	let matched = msg
 		.clone()
 		.reactions
 		.into_iter()
 		.find(|r| r.reaction_type == reaction.emoji)
-		.ok_or_else(|| {
-			eyre!(
+		.with_context(|| {
+			format!(
 				"Couldn't find any matching reactions for {} in message {}!",
 				reaction.emoji.as_data(),
 				msg.id
@@ -109,7 +109,7 @@ async fn send_to_reactboard(
 		ctx.http
 			.get_message(entry.posted_channel_id, entry.posted_message_id)
 			.await
-			.wrap_err_with(|| {
+			.with_context(|| {
 				format!(
 					"Couldn't get previous message from ReactBoardEntry {} in Redis DB!",
 					entry.original_message_id

@@ -1,4 +1,4 @@
-use eyre::{bail, OptionExt, Result};
+use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 
 // https://github.com/getchoo/teawieAPI
@@ -24,5 +24,5 @@ where
 	};
 
 	json.url
-		.ok_or_eyre("TeawieAPI didn't return an error or URL???")
+		.context("TeawieAPI didn't return an error or URL???")
 }

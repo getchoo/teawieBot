@@ -1,26 +1,17 @@
 {
-  description = "teawie moment";
-
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-
-    ## Everything below this is optional
-    ## `inputs.<name>.follows = ""`
-
-    treefmt-nix = {
-      url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
     {
       self,
       nixpkgs,
-      treefmt-nix,
     }:
+
     let
       inherit (nixpkgs) lib;
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -29,19 +20,66 @@
       ];
 
       forAllSystems = lib.genAttrs systems;
-      nixpkgsFor = forAllSystems (system: nixpkgs.legacyPackages.${system});
-      treefmtFor = forAllSystems (system: treefmt-nix.lib.evalModule nixpkgsFor.${system} ./treefmt.nix);
     in
     {
-      checks = forAllSystems (system: {
-        treefmt = treefmtFor.${system}.config.build.check self;
-      });
+      checks = forAllSystems (
+        system:
+
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+
+          mkCheck =
+            name: nativeBuildInputs: script:
+            pkgs.runCommand "check-${name}" { inherit nativeBuildInputs; } ''
+              ${script} | tee $out
+            '';
+        in
+
+        {
+          clippy-sarif = pkgs.stdenv.mkDerivation {
+            name = "check-clippy-sarif";
+            inherit (self.packages.${system}.chill-discord-bot) src cargoDeps;
+
+            nativeBuildInputs = [
+              pkgs.cargo
+              pkgs.clippy
+              pkgs.clippy-sarif
+              pkgs.rustPlatform.cargoSetupHook
+              pkgs.rustc
+              pkgs.sarif-fmt
+            ];
+
+            buildPhase = ''
+              runHook preBuild
+
+              cargo clippy \
+                --all-features \
+                --all-targets \
+                --tests \
+                --message-format=json \
+              | clippy-sarif | tee $out | sarif-fmt
+
+              runHook postBuild
+            '';
+          };
+
+          actionlint = mkCheck "actionlint" [ pkgs.actionlint ] "actionlint ${self}/.github/workflows/*";
+          deadnix = mkCheck "deadnix" [ pkgs.deadnix ] "deadnix check ${self}";
+          nixfmt = mkCheck "nixfmt" [
+            pkgs.nixfmt-rfc-style
+          ] "find ${self} -type f -name '*.nix' | xargs nixfmt --check";
+          rustfmt = mkCheck "rustfmt" [ pkgs.cargo pkgs.rustfmt ] "cd ${self} && cargo fmt -- --check";
+          statix = mkCheck "statix" [ pkgs.statix ] "statix check ${self}";
+        }
+      );
 
       devShells = forAllSystems (
         system:
+
         let
-          pkgs = nixpkgsFor.${system};
+          pkgs = nixpkgs.legacyPackages.${system};
         in
+
         {
           default = pkgs.mkShell {
             packages = [
@@ -61,7 +99,7 @@
               pkgs.redis
             ];
 
-            inputsFrom = [ self.packages.${system}.teawie-bot ];
+            inputsFrom = [ self.packages.${system}.chill-discord-bot ];
             RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
           };
 
@@ -73,24 +111,26 @@
               self.formatter.${system}
             ];
 
-            inputsFrom = [ self.packages.${system}.teawie-bot ];
+            inputsFrom = [ self.packages.${system}.chill-discord-bot ];
           };
         }
       );
 
-      formatter = forAllSystems (system: nixpkgsFor.${system}.nixfmt-rfc-style);
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
 
-      nixosModules.default = import ./nix/module.nix self;
+      nixosModules.default = lib.modules.importApply ./nix/module.nix { inherit self; };
 
       packages = forAllSystems (
         system:
+
         let
-          pkgs = nixpkgsFor.${system};
+          pkgs = nixpkgs.legacyPackages.${system};
           packages' = self.packages.${system};
 
-          staticWith = pkgs.callPackage ./nix/static.nix { inherit (packages') teawie-bot; };
+          staticWith = pkgs.callPackage ./nix/static.nix { inherit self; };
           containerize = pkgs.callPackage ./nix/containerize.nix { };
         in
+
         {
           container-amd64 = containerize packages'.static-x86_64;
           container-arm64 = containerize packages'.static-aarch64;
@@ -98,9 +138,9 @@
           static-x86_64 = staticWith { arch = "x86_64"; };
           static-aarch64 = staticWith { arch = "aarch64"; };
 
-          teawie-bot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
+          chill-discord-bot = pkgs.callPackage ./nix/package.nix { inherit self; };
 
-          default = self.packages.${system}.teawie-bot;
+          default = self.packages.${system}.chill-discord-bot;
         }
       );
     };

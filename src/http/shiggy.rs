@@ -1,4 +1,4 @@
-use eyre::Result;
+use anyhow::Result;
 use serde::Deserialize;
 
 const SHIGGY: &str = "https://safebooru.donmai.us";

@@ -2,14 +2,14 @@ use crate::{commands, events, http, storage::Storage};
 
 use std::{sync::Arc, time::Duration};
 
-use eyre::{bail, Context as _, Result};
-use log::{info, trace, warn};
+use anyhow::{Context as _, Result};
+use log::{info, warn};
 use poise::{
 	serenity_prelude::{self as serenity},
 	EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
 };
 
-pub type Error = eyre::Report;
+pub type Error = anyhow::Error;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[derive(Clone, Debug, Default)]
@@ -21,28 +21,8 @@ pub struct Data {
 async fn setup(ctx: &serenity::Context) -> Result<Data> {
 	let storage = Storage::from_env().ok();
 
-	if let Some(storage) = storage.as_ref() {
-		if !storage.clone().is_connected() {
-			bail!("You specified a storage backend but there's no connection! Is it running?");
-		}
-		trace!("Storage backend connected!");
-
-		poise::builtins::register_globally(ctx, &commands::global()).await?;
-		info!("Registered global commands!");
-
-		// register "extra" commands in guilds that allow it
-		let guilds = storage.get_opted_guilds().await?;
-
-		for guild in guilds {
-			poise::builtins::register_in_guild(ctx, &commands::optional(), guild).await?;
-
-			info!("Registered guild commands to {}", guild);
-		}
-	} else {
-		warn!("No storage backend was specified. Features requiring storage cannot be used");
-		warn!("Registering optional commands globally since there's no storage backend");
-		poise::builtins::register_globally(ctx, &commands::all()).await?;
-	}
+	poise::builtins::register_globally(ctx, &commands::all()).await?;
+	info!("Registered global commands!");
 
 	let http_client = <http::Client as http::Ext>::default();
 	let data = Data {
@@ -60,7 +40,7 @@ pub async fn handle_shutdown(shard_manager: Arc<serenity::ShardManager>, reason:
 }
 
 pub async fn get() -> Result<serenity::Client> {
-	let token = std::env::var("TOKEN").wrap_err("Couldn't find bot token in environment!")?;
+	let token = std::env::var("TOKEN").context("Couldn't find bot token in environment!")?;
 
 	let intents =
 		serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;

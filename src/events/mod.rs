@@ -1,6 +1,6 @@
 use crate::{client::Data, consts};
 
-use eyre::Result;
+use anyhow::Result;
 use log::{debug, info};
 use poise::serenity_prelude::{self as serenity, CreateBotAuthParameters};
 use serenity::FullEvent;

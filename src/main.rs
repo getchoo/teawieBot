@@ -6,7 +6,7 @@ mod http;
 mod storage;
 mod utils;
 
-use eyre::{Report, Result};
+use anyhow::Result;
 
 use tokio::signal::ctrl_c;
 #[cfg(target_family = "unix")]
@@ -17,7 +17,6 @@ use tokio::signal::windows::ctrl_close;
 #[tokio::main]
 async fn main() -> Result<()> {
 	dotenvy::dotenv().ok();
-	color_eyre::install()?;
 	env_logger::init();
 
 	let mut client = client::get().await?;
@@ -29,7 +28,7 @@ async fn main() -> Result<()> {
 	let mut sigterm = ctrl_close()?;
 
 	tokio::select! {
-		result = client.start() => result.map_err(Report::from),
+		result = client.start() => result.map_err(anyhow::Error::from),
 		_ = sigterm.recv() => {
 			client::handle_shutdown(shard_manager, "Received SIGTERM").await;
 			println!("Everything is shutdown. Goodbye!");

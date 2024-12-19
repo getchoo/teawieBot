@@ -3,7 +3,7 @@ use crate::storage::settings::{Properties, Settings};
 
 use std::str::FromStr;
 
-use eyre::{OptionExt as _, Result};
+use anyhow::{Context as _, Result};
 use log::debug;
 use poise::serenity_prelude::{CreateEmbed, GuildChannel, ReactionType};
 use poise::{ChoiceParameter, CreateReply};
@@ -70,7 +70,7 @@ pub async fn set(
 	#[description = "Minimum number of reactions a message needs to make it to the ReactBoard (defaults to 5)"]
 	reactboard_requirement: Option<u64>,
 	#[description = "Toggle ReactBoard"] reactboard_enabled: Option<bool>,
-	#[description = "Enables 'extra' commands like teawiespam and copypasta. Defaults to false."]
+	#[description = "Enables 'extra' commands like uwurandom. Defaults to false."]
 	optional_commands_enabled: Option<bool>,
 ) -> Result<()> {
 	if let Some(storage) = &ctx.data().storage {
@@ -152,7 +152,7 @@ pub async fn get(
 ) -> Result<()> {
 	let gid = &ctx
 		.guild_id()
-		.ok_or_eyre("Failed to get GuildId from context!")?;
+		.context("Failed to get GuildId from context!")?;
 
 	if let Some(storage) = &ctx.data().storage {
 		let settings = storage.get_guild_settings(gid).await?;

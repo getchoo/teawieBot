@@ -2,7 +2,6 @@ use crate::client::{Data, Error};
 
 mod general;
 mod moderation;
-mod optional;
 
 type Command = poise::Command<Data, Error>;
 
@@ -18,12 +17,6 @@ macro_rules! cmd {
 }
 
 pub fn all() -> Vec<Command> {
-	let mut all_commands = global();
-	all_commands.append(&mut optional());
-	all_commands
-}
-
-pub fn global() -> Vec<Command> {
 	vec![
 		cmd!(general, ask),
 		cmd!(general, bing),
@@ -35,8 +28,4 @@ pub fn global() -> Vec<Command> {
 		cmd!(general, version),
 		cmd!(moderation, clear_messages),
 	]
-}
-
-pub fn optional() -> Vec<Command> {
-	vec![cmd!(optional, teawiespam), cmd!(optional, uwurandom)]
 }

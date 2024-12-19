@@ -2,7 +2,7 @@ use crate::{client::Context, consts::Colors};
 
 use std::env::consts::{ARCH, OS};
 
-use eyre::Result;
+use anyhow::Result;
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Get version info
@@ -12,7 +12,7 @@ pub async fn version(ctx: Context<'_>) -> Result<()> {
 	let revision_url = format!(
 		"[{}]({}/tree/{})",
 		sha,
-		option_env!("CARGO_PKG_REPOSITORY").unwrap_or("https://github.com/getchoo/teawieBot"),
+		option_env!("CARGO_PKG_REPOSITORY").unwrap_or("https://github.com/getchoo/chill"),
 		sha,
 	);
 

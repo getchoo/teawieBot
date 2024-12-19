@@ -1,17 +1,21 @@
 { lib, dockerTools }:
+
 let
   containerize =
-    teawie-bot:
+    chill-discord-bot:
+
     let
-      inherit (teawie-bot.passthru) crossPkgs;
+      inherit (chill-discord-bot.passthru) crossPkgs;
       architecture = crossPkgs.go.GOARCH;
     in
+
     dockerTools.buildLayeredImage {
-      name = "teawie-bot";
+      name = "chill-discord-bot";
       tag = "latest-${architecture}";
       contents = [ dockerTools.caCertificates ];
-      config.Cmd = [ (lib.getExe teawie-bot) ];
+      config.Cmd = [ (lib.getExe chill-discord-bot) ];
       inherit architecture;
     };
 in
+
 containerize

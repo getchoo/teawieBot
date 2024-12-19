@@ -1,49 +1,51 @@
-name: Update flake.lock
+name: "Update flake.lock"
 
 on:
   schedule:
-    # run every saturday
-    - cron: "0 0 * * 6"
+    # Run on the 1st and 15th of every month
+    - cron: "0 0 1,15 * *"
   workflow_dispatch:
 
 jobs:
   update:
-    name: Run update & create PR
+    name: "Run update & create PR"
 
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     steps:
-      - name: Generate GitHub App token
-        uses: actions/create-github-app-token@v1
-        id: app-token
+      - name: "Generate GitHub App token"
+        uses: "actions/create-github-app-token@v1"
+        id: "app-token"
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: "Checkout repository"
+        uses: "actions/checkout@v4"
         with:
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v14
+      - name: "Install Nix"
+        uses: "cachix/install-nix-action@v30"
 
-      - name: Run update
-        run: nix flake update
+      - name: "Run update"
+        run: |
+          nix flake update
 
-      - name: Create pull request
-        id: pull-request
-        uses: peter-evans/create-pull-request@v7
+      - name: "Create pull request"
+        id: "pull-request"
+        uses: "peter-evans/create-pull-request@v7"
         with:
-          branch: update-flake-lock
+          branch: "update-flake-lock"
           commit-message: "nix: update flake.lock"
           title: "nix: update flake.lock"
           token: ${{ steps.app-token.outputs.token }}
           sign-commits: true
 
-      - name: Enable auto-merge
+      - name: "Enable auto-merge"
         if: ${{ env.PR_ID != '' }}
-        run: gh pr merge --auto --squash "$PR_ID"
         env:
-          PR_ID: ${{ steps.pull-request.outputs.pull-request-number }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_ID: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: |
+          gh pr merge --auto --squash "$PR_ID"
