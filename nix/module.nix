@@ -5,10 +5,8 @@ self:
   pkgs,
   ...
 }:
-let
-  cfg = config.services.chill-discord-bot;
-  defaultUser = "chill-discord-bot";
 
+let
   inherit (lib)
     getExe
     literalExpression
@@ -19,10 +17,14 @@ let
     optionals
     types
     ;
-
   inherit (pkgs.stdenv.hostPlatform) system;
+
+  cfg = config.services.chill-discord-bot;
+
+  defaultUser = "chill-discord-bot";
   flakePackages = self.packages.${system} or (throw "getchoo/chill: ${system} is not supported");
 in
+
 {
   options.services.chill-discord-bot = {
     enable = mkEnableOption "chill";

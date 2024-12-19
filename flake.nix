@@ -8,8 +8,10 @@
       self,
       nixpkgs,
     }:
+
     let
       inherit (nixpkgs) lib;
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -18,14 +20,13 @@
       ];
 
       forAllSystems = lib.genAttrs systems;
-      nixpkgsFor = forAllSystems (system: nixpkgs.legacyPackages.${system});
     in
     {
       checks = forAllSystems (
         system:
 
         let
-          pkgs = nixpkgsFor.${system};
+          pkgs = nixpkgs.legacyPackages.${system};
 
           mkCheck =
             name: nativeBuildInputs: script:
@@ -47,9 +48,11 @@
 
       devShells = forAllSystems (
         system:
+
         let
-          pkgs = nixpkgsFor.${system};
+          pkgs = nixpkgs.legacyPackages.${system};
         in
+
         {
           default = pkgs.mkShell {
             packages = [
@@ -86,19 +89,21 @@
         }
       );
 
-      formatter = forAllSystems (system: nixpkgsFor.${system}.nixfmt-rfc-style);
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
 
-      nixosModules.default = import ./nix/module.nix self;
+      nixosModules.default = lib.modules.importApply ./nix/module.nix { inherit self; };
 
       packages = forAllSystems (
         system:
+
         let
-          pkgs = nixpkgsFor.${system};
+          pkgs = nixpkgs.legacyPackages.${system};
           packages' = self.packages.${system};
 
           staticWith = pkgs.callPackage ./nix/static.nix { inherit (packages') chill-discord-bot; };
           containerize = pkgs.callPackage ./nix/containerize.nix { };
         in
+
         {
           container-amd64 = containerize packages'.static-x86_64;
           container-arm64 = containerize packages'.static-aarch64;

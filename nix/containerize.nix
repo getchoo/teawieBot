@@ -1,11 +1,14 @@
 { lib, dockerTools }:
+
 let
   containerize =
     chill-discord-bot:
+
     let
       inherit (chill-discord-bot.passthru) crossPkgs;
       architecture = crossPkgs.go.GOARCH;
     in
+
     dockerTools.buildLayeredImage {
       name = "chill-discord-bot";
       tag = "latest-${architecture}";
@@ -14,4 +17,5 @@ let
       inherit architecture;
     };
 in
+
 containerize
