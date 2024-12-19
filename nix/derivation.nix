@@ -1,8 +1,6 @@
 {
   lib,
-  stdenv,
   rustPlatform,
-  darwin,
   self ? { },
   lto ? true,
   optimizeSize ? false,
@@ -27,41 +25,25 @@ rustPlatform.buildRustPackage {
     );
   };
 
-  cargoLock = {
-    lockFile = ../Cargo.lock;
-  };
+  cargoLock.lockFile = ../Cargo.lock;
 
-  buildInputs = lib.optionals stdenv.isDarwin (
-    with darwin.apple_sdk.frameworks;
-    [
-      CoreFoundation
-      Security
-      SystemConfiguration
-      darwin.libiconv
+  RUSTFLAGS =
+    lib.optionals lto [
+      "-C"
+      "lto=thin"
     ]
-  );
+    ++ lib.optionals optimizeSize [
+      "-C"
+      "codegen-units=1"
+      "-C"
+      "opt-level=s"
+      "-C"
+      "panic=abort"
+      "-C"
+      "strip=symbols"
+    ];
 
-  env =
-    let
-      toRustFlags = lib.mapAttrs' (
-        name:
-        lib.nameValuePair "CARGO_BUILD_RELEASE_${
-          lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] name)
-        }"
-      );
-    in
-    {
-      GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown";
-    }
-    // lib.optionalAttrs lto (toRustFlags {
-      lto = "thin";
-    })
-    // lib.optionalAttrs optimizeSize (toRustFlags {
-      codegen-units = 1;
-      opt-level = "s";
-      panic = "abort";
-      strip = "symbols";
-    });
+  GIT_SHA = self.shortRev or self.dirtyShortRev or "unknown";
 
   meta = {
     description = "funni bot";
