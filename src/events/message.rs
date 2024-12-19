@@ -37,6 +37,5 @@ async fn should_echo(ctx: &Context, msg: &Message, data: &Data) -> Result<bool> 
 
 	Ok(content == "🗿"
 		|| content.to_ascii_lowercase() == "moyai"
-		|| content
-			.to_ascii_lowercase() == "twitter's recommendation algorithm")
+		|| content.to_ascii_lowercase() == "twitter's recommendation algorithm")
 }

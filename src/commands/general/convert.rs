@@ -1,7 +1,7 @@
 use crate::client::Context;
 
-use bottomify::bottom;
 use anyhow::Result;
+use bottomify::bottom;
 use poise::serenity_prelude::constants::MESSAGE_CODE_LIMIT;
 
 #[allow(clippy::unused_async)]
