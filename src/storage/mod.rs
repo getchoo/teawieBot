@@ -41,7 +41,7 @@ impl Storage {
 		redis::pipe()
 			.set(&guild_key, &settings)
 			.sadd(SETTINGS_KEY, u64::from(settings.guild_id))
-			.query_async(&mut con)
+			.exec_async(&mut con)
 			.await?;
 
 		Ok(())
@@ -65,7 +65,7 @@ impl Storage {
 		redis::pipe()
 			.del(&guild_key)
 			.srem(SETTINGS_KEY, u64::from(*guild_id))
-			.query_async(&mut con)
+			.exec_async(&mut con)
 			.await?;
 
 		Ok(())
@@ -123,7 +123,9 @@ impl Storage {
 		let entry_key = format!("{REACTBOARD_KEY}:{guild_id}:{}", entry.original_message_id);
 
 		let mut con = self.client.get_multiplexed_async_connection().await?;
-		con.set_ex(&entry_key, &entry, 30 * 24 * 60 * 60).await?; // 30 days
+		// https://github.com/redis-rs/redis-rs/issues/1228
+		con.set_ex::<_, _, ()>(&entry_key, &entry, 30 * 24 * 60 * 60)
+			.await?; // 30 days
 
 		Ok(())
 	}
