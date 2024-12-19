@@ -1,21 +1,12 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-
-    ## Everything below this is optional
-    ## `inputs.<name>.follows = ""`
-
-    treefmt-nix = {
-      url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
     {
       self,
       nixpkgs,
-      treefmt-nix,
     }:
     let
       inherit (nixpkgs) lib;
@@ -28,12 +19,31 @@
 
       forAllSystems = lib.genAttrs systems;
       nixpkgsFor = forAllSystems (system: nixpkgs.legacyPackages.${system});
-      treefmtFor = forAllSystems (system: treefmt-nix.lib.evalModule nixpkgsFor.${system} ./treefmt.nix);
     in
     {
-      checks = forAllSystems (system: {
-        treefmt = treefmtFor.${system}.config.build.check self;
-      });
+      checks = forAllSystems (
+        system:
+
+        let
+          pkgs = nixpkgsFor.${system};
+
+          mkCheck =
+            name: nativeBuildInputs: script:
+            pkgs.runCommand name { inherit nativeBuildInputs; } ''
+              ${script} | tee $out
+            '';
+        in
+
+        {
+          actionlint = mkCheck "actionlint" [ pkgs.actionlint ] "actionlint ${self}/.github/workflows/*";
+          deadnix = mkCheck "deadnix" [ pkgs.deadnix ] "deadnix check ${self}";
+          nixfmt = mkCheck "nixfmt" [
+            pkgs.nixfmt-rfc-style
+          ] "find ${self} -type f -name '*.nix' | xargs nixfmt --check";
+          rustfmt = mkCheck "rustfmt" [ pkgs.cargo pkgs.rustfmt ] "cd ${self} && cargo fmt -- --check";
+          statix = mkCheck "statix" [ pkgs.statix ] "statix check ${self}";
+        }
+      );
 
       devShells = forAllSystems (
         system:
