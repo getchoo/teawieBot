@@ -127,7 +127,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
           packages' = self.packages.${system};
 
-          staticWith = pkgs.callPackage ./nix/static.nix { inherit (packages') chill-discord-bot; };
+          staticWith = pkgs.callPackage ./nix/static.nix { inherit self; };
           containerize = pkgs.callPackage ./nix/containerize.nix { };
         in
 

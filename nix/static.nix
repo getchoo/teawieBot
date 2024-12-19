@@ -1,6 +1,7 @@
 {
   lib,
   pkgsCross,
+  self,
 }:
 
 let
@@ -16,8 +17,12 @@ let
   crossPkgs = crossPkgsFor.${arch};
 in
 
-(crossPkgs.callPackage ./derivation.nix { optimizeSize = true; }).overrideAttrs (old: {
-  passthru = old.passthru or { } // {
-    inherit crossPkgs;
-  };
-})
+(crossPkgs.callPackage ./derivation.nix {
+  inherit self;
+  optimizeSize = true;
+}).overrideAttrs
+  (old: {
+    passthru = old.passthru or { } // {
+      inherit crossPkgs;
+    };
+  })
