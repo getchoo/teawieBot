@@ -1,56 +1,54 @@
-name: Clippy
+name: "Clippy"
 
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
     paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '**.rs'
+      - "**.rs"
+      - "**.lock"
+      - "Cargo.toml"
+      - "flake.nix"
+
+      - ".github/workflows/clippy.yaml"
   pull_request:
     paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '**.rs'
+      - "**.rs"
+      - "**.lock"
+      - "Cargo.toml"
+      - "flake.nix"
+
+      - ".github/workflows/clippy.yaml"
   workflow_dispatch:
 
 jobs:
   clippy:
-    name: Run scan
+    name: "Run scan"
 
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     permissions:
-      security-events: write
+      contents: "read"
+      security-events: "write"
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: "Checkout repository"
+        uses: "actions/checkout@v4"
 
-      - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: "Install Nix"
+        uses: "cachix/install-nix-action@v30"
+
+      - name: "Setup Nix cache"
+        uses: "DeterminateSystems/magic-nix-cache-action@v8"
+
+      - name: "Run Clippy"
+        id: "clippy-run"
+        run: |
+          nix build --print-build-logs .#checks.x86_64-linux.clippy-sarif
+          [ -L result ] || exit 1
+          echo "sarif-file=$(readlink -f result)" >> "$GITHUB_OUTPUT"
+
+      - name: "Upload results"
+        uses: "github/codeql-action/upload-sarif@v3"
         with:
-          components: clippy
-
-      - name: Install SARIF tools
-        run: |
-          cargo install clippy-sarif sarif-fmt
-
-      - name: Fetch Cargo deps
-        run: |
-          cargo fetch --locked
-
-      - name: Run Clippy
-        continue-on-error: true
-        run: |
-          cargo clippy \
-            --all-features \
-            --all-targets \
-            --message-format=json \
-          | clippy-sarif | tee /tmp/clippy.sarif | sarif-fmt
-
-      - name: Upload results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: /tmp/clippy.sarif
+          sarif_file: ${{ steps.clippy-run.outputs.sarif-file }}
           wait-for-processing: true

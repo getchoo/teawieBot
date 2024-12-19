@@ -30,12 +30,39 @@
 
           mkCheck =
             name: nativeBuildInputs: script:
-            pkgs.runCommand name { inherit nativeBuildInputs; } ''
+            pkgs.runCommand "check-${name}" { inherit nativeBuildInputs; } ''
               ${script} | tee $out
             '';
         in
 
         {
+          clippy-sarif = pkgs.stdenv.mkDerivation {
+            name = "check-clippy-sarif";
+            inherit (self.packages.${system}.chill-discord-bot) src cargoDeps;
+
+            nativeBuildInputs = [
+              pkgs.cargo
+              pkgs.clippy
+              pkgs.clippy-sarif
+              pkgs.rustPlatform.cargoSetupHook
+              pkgs.rustc
+              pkgs.sarif-fmt
+            ];
+
+            buildPhase = ''
+              runHook preBuild
+
+              cargo clippy \
+                --all-features \
+                --all-targets \
+                --tests \
+                --message-format=json \
+              | clippy-sarif | tee $out | sarif-fmt
+
+              runHook postBuild
+            '';
+          };
+
           actionlint = mkCheck "actionlint" [ pkgs.actionlint ] "actionlint ${self}/.github/workflows/*";
           deadnix = mkCheck "deadnix" [ pkgs.deadnix ] "deadnix check ${self}";
           nixfmt = mkCheck "nixfmt" [
