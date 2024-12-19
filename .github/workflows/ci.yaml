@@ -18,7 +18,7 @@ on:
 
 jobs:
   build:
-    name: "Build"
+    name: "Build (${{ matrix.os }})"
 
     strategy:
       fail-fast: false
@@ -65,3 +65,17 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           nix flake check --print-build-logs
+
+  release-gate:
+    name: "CI Release gate"
+    needs: [ "build" ]
+
+    if: ${{ always() }}
+
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: "Exit with error"
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          exit 1
