@@ -88,7 +88,7 @@ jobs:
     env:
       REGISTRY: "ghcr.io"
       USERNAME: ${{ github.actor }}
-      IMAGE_NAME: "chill-discord-bot"
+      IMAGE_NAME: "chill_discord_bot"
 
     steps:
       - name: "Checkout repository"
@@ -113,7 +113,7 @@ jobs:
           architectures=("amd64" "arm64")
           for arch in "${architectures[@]}"; do
             docker load < images/container-"$arch"/*.tar.gz
-            docker tag chill-discord-bot:latest-"$arch" "$TAG"-"$arch"
+            docker tag "$IMAGE_NAME":latest-"$arch" "$TAG"-"$arch"
             docker push "$TAG"-"$arch"
           done
 
