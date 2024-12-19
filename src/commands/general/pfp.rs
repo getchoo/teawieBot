@@ -1,6 +1,6 @@
 use crate::{client::Context, consts::Colors};
 
-use eyre::Result;
+use anyhow::Result;
 use poise::{
 	serenity_prelude::{CreateEmbed, User},
 	CreateReply,

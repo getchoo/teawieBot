@@ -1,4 +1,4 @@
-use eyre::Result;
+use anyhow::Result;
 use log::trace;
 use serde::de::DeserializeOwned;
 

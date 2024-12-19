@@ -2,14 +2,14 @@ use crate::{commands, events, http, storage::Storage};
 
 use std::{sync::Arc, time::Duration};
 
-use eyre::{bail, Context as _, Result};
+use anyhow::{bail, Context as _, Result};
 use log::{info, trace, warn};
 use poise::{
 	serenity_prelude::{self as serenity},
 	EditTracker, Framework, FrameworkOptions, PrefixFrameworkOptions,
 };
 
-pub type Error = eyre::Report;
+pub type Error = anyhow::Error;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[derive(Clone, Debug, Default)]
@@ -60,7 +60,7 @@ pub async fn handle_shutdown(shard_manager: Arc<serenity::ShardManager>, reason:
 }
 
 pub async fn get() -> Result<serenity::Client> {
-	let token = std::env::var("TOKEN").wrap_err("Couldn't find bot token in environment!")?;
+	let token = std::env::var("TOKEN").context("Couldn't find bot token in environment!")?;
 
 	let intents =
 		serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;

@@ -1,7 +1,7 @@
 use crate::{client::Data, storage};
 use storage::settings::Settings;
 
-use eyre::Result;
+use anyhow::Result;
 use log::{debug, warn};
 use poise::serenity_prelude::{Guild, UnavailableGuild};
 

@@ -2,7 +2,7 @@ use crate::{client::Context, consts::Colors};
 
 use std::env::consts::{ARCH, OS};
 
-use eyre::Result;
+use anyhow::Result;
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Get version info

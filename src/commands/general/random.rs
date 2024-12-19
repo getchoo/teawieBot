@@ -1,6 +1,6 @@
-use crate::{client::Context, consts, http, utils};
+use crate::{client::Context, http, utils};
 
-use eyre::Result;
+use anyhow::Result;
 
 #[poise::command(slash_command, subcommands("teawie", "shiggy"))]
 #[allow(clippy::unused_async)]

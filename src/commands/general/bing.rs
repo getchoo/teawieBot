@@ -1,6 +1,6 @@
 use crate::client::Context;
 
-use eyre::Result;
+use anyhow::Result;
 
 /// Make sure the wie is alive
 #[poise::command(prefix_command)]

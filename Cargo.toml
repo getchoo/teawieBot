@@ -7,14 +7,10 @@ repository = "https://github.com/getchoo/chill"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0"
 bottomify = "1.2.0"
-color-eyre = "0.6.3"
 dotenvy = "0.15.7"
 env_logger = "0.11.5"
-eyre = { version = "0.6.12", default-features = false, features = [
-	"auto-install",
-	"track-caller",
-] }
 log = "0.4.22"
 poise = "0.6.1"
 rand = "0.8.5"

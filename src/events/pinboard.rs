@@ -1,6 +1,6 @@
 use crate::{client::Data, utils};
 
-use eyre::{eyre, Context as _, OptionExt as _, Result};
+use anyhow::{anyhow, Context as _, Result};
 use log::{debug, warn};
 use poise::serenity_prelude::{
 	ChannelId, Context, CreateAllowedMentions, CreateMessage, Message, MessageType, User,
@@ -43,20 +43,20 @@ pub async fn handle(ctx: &Context, message: &Message, data: &Data) -> Result<()>
 	let reference_id = message
 		.clone()
 		.message_reference
-		.ok_or_eyre("Couldn't get referenced message of pin!")?
+		.context("Couldn't get referenced message of pin!")?
 		.message_id
-		.ok_or_eyre("Couldn't get id of referenced message of pin!")?;
+		.context("Couldn't get id of referenced message of pin!")?;
 
 	let pins = message
 		.channel_id
 		.pins(ctx)
 		.await
-		.wrap_err("Couldn't get a list of pins!?")?;
+		.context("Couldn't get a list of pins!?")?;
 
 	let pin = pins
 		.iter()
 		.find(|pin| pin.id == reference_id)
-		.ok_or_else(|| eyre!("Couldn't find a pin for message {reference_id}!"))?;
+		.ok_or_else(|| anyhow!("Couldn't find a pin for message {reference_id}!"))?;
 
 	redirect(ctx, pin, &message.author, &target).await?;
 	pin.unpin(ctx).await?;
@@ -75,7 +75,7 @@ async fn redirect(ctx: &Context, pin: &Message, pinner: &User, target: &ChannelI
 	target
 		.send_message(&ctx.http, message)
 		.await
-		.wrap_err("Couldn't redirect message")?;
+		.context("Couldn't redirect message")?;
 
 	Ok(())
 }

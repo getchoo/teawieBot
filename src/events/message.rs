@@ -1,6 +1,6 @@
-use crate::{client::Data, consts};
+use crate::client::Data;
 
-use eyre::{eyre, Result};
+use anyhow::{anyhow, Result};
 use log::{debug, warn};
 use poise::serenity_prelude::{Context, Message};
 
@@ -20,7 +20,7 @@ async fn should_echo(ctx: &Context, msg: &Message, data: &Data) -> Result<bool> 
 
 	let gid = msg
 		.guild_id
-		.ok_or_else(|| eyre!("Couldn't get GuildId from {}!", msg.id))?;
+		.ok_or_else(|| anyhow!("Couldn't get GuildId from {}!", msg.id))?;
 
 	if let Some(storage) = &data.storage {
 		let settings = storage.get_guild_settings(&gid).await?;

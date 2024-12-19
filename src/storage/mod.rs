@@ -1,6 +1,6 @@
 use std::{env, fmt::Debug, str::FromStr};
 
-use eyre::Result;
+use anyhow::Result;
 use log::debug;
 use poise::serenity_prelude::{GuildId, MessageId};
 use redis::{AsyncCommands, Client, ConnectionLike, RedisError};

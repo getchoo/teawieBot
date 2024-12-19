@@ -1,6 +1,6 @@
 use crate::client::Context;
 
-use eyre::Result;
+use anyhow::Result;
 use log::debug;
 use rand::Rng;
 
