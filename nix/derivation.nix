@@ -7,11 +7,13 @@
   lto ? true,
   optimizeSize ? false,
 }:
+
 let
   fs = lib.fileset;
 in
+
 rustPlatform.buildRustPackage {
-  pname = "teawie-bot";
+  pname = "chill-discord-bot";
   version = (lib.importTOML ../Cargo.toml).package.version or "unknown";
 
   src = fs.toSource {
@@ -63,9 +65,9 @@ rustPlatform.buildRustPackage {
 
   meta = {
     description = "funni bot";
-    homepage = "https://github.com/getchoo/teawiebot";
+    homepage = "https://github.com/getchoo/chill";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ getchoo ];
-    mainProgram = "teawie-bot";
+    mainProgram = "chill";
   };
 }

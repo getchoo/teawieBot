@@ -70,7 +70,7 @@ pub async fn set(
 	#[description = "Minimum number of reactions a message needs to make it to the ReactBoard (defaults to 5)"]
 	reactboard_requirement: Option<u64>,
 	#[description = "Toggle ReactBoard"] reactboard_enabled: Option<bool>,
-	#[description = "Enables 'extra' commands like teawiespam and copypasta. Defaults to false."]
+	#[description = "Enables 'extra' commands like uwurandom. Defaults to false."]
 	optional_commands_enabled: Option<bool>,
 ) -> Result<()> {
 	if let Some(storage) = &ctx.data().storage {

@@ -6,13 +6,12 @@ self:
   ...
 }:
 let
-  cfg = config.services.teawiebot;
-  defaultUser = "teawiebot";
+  cfg = config.services.chill-discord-bot;
+  defaultUser = "chill-discord-bot";
 
   inherit (lib)
     getExe
     literalExpression
-    mdDoc
     mkEnableOption
     mkIf
     mkOption
@@ -22,15 +21,16 @@ let
     ;
 
   inherit (pkgs.stdenv.hostPlatform) system;
+  flakePackages = self.packages.${system} or (throw "getchoo/chill: ${system} is not supported");
 in
 {
-  options.services.teawiebot = {
-    enable = mkEnableOption "teawieBot";
-    package = mkPackageOption (self.packages.${system} or (builtins.throw "${system} is not supported!")
-    ) "teawie-bot" { };
+  options.services.chill-discord-bot = {
+    enable = mkEnableOption "chill";
+
+    package = mkPackageOption flakePackages "chill-discord-bot" { };
 
     user = mkOption {
-      description = mdDoc ''
+      description = ''
         User under which the service should run. If this is the default value,
         the user will be created, with the specified group as the primary
         group.
@@ -43,7 +43,7 @@ in
     };
 
     group = mkOption {
-      description = mdDoc ''
+      description = ''
         Group under which the service should run. If this is the default value,
         the group will be created.
       '';
@@ -55,7 +55,7 @@ in
     };
 
     redisUrl = mkOption {
-      description = mdDoc ''
+      description = ''
         Connection to a redis server. If this needs to include credentials
         that shouldn't be world-readable in the Nix store, set environmentFile
         and override the `REDIS_URL` entry.
@@ -69,28 +69,36 @@ in
     };
 
     environmentFile = mkOption {
-      description = mdDoc ''
+      description = ''
         Environment file as defined in {manpage}`systemd.exec(5)`
       '';
       type = types.nullOr types.path;
       default = null;
       example = literalExpression ''
-        "/run/agenix.d/1/teawieBot"
+        "/run/agenix.d/1/chillDiscordBot"
       '';
     };
   };
 
+  imports = [
+    (lib.mkRenamedOptionModule [ "services" "teawiebot" ] [ "services" "chill-discord-bot" ])
+  ];
+
   config = mkIf cfg.enable {
-    services.redis.servers.teawiebot = mkIf (cfg.redisUrl == "local") {
-      enable = true;
-      inherit (cfg) user;
-      port = 0; # disable tcp listener
+    services.redis.servers = mkIf (cfg.redisUrl == "local") {
+      chill-discord-bot = {
+        enable = true;
+        inherit (cfg) user;
+        port = 0; # disable tcp listener
+      };
     };
 
-    systemd.services."teawiebot" = {
+    systemd.services.chill-discord-bot = {
       enable = true;
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ] ++ optionals (cfg.redisUrl == "local") [ "redis-teawiebot.service" ];
+      after = [
+        "network.target"
+      ] ++ optionals (cfg.redisUrl == "local") [ "redis-chill-discord-bot.service" ];
 
       script = ''
         ${getExe cfg.package}
@@ -99,7 +107,7 @@ in
       environment = {
         REDIS_URL =
           if cfg.redisUrl == "local" then
-            "unix:${config.services.redis.servers.teawiebot.unixSocket}"
+            "unix:${config.services.redis.servers.chill-discord-bot.unixSocket}"
           else
             cfg.redisUrl;
       };

@@ -38,5 +38,5 @@ pub fn global() -> Vec<Command> {
 }
 
 pub fn optional() -> Vec<Command> {
-	vec![cmd!(optional, teawiespam), cmd!(optional, uwurandom)]
+	vec![cmd!(optional, uwurandom)]
 }

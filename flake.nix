@@ -1,6 +1,4 @@
 {
-  description = "teawie moment";
-
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
@@ -61,7 +59,7 @@
               pkgs.redis
             ];
 
-            inputsFrom = [ self.packages.${system}.teawie-bot ];
+            inputsFrom = [ self.packages.${system}.chill-discord-bot ];
             RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
           };
 
@@ -73,7 +71,7 @@
               self.formatter.${system}
             ];
 
-            inputsFrom = [ self.packages.${system}.teawie-bot ];
+            inputsFrom = [ self.packages.${system}.chill-discord-bot ];
           };
         }
       );
@@ -88,7 +86,7 @@
           pkgs = nixpkgsFor.${system};
           packages' = self.packages.${system};
 
-          staticWith = pkgs.callPackage ./nix/static.nix { inherit (packages') teawie-bot; };
+          staticWith = pkgs.callPackage ./nix/static.nix { inherit (packages') chill-discord-bot; };
           containerize = pkgs.callPackage ./nix/containerize.nix { };
         in
         {
@@ -98,9 +96,9 @@
           static-x86_64 = staticWith { arch = "x86_64"; };
           static-aarch64 = staticWith { arch = "aarch64"; };
 
-          teawie-bot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
+          chill-discord-bot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
 
-          default = self.packages.${system}.teawie-bot;
+          default = self.packages.${system}.chill-discord-bot;
         }
       );
     };

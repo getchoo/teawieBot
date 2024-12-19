@@ -36,9 +36,7 @@ async fn should_echo(ctx: &Context, msg: &Message, data: &Data) -> Result<bool> 
 	let content = &msg.content;
 
 	Ok(content == "🗿"
-		|| consts::TEAMOJIS.contains(&content.as_str())
 		|| content.to_ascii_lowercase() == "moyai"
 		|| content
-			.to_ascii_lowercase()
-			.contains("twitter's recommendation algorithm"))
+			.to_ascii_lowercase() == "twitter's recommendation algorithm")
 }

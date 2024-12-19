@@ -1,7 +1,7 @@
 {
   lib,
   pkgsCross,
-  teawie-bot,
+  chill-discord-bot,
 }:
 let
   crossPkgsFor = with pkgsCross; {

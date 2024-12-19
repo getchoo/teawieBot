@@ -19,7 +19,7 @@ impl Ext for Client {
 	fn default() -> Self {
 		reqwest::ClientBuilder::new()
 			.user_agent(format!(
-				"teawie-bot/{}",
+				"chill-discord-bot/{}",
 				option_env!("CARGO_PKG_VERSION").unwrap_or("development")
 			))
 			.build()

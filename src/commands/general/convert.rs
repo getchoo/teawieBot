@@ -13,44 +13,44 @@ pub async fn convert(_: Context<'_>) -> Result<()> {
 	Ok(())
 }
 
-/// Ask teawie to convert °F to °C
+/// Convert °F to °C
 #[poise::command(slash_command)]
 pub async fn to_celsius(
 	ctx: Context<'_>,
-	#[description = "What teawie will convert"] degrees_fahrenheit: f32,
+	#[description = "What to convert"] degrees_fahrenheit: f32,
 ) -> Result<()> {
 	let temp = (degrees_fahrenheit - 32.0) * (5.0 / 9.0);
 	ctx.say(temp.to_string()).await?;
 	Ok(())
 }
 
-/// Ask teawie to convert °C to °F
+/// Convert °C to °F
 #[poise::command(slash_command)]
 pub async fn to_fahrenheit(
 	ctx: Context<'_>,
-	#[description = "What teawie will convert"] degrees_celsius: f32,
+	#[description = "What to convert"] degrees_celsius: f32,
 ) -> Result<()> {
 	let temp = (degrees_celsius * (9.0 / 5.0)) + 32.0;
 	ctx.say(temp.to_string()).await?;
 	Ok(())
 }
 
-/// Teawie will translate to bottom 🥺
+/// Translate to bottom 🥺
 #[poise::command(slash_command)]
 pub async fn to_bottom(
 	ctx: Context<'_>,
-	#[description = "What teawie will translate into bottom"] message: String,
+	#[description = "What to translate into bottom"] message: String,
 ) -> Result<()> {
 	let encoded = bottom::encode_string(&message);
 	ctx.say(encoded).await?;
 	Ok(())
 }
 
-/// Teawie will translate from bottom 🥸
+/// Translate from bottom 🥸
 #[poise::command(slash_command)]
 pub async fn from_bottom(
 	ctx: Context<'_>,
-	#[description = "What teawie will translate from bottom"] message: String,
+	#[description = "What to translate from bottom"] message: String,
 ) -> Result<()> {
 	let resp: String;
 

@@ -272,6 +272,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chill"
+version = "1.0.0"
+dependencies = [
+ "bottomify",
+ "color-eyre",
+ "dotenvy",
+ "env_logger",
+ "eyre",
+ "log",
+ "poise",
+ "rand 0.8.5",
+ "redis",
+ "redis-macros",
+ "reqwest 0.12.9",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
+ "uwurandom-rs",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2103,28 +2125,6 @@ name = "tagptr"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b2093cf4c8eb1e67749a6762251bc9cd836b6fc171623bd0a9d324d37af2417"
-
-[[package]]
-name = "teawie-bot"
-version = "1.0.0"
-dependencies = [
- "bottomify",
- "color-eyre",
- "dotenvy",
- "env_logger",
- "eyre",
- "log",
- "poise",
- "rand 0.8.5",
- "redis",
- "redis-macros",
- "reqwest 0.12.9",
- "serde",
- "serde_json",
- "tokio",
- "url",
- "uwurandom-rs",
-]
 
 [[package]]
 name = "tempfile"

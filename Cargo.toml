@@ -1,8 +1,8 @@
 [package]
-name = "teawie-bot"
+name = "chill"
 version = "1.0.0"
 edition = "2021"
-repository = "https://github.com/getchoo/teawieBot"
+repository = "https://github.com/getchoo/chill"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
