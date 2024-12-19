@@ -27,6 +27,9 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ../Cargo.lock;
 
+  # `-C panic="abort"` breaks checks
+  doCheck = !optimizeSize;
+
   RUSTFLAGS =
     lib.optionals lto [
       "-C"
