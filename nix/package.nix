@@ -30,6 +30,8 @@ rustPlatform.buildRustPackage {
   RUSTFLAGS =
     lib.optionals lto [
       "-C"
+      "embed-bitcode=yes"
+      "-C"
       "lto=thin"
     ]
     ++ lib.optionals optimizeSize [
