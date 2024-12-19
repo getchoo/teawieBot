@@ -138,7 +138,7 @@
           static-x86_64 = staticWith { arch = "x86_64"; };
           static-aarch64 = staticWith { arch = "aarch64"; };
 
-          chill-discord-bot = pkgs.callPackage ./nix/derivation.nix { inherit self; };
+          chill-discord-bot = pkgs.callPackage ./nix/package.nix { inherit self; };
 
           default = self.packages.${system}.chill-discord-bot;
         }

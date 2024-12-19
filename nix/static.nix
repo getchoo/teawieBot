@@ -17,7 +17,7 @@ let
   crossPkgs = crossPkgsFor.${arch};
 in
 
-(crossPkgs.callPackage ./derivation.nix {
+(crossPkgs.callPackage ./package.nix {
   inherit self;
   optimizeSize = true;
 }).overrideAttrs
